@@ -10,9 +10,8 @@
 
 
 #include <iostream>
-#include "../../src_itvl/problem.h"
-#include "../../src_itvl/csolver.h"
-
+#include "src_itvl/problem.h"
+#include "src_itvl/csolver.h"
 #include "car.hpp"
 
 
@@ -20,6 +19,9 @@
 
 int main()
 {
+    const int XD = 3;
+    const int UD = 2;
+    
     /* state space */
     double xlb[] = {7.3, 0, -M_PI};
     double xub[] = {10, 2, M_PI};
@@ -34,7 +36,7 @@ int main()
     car *ptrCar = new car(UD, ulb, uub, mu, tau);
 
     /* create a control problem */
-    CntlProb carReach("vehicle", XD, UD, xlb, xub, ptrCar);
+    rocs::CntlProb carReach("vehicle", XD, UD, xlb, xub, ptrCar);
     std::cout << carReach << '\n';
 
     /* specifications */
@@ -45,11 +47,11 @@ int main()
     double oub[] = {8.4, 1.2, M_PI};
     
     /* create a solver */
-    CSolver *solver = new CSolver(&carReach);
-    solver->init(GOAL, glb, gub);
-    solver->init(AVOID, olb, oub);
+    rocs::CSolver *solver = new rocs::CSolver(&carReach);
+    solver->init(rocs::GOAL, glb, gub);
+    solver->init(rocs::AVOID, olb, oub);
     
-    solver->buchi(ABSMAX, 0.2);
+    solver->buchi(rocs::ABSMAX, 0.2);
 
     solver->print_controller_info();
     

@@ -12,6 +12,7 @@
 #include "interval_vector.h"
 
 
+namespace rocs {
 
 /********** member functions ***********/
 
@@ -515,3 +516,6 @@ std::ostream& operator<<(std::ostream &out, const ivec &x) {
 
     return out;
 }
+
+
+} // namespace rocs

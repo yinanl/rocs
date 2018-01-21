@@ -20,6 +20,8 @@
 #include "interval.h"
 
 
+namespace rocs {
+
 class ivec
 {
  private:
@@ -100,6 +102,6 @@ class ivec
 };
 
 
-
+} // namespace rocs
 
 #endif

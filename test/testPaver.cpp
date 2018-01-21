@@ -10,11 +10,12 @@
 
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE PaverClass
+
+
 #include <boost/test/unit_test.hpp>
 #include <boost/test/unit_test_log.hpp>
-
 #include <cmath>
-#include "interval_paver.h"
+#include "src_itvl/interval_paver.h"
 
 
 /*
@@ -22,17 +23,17 @@
 */
 BOOST_AUTO_TEST_CASE(test_init_SPnode)
 {
-    ivec a(3);
-    a[0] = interval(-1, 1);
-    a[1] = interval(-0.1, 0.01);
-    a[2] = interval(0, 2);
+    rocs::ivec a(3);
+    a[0] = rocs::interval(-1, 1);
+    a[1] = rocs::interval(-0.1, 0.01);
+    a[2] = rocs::interval(0, 2);
     
-    ivec e(2);
-    e[0] = interval(1, 0);
-    e[1] = interval(NINF, PINF);
+    rocs::ivec e(2);
+    e[0] = rocs::interval(1, 0);
+    e[1] = rocs::interval(rocs::NINF, rocs::PINF);
 
     /* test direct init */
-    SPnode node0(a, 5); //init
+    rocs::SPnode node0(a, 5); //init
     boost::dynamic_bitset<> cntl0(5, 0);
     BOOST_CHECK(node0._box == a);  // box=a
     BOOST_CHECK(node0._cntl == cntl0);  // cntl={}
@@ -44,13 +45,13 @@ BOOST_AUTO_TEST_CASE(test_init_SPnode)
     BOOST_CHECK(node0._tag == 1);
 
     /* test default init */
-    SPnode node1;
+    rocs::SPnode node1;
     BOOST_CHECK(node1.isempty());
 
     /* test 2nd init */
     boost::dynamic_bitset<> cntl2(5, 0);
     cntl2[3] = 1;
-    SPnode node2 = SPnode(a, cntl2, 2, true, false);
+    rocs::SPnode node2 = rocs::SPnode(a, cntl2, 2, true, false);
     BOOST_CHECK(node2._box == a);  // box=a
     BOOST_CHECK(2 == node2._tag);  // tag=2
     BOOST_CHECK(node2._cntl == cntl2);  // cntl={0,0,1}
@@ -59,7 +60,7 @@ BOOST_AUTO_TEST_CASE(test_init_SPnode)
     BOOST_CHECK(node2._split == -1);  // no splitting
 
     /* test copy init */
-    SPnode node3 = SPnode(node2);
+    rocs::SPnode node3 = rocs::SPnode(node2);
     BOOST_CHECK(node3._box == a);  // box=a
     BOOST_CHECK(node3._tag == 2);  // tag=2
     BOOST_CHECK(node3._cntl == cntl2);  // cntl={0,0,1}
@@ -78,17 +79,17 @@ BOOST_AUTO_TEST_CASE(test_init_SPnode)
 */
 BOOST_AUTO_TEST_CASE(test_SPtree)
 {
-    ivec a(3);
-    a[0] = interval(-1, 1);
-    a[1] = interval(-0.1, 0.01);
-    a[2] = interval(0, 3.2);
+    rocs::ivec a(3);
+    a[0] = rocs::interval(-1, 1);
+    a[1] = rocs::interval(-0.1, 0.01);
+    a[2] = rocs::interval(0, 3.2);
 
-    SPnode root(a, 5);  // box=a, tag=0, cntl={0,0,0,0,0}
+    rocs::SPnode root(a, 5);  // box=a, tag=0, cntl={0,0,0,0,0}
 
 
-    SPtree paver1; // default init (empty)
-    SPtree paver2(&root); // init by root pointer
-    SPtree paver3 = SPtree(paver2); // copy init
+    rocs::SPtree paver1; // default init (empty)
+    rocs::SPtree paver2(&root); // init by root pointer
+    rocs::SPtree paver3 = rocs::SPtree(paver2); // copy init
 
 
     /* expand 2 levels */
@@ -97,15 +98,15 @@ BOOST_AUTO_TEST_CASE(test_SPtree)
     paver3.expand(paver3._root->_right, 0);  // split=0
 
     /* test depth 1 (root--0,leaf--2) */
-    ivec al(3), ar(3);
-    al[0] = interval(-1, 1);
-    al[1] = interval(-0.1, 0.01);
-    al[2] = interval(0, 1.6);
-    ar[0] = interval(-1, 1);
-    ar[1] = interval(-0.1, 0.01);
-    ar[2] = interval(1.6, 3.2);
-    ivec lbox = paver3._root->_left->_box;
-    ivec rbox = paver3._root->_right->_box;
+    rocs::ivec al(3), ar(3);
+    al[0] = rocs::interval(-1, 1);
+    al[1] = rocs::interval(-0.1, 0.01);
+    al[2] = rocs::interval(0, 1.6);
+    ar[0] = rocs::interval(-1, 1);
+    ar[1] = rocs::interval(-0.1, 0.01);
+    ar[2] = rocs::interval(1.6, 3.2);
+    rocs::ivec lbox = paver3._root->_left->_box;
+    rocs::ivec rbox = paver3._root->_right->_box;
     BOOST_CHECK(lbox == al);
     BOOST_CHECK(rbox == ar);
     BOOST_CHECK(paver3._root->_left->_split == 2);

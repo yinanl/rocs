@@ -15,6 +15,8 @@
 
 #include "config.h"
 
+
+namespace rocs {
  
 class interval
 {
@@ -129,6 +131,6 @@ class interval
   
 };
 
-
+} // namespace rocs
 
 #endif

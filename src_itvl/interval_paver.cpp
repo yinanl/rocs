@@ -14,7 +14,7 @@
 #include "interval_paver.h"
 
 
-
+namespace rocs {
 
 /* SPnode */
 std::ostream& operator<<(std::ostream &out, const SPnode &node) {
@@ -702,3 +702,6 @@ void SPtree::write2txt_leaves(SPnode *node, const char *filename) {
 
     txtfile.close();
 }
+
+    
+} // namespace rocs

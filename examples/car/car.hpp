@@ -19,11 +19,9 @@
 #include <vector>
 #include <cmath>
 
-#include "../../src_itvl/vectorfield.h"
+#include "src_itvl/vectorfield.h"
 
 
-const int XD = 3;
-const int UD = 2;
 
 /**
  * Discrete-time dynamics
@@ -45,14 +43,14 @@ std::vector<XT> carvf(const XT &x, const UT &u, const double h)
 
 	alpha = atan(tan(u[i][1]) / 2);
 
-	if (fabs(u[i][0]) < 1e-6) {
+	if (std::fabs(u[i][0]) < 1e-6) {
       
 	    y[i] = x;
 	}
-	else if (fabs(u[i][1]) < 1e-6) {
+	else if (std::fabs(u[i][1]) < 1e-6) {
 
-	    dx[0] = x[0] + u[i][0]*cos(x[2])*h;
-	    dx[1] = x[1] + u[i][0]*sin(x[2])*h;
+	    dx[0] = x[0] + u[i][0]* cos(x[2])*h;
+	    dx[1] = x[1] + u[i][0]* sin(x[2])*h;
 	    dx[2] = x[2];
 
 	    y[i] = dx;
@@ -80,38 +78,39 @@ std::vector<XT> carvf(const XT &x, const UT &u, const double h)
 /**
  * Derived functor for 2d car dynamics.
  */
-class car : public VFunctor {
+class car : public rocs::VFunctor {
     
 public:
 
     /* constructors */
     car() {}
-    car(double h) : VFunctor(h) {}
-    car(input_type &u, double h): VFunctor(u, h) {}
-    car(grid ug, double h) : VFunctor(ug, h) {}
+    car(rocs::input_type &u, double h): VFunctor(u, h) {}
+    car(rocs::grid ug, double h) : VFunctor(ug, h) {}
     car(const int dim, const double lb[], const double ub[],
 	const double mu[], double h) : VFunctor(dim, lb, ub, mu, h) {}
     
     
     /* override operator () */
-    virtual std::vector<ivec> operator()(const ivec &x) {
+    virtual std::vector<rocs::ivec> operator()(const rocs::ivec &x) {
 
-	if (!_uset.empty())
-	    return carvf(x, _uset, _tau);
-	else if (!_ugrid._data.empty())
+	if (!_ugrid._data.empty())
 	    return carvf(x, _ugrid._data, _tau);
-	else
+	else {
+	    std::cout <<
+		"Callback of car vectorfield failed: no input data.\n";
 	    assert(false);
+	}
     }
 
-    virtual std::vector<state_type> operator()(const state_type &x) {
+    virtual std::vector<rocs::state_type> operator()(const rocs::state_type &x) {
 
-	if (!_uset.empty())
-	    return carvf(x, _uset, _tau);
-	else if (!_ugrid._data.empty())
+	if (!_ugrid._data.empty())
 	    return carvf(x, _ugrid._data, _tau);
-	else
+	else {
+	    std::cout <<
+		"Callback of car vectorfield failed: no input data.\n";
 	    assert(false);
+	}
     }
 
 

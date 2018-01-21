@@ -1,105 +1,47 @@
+# 1) get directories of external packages: 
+# BSTDIR (boost), MATDIR (matlab), LADIR (armadillo).
+# 2) get compiling and linking flags:
+# CXX, CXXFLAGS, INCS, LIBS, LIBTEST, LDFLAGS.
+-include ../../configMake
 
+IDIR := ../../intervals
+GDIR := ../../grids
+SDIR := ../../src_itvl
+RDIR := ../../
 
-############################################################################
-
-# the simplest makefile
-#
-#mcis:mcis.cpp
-#	g++ -Wall -g mcis.cpp -o mcis
-
-
-
-############################################################################
-# REMEMBER TO UPDATE THE ENVIRONMENT VARIABLE DYLD_LIBRARY_PATH in terminal
-# export DYLD_LIBRARY_PATH='/Applications/MATLAB_R2016a.app/bin/maci64:/Applications/MATLAB_R2016a.app/sys/os/maci64':$DYLD_LIBRARY_PATH
-
-
-# ROOTs
-BOOSTROOT = /usr/local/Cellar/boost/1.62.0
-MATLABROOT = /Applications/MATLAB_R2016a.app
-LINALGROOT = /usr/local/Cellar/armadillo/7.500.2
-
-INTERVALROOT = ../../intervals
-GRIDROOT = ../../grids
-SOLVERROOT = ../../src_itvl
-
-# for armadillo
-#DEBUG = -DARMA_EXTRA_DEBUG
-OPT = -O3 #-O0
-#EXTRA_OPT = -fwhole-program
-FINAL = -DARMA_NO_DEBUG
-
-
-# define the c++ compiler to use
-CXX = clang++
-#CXX = gcc
-
-# define any compile-time flags
-CXXFLAGS = -Wall -g $(DEBUG) $(FINAL) $(OPT) $(EXTRA_OPT) -std=c++11 -stdlib=libc++
-
-
-# define any directories containing header files other than /usr/include
-#
-INCLUDES = -I$(BOOSTROOT)/include -I$(LINALGROOT)/include -I$(MATLABROOT)/extern/include #-I/usr/local/include
-
-
-# define library paths in addition to /usr/lib
-#   if I wanted to include libraries not in /usr/lib I'd specify
-#   their path using -Lpath, something like:
-LDFLAGS = -L$(BOOSTROOT)/lib -L$(LINALGROOT)/lib -L$(MATLABROOT)/bin/maci64 -rpath $(MATLABROOT)/bin/maci64
-
-
-# define any libraries to link into executable:
-#   if I want to link in libraries (libx.so or libx.a) I use the -llibname 
-#   option, something like (this will link in libmylib.so and libm.so:
-LIBS = -larmadillo -lboost_unit_test_framework-mt -lmat -leng -lmx
-
+INCS += -I$(RDIR)
 
 # define the source files
-SRCIVEC = $(INTERVALROOT)/interval.cpp $(INTERVALROOT)/interval_vector.cpp
-SRCGRID = $(GRIDROOT)/grid.cpp
-SRCSP = $(SOLVERROOT)/interval_paver.cpp $(SRCIVEC)
-SRCCP = $(SOLVERROOT)/csolver.cpp $(SOLVERROOT)/problem.cpp $(SRCSP)
+SRCIVEC = $(IDIR)/interval.cpp $(IDIR)/interval_vector.cpp
+SRCSP = $(SDIR)/interval_paver.cpp $(SRCIVEC)
+SRCCP = $(SDIR)/csolver.cpp $(SDIR)/problem.cpp $(SRCSP)
+SRCGRID = $(GDIR)/grid.cpp
 
-SRC01 = DemoCar1.cpp $(SRCGRID) $(SRCCP)
-SRC02 = DemoCar2.cpp $(SRCGRID) $(SRCCP)
-SRCBUCHI = DemoCarBuchi.cpp $(SRCGRID) $(SRCCP)
-
-
-# define the C object files 
-#
-# This uses Suffix Replacement within a macro:
-#   $(name:string1=string2)
-#         For each word in 'name' replace 'string1' with 'string2'
-# Below we are replacing the suffix .c of all words in the macro SRCS
-# with the .o suffix
-#
+SRC01 = carReach1.cpp $(SRCGRID) $(SRCCP)
+SRC02 = carReach2.cpp $(SRCGRID) $(SRCCP)
+SRCBUCHI = carBuchi.cpp $(SRCGRID) $(SRCCP)
 
 
 # define the executable file
-EXE01 = car1
-EXE02 = car2
-EXEBUCHI = carbuchi
-EXECUTABLE = car1 car2 carbuchi
+EXE01 = carReach1
+EXE02 = carReach2
+EXEBUCHI = carBuchi
+EXECUTABLE = carReach1 carReach2 carBuchi
 
-
-#
-# The following part of the makefile is generic; it can be used to 
-# build any executable just by changing the definitions above and by
-# deleting dependencies appended to the file from 'make depend'
-#
 .PHONY : clean
 
+
+# rules
 all: $(EXECUTABLE)
 
-$(EXE01): $(SRC01)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) $(LDFLAGS) $(LIBS) -o $(EXE01) $(SRC01)
+$(EXE01): $(SRC01) car.hpp
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $(EXE01) $(SRC01)
 
-$(EXE02): $(SRC02)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) $(LDFLAGS) $(LIBS) -o $(EXE02) $(SRC02)
+$(EXE02): $(SRC02) car.hpp
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $(EXE02) $(SRC02)
 
-$(EXEBUCHI): $(SRCBUCHI)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) $(LDFLAGS) $(LIBS) -o $(EXEBUCHI) $(SRCBUCHI)
+$(EXEBUCHI): $(SRCBUCHI) car.hpp
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $(EXEBUCHI) $(SRCBUCHI)
 
 clean:
-	rm -rf $(EXECUTABLE)
+	rm -rf *.o *.dSYM $(EXECUTABLE)

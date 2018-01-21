@@ -12,12 +12,10 @@
 #define _dcdc_h
 
 
-#include "../../src_itvl/vectorfield.h"
-
 #include <cmath>
 #include <cassert>
-
 #include <armadillo>
+#include "src_itvl/vectorfield.h"
 
 
 const double xc = 70.0;
@@ -37,22 +35,19 @@ const double a23 = (1/xc) * (r0/(r0+rc));
 const double a24 = (-1/xc) * (1/(r0+rc));
 
 const double TS = 0.5;
-
-const int XD = 2;
-const int UD = 1;
 const size_t M = 2;
 
 
-/*
+/**
  * 2-mode boost DC-DC converter:
  * discrete-time interval model
  */
-std::vector<ivec> dcdc(const ivec &x) {
+std::vector<rocs::ivec> dcdc(const rocs::ivec &x) {
 
     int n = x.getdim();
     assert(n == 2);
 
-    std::vector<ivec> y(M);
+    std::vector<rocs::ivec> y(M);
     arma::mat I = arma::eye<arma::mat>(n, n);
     arma::vec b = {b1, 0};
     
@@ -60,16 +55,16 @@ std::vector<ivec> dcdc(const ivec &x) {
     // x1(t+h)=e^(a11 h)x1(t) + b1/a11(e^(a11 h)-1)
     // x2(t+h)=e^(a14 h)x2(t)
     arma::mat A1 = {{a11, 0}, {0, a14}};
-    arma::mat F1 = expmat(A1 * TS);
-    arma::vec g1 = inv(A1) * (F1 - I) * b;
+    arma::mat F1 = arma::expmat(A1 * TS);
+    arma::vec g1 = arma::inv(A1) * (F1 - I) * b;
     y[0] = linmap(F1, g1, x);
 
     
     /* mode 2: use the solution form and zonotope operations */
     // x(t+h) = e^(Ah)x(t) + A^-1(e^(Ah)-I)b
     arma::mat A2 = { {a21, a22}, {a23, a24} };
-    arma::mat F2 = expmat(A2 * TS);
-    arma::vec g2 = inv(A2) * (F2 - I) * b;
+    arma::mat F2 = arma::expmat(A2 * TS);
+    arma::vec g2 = arma::inv(A2) * (F2 - I) * b;
 
     y[1] = linmap(F2, g2, x);
     
@@ -121,12 +116,12 @@ std::vector<ivec> dcdc(const ivec &x) {
 
 
 
-std::vector<ivec> dcdc_vf(const ivec &x, double tau) {
+std::vector<rocs::ivec> dcdc_vf(const rocs::ivec &x, double tau) {
 
     int n = x.getdim();
     assert(n == 2);
 
-    std::vector<ivec> y(2);
+    std::vector<rocs::ivec> y(2);
     arma::mat I = arma::eye<arma::mat>(n, n);
     arma::vec b = {b1, 0};
     
@@ -134,16 +129,16 @@ std::vector<ivec> dcdc_vf(const ivec &x, double tau) {
     // x1(t+h)=e^(a11 h)x1(t) + b1/a11(e^(a11 h)-1)
     // x2(t+h)=e^(a14 h)x2(t)
     arma::mat A1 = {{a11, 0}, {0, a14}};
-    arma::mat F1 = expmat(A1 * tau);
-    arma::vec g1 = inv(A1) * (F1 - I) * b;
+    arma::mat F1 = arma::expmat(A1 * tau);
+    arma::vec g1 = arma::inv(A1) * (F1 - I) * b;
     y[0] = linmap(F1, g1, x);
 
     
     /* mode 2: use the solution form and zonotope operations */
     // x(t+h) = e^(Ah)x(t) + A^-1(e^(Ah)-I)b
     arma::mat A2 = { {a21, a22}, {a23, a24} };
-    arma::mat F2 = expmat(A2 * tau);
-    arma::vec g2 = inv(A2) * (F2 - I) * b;
+    arma::mat F2 = arma::expmat(A2 * tau);
+    arma::vec g2 = arma::inv(A2) * (F2 - I) * b;
 
     y[1] = linmap(F2, g2, x);
     
@@ -158,18 +153,18 @@ std::vector<ivec> dcdc_vf(const ivec &x, double tau) {
  * to be consistent with the vf without controls
  * */
 
-class DCDC : public VFunctor {
+class DCDC : public rocs::VFunctor {
     
 public:
 
     /* constructors */
     DCDC() {}
     
-    DCDC(input_type &modes, double h): VFunctor(modes, h) {}
+    DCDC(rocs::input_type &modes, double h): VFunctor(modes, h) {}
     
     
     /* override operator () */
-    virtual std::vector<ivec> operator()(const ivec &x) {
+    virtual std::vector<rocs::ivec> operator()(const rocs::ivec &x) {
 
 	return dcdc_vf(x, _tau);
     }

@@ -17,6 +17,8 @@
 #include "problem.h"
 
 
+namespace rocs {
+  
 /**
  * An enum used to specify GOAL and AVOIDANCE.
  */
@@ -65,7 +67,7 @@ class CSolver
   CSolver(PtrCntlProb prob, BISECT bs, size_t maxi) :
   _cpb(prob), _bstype(bs), _maxiter(maxi), _fpiter{0,0,0}, _timer(0) {
     
-    SPnode root(_cpb->_workspace, _cpb->_vf->_unum);
+    SPnode root(_cpb->_workspace, _cpb->_vf->_ugrid._nv);
 
     _ctlr = SPtree(&root);	/* SPtree copy assignment */
   }
@@ -78,7 +80,7 @@ class CSolver
   CSolver(PtrCntlProb prob, size_t maxi) :
   _cpb(prob), _bstype(ABSMAX), _maxiter(maxi), _fpiter{0,0,0}, _timer(0) {
     
-    SPnode root(_cpb->_workspace, _cpb->_vf->_unum);
+    SPnode root(_cpb->_workspace, _cpb->_vf->_ugrid._nv);
 
     _ctlr = SPtree(&root);	/* SPtree copy assignment */
   }
@@ -91,7 +93,7 @@ class CSolver
   CSolver(PtrCntlProb prob) :
   _cpb(prob), _bstype(ABSMAX), _maxiter(UINT_MAX), _fpiter{0,0,0}, _timer(0) {
 
-    SPnode root(_cpb->_workspace, _cpb->_vf->_unum);
+    SPnode root(_cpb->_workspace, _cpb->_vf->_ugrid._nv);
 
     _ctlr = SPtree(&root);	/* SPtree copy assignment */
   }
@@ -323,6 +325,7 @@ class CSolver
 };
 
 
+} // namespace rocs
 
 
 #endif

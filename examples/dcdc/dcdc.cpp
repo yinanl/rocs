@@ -1,5 +1,5 @@
 /**
- *  DemoDcdc.cpp
+ *  dcdc.cpp
  *
  *  DCDC converter example (benchmark)
  *
@@ -8,25 +8,23 @@
  */
 
 #include <iostream>
-
-#include "../../src_itvl/problem.h"
-
-#include "../../src_itvl/csolver.h"
-
+#include "src_itvl/problem.h"
+#include "src_itvl/csolver.h"
 #include "dcdc.hpp"
-
-
 
 
 int main()
 {
+    const int XD = 2;
+    const int UD = 1;
+    
     /* state space */
     // double xlb[] = {-2, -1.5};
     // double xub[] = {2, 3};
     double xlb[] = {-2, 0.70};
     double xub[] = {2, 1.50};
 
-    input_type U {{1}, {2}};  // two modes
+    rocs::input_type U {{1}, {2}};  // two modes
 
     /* invariant area */
     double glb[] = {1.15, 1.09};
@@ -37,15 +35,15 @@ int main()
 
 
     /* define an invariance control problem */
-    CntlProb dcdcInv("dcdc", XD, UD, xlb, xub, ptrDC);
+    rocs::CntlProb dcdcInv("dcdc", XD, UD, xlb, xub, ptrDC);
     std::cout << dcdcInv << '\n';
 
     /* use solver to design a controller */
-    CSolver *solver = new CSolver(&dcdcInv);
+    rocs::CSolver *solver = new rocs::CSolver(&dcdcInv);
 
-    solver->init(GOAL, glb, gub);
+    solver->init(rocs::GOAL, glb, gub);
     
-    solver->invariance_control(0.001, RELMAXG);
+    solver->invariance_control(0.001, rocs::RELMAXG);
 
     solver->print_controller_info();
 

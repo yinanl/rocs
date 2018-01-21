@@ -14,13 +14,11 @@
 
 
 #include <vector>
-
-#include "../intervals/interval_vector.h"
-
-#include "../grids/grid.h"
+#include "intervals/interval_vector.h"
+#include "grids/grid.h"
 
 
-
+namespace rocs {
 
 typedef std::vector<double> state_type;
 typedef std::vector< std::vector<double> > input_type;
@@ -32,46 +30,68 @@ class VFunctor {
 
  public:
   
-  input_type  _uset; /**< a set of controls */
   grid _ugrid;  /**< a grid of controls */
-  size_t _unum; /**< number of control values */
   double _tau; /**< sampling time */
   double _dt; /**< ode integrate time step */
 
-  /* constructors */
+  
+  /**
+   * Constructors:
+   *
+   * Initialize the sampling time and number of input values.
+   * @param T the sampling time.
+   * @param dt the integration step.
+   * @param un the number of input values.
+   */
   VFunctor(){}
-  VFunctor(double T) : _tau(T) {}
-  VFunctor(double T, double dt) : _tau(T), _dt(dt) {}  /* with integration step */
-  VFunctor(size_t un, double T) : _unum(un), _tau(T) {}
+  VFunctor(double T, double dt = 0) : _tau(T), _dt(dt) {}
   
-  VFunctor(input_type U, double T) : _uset(U), _unum(U.size()), _tau(T) {}
-  VFunctor(input_type U, double T, double dt) : _uset(U), _unum(U.size()), _tau(T), _dt(dt) {}
-  
-  VFunctor(grid ug, double T) : _ugrid(ug), _unum(ug._nv), _tau(T) {}
-  VFunctor(grid ug, double T, double dt) : _ugrid(ug), _unum(ug._nv), _tau(T), _dt(dt) {}
-  
-  VFunctor(const int dim, const double lb[], const double ub[],
-	   const double mu[], double T) : _ugrid(dim, mu, lb, ub), _tau(T)
-  {
-    _ugrid.gridding();
+  /**
+   * Constructor:
+   *
+   * Change input_type U to the grid data type.
+   * @param U the inputs in the form of input_type.
+   * @param T the sampling time.
+   */
+  VFunctor(input_type U, double T, double dt = 0) : _tau(T), _dt(dt) {
     
-    _unum = _ugrid._nv;
+    _ugrid._nv = U.size();
+    _ugrid._dim = U[0].size();
+    _ugrid._data = U;
+    
   }
+  /**
+   * Constructor:
+   * 
+   * Initialize from input grid.
+   * @param ug input grid.
+   */
+  VFunctor(grid ug, double T, double dt = 0) : _ugrid(ug), _tau(T), _dt(dt) {}
+  /**
+   * Constructor:
+   *
+   * Initialize the input grid during functor construction.
+   * @param dim dimension of inputs.
+   * @param lb lower bound of input values.
+   * @param ub upper bound of input values.
+   * @param mu grid width.
+   * @param T sampling time.
+   */
   VFunctor(const int dim, const double lb[], const double ub[],
-	   const double mu[], double T, double dt)
+	   const double mu[], double T, double dt = 0)
     : _ugrid(dim, mu, lb, ub), _tau(T), _dt(dt)
   {
     _ugrid.gridding();
-    
-    _unum = _ugrid._nv;
   }
 
+  
   /**
    * Set a grid of controls to the functor.
    * @param u the grid of controls.
    */
   void setugrid(grid &u) { _ugrid = u;}
-  
+
+
   /**
    * Interface of interval reachable set computation w.r.t. dynamics.
    *
@@ -90,16 +110,14 @@ class VFunctor {
    */
   virtual std::vector<state_type> operator()(const state_type &x) {
     
-    if (!_uset.empty()) {
-      std::vector<state_type> y(_uset.size(), x);
-      return y;
-      
-    } else if (!_ugrid._data.empty()) {
+    if (!_ugrid._data.empty()) {
       std::vector<state_type> y(_ugrid._nv, x);
       return y;
 
-    } else
+    } else {
+      std::cout << "vfunctor() failed: no input data.\n";
       assert(false);
+    }
     
   }
 
@@ -110,5 +128,8 @@ class VFunctor {
 
 
 typedef VFunctor* PtrVF;
+
+
+} // namespace rocs
 
 #endif

@@ -13,18 +13,18 @@
 #define _interval_paver_h_
 
 
-#include "../intervals/interval.h"
-#include "../intervals/interval_vector.h"
-
+#include "intervals/interval.h"
+#include "intervals/interval_vector.h"
 #include <queue>
 #include <stack>
 #include <boost/dynamic_bitset.hpp>
 #include <mat.h>
 #include <matrix.h>
-
 #include <fstream>
 
 
+namespace rocs {
+  
 /**
  * An enum defines set approximation type.
  */
@@ -265,5 +265,7 @@ class SPtree
   void write2txt_leaves(SPnode *ptrn, const char *filename);
 };
 
+
+} // namespace rocs
 
 #endif

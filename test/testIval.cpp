@@ -1,20 +1,22 @@
-//
-//  Testival.cpp
-//  
-//  test interval class
-//
-//  Created by yinan li on 20/07/2016.
-//  Copyright (c) 2016 UW. All rights reserved.
-// ------------------------------------------------
+/**
+ *  Testival.cpp
+ *
+ *  Test interval class
+ *
+ *  Created by Yinan Li on July 20, 2016.
+ *
+ *  Hybrid Systems Group, University of Waterloo.
+ */
 
 
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE IntervalClass
+
+
 #include <boost/test/unit_test.hpp>
 //#include <boost/test/unit_test_log.hpp>
-
 #include <cmath>
-#include "interval.h"
+#include "intervals/interval.h"
 
 
 /*
@@ -22,11 +24,11 @@
 */
 BOOST_AUTO_TEST_CASE(test_init_basics)
 {
-    interval a(2,1);
-    interval b(0.2, 1.5);
-    interval c(b);
-    interval d = b;
-    interval e(PINF, PINF);
+    rocs::interval a(2,1);
+    rocs::interval b(0.2, 1.5);
+    rocs::interval c(b);
+    rocs::interval d = b;
+    rocs::interval e(rocs::PINF, rocs::PINF);
 
     /* test isempty() */
     BOOST_CHECK(a.isempty()); 
@@ -48,6 +50,8 @@ BOOST_AUTO_TEST_CASE(test_init_basics)
 */
 BOOST_AUTO_TEST_CASE(test_plus_minus)
 {
+    using namespace rocs;
+    
     interval e(2,1); // empty interval
     
     interval a(0.2, 1.5);
@@ -82,6 +86,8 @@ BOOST_AUTO_TEST_CASE(test_plus_minus)
 */
 BOOST_AUTO_TEST_CASE(test_mul_div)
 {
+    using namespace rocs;
+    
     interval e(2,1); // empty interval
     
     interval a(0.2, 1.5);
@@ -173,6 +179,8 @@ BOOST_AUTO_TEST_CASE(test_mul_div)
 */
 BOOST_AUTO_TEST_CASE(test_trigonometric_fcns)
 {
+    using namespace rocs;
+    
     /* test sin() [cos() is implemented by sin()] */
     BOOST_CHECK(interval(-1, sin(-1.1)) == sin(interval(-1.6, -1.1))); //wid = 0.5
     BOOST_CHECK(interval(sin(-1), sin(-0.5)) == sin(interval(-1, -0.5)));
@@ -216,6 +224,8 @@ BOOST_AUTO_TEST_CASE(test_trigonometric_fcns)
 */
 BOOST_AUTO_TEST_CASE(test_power_root)
 {
+    using namespace rocs;
+    
     BOOST_CHECK(interval(0.01, 25) == sqr(interval(-5, -0.1))); //sqr
     BOOST_CHECK(interval(0.01, 25) == sqr(interval(0.1, 5)));
     BOOST_CHECK(interval(0, 25) == sqr(interval(-5, 0.1)));
@@ -239,6 +249,8 @@ BOOST_AUTO_TEST_CASE(test_power_root)
 */
 BOOST_AUTO_TEST_CASE(test_inter_hull)
 {
+    using namespace rocs;
+    
     interval a(-0.7, 0.2);
     interval b(0, 0.5);
     interval c(-0.5, 0);
@@ -272,11 +284,11 @@ BOOST_AUTO_TEST_CASE(test_inter_hull)
 */
 BOOST_AUTO_TEST_CASE(test_bisection)
 {
-    interval a(-0.7, 0.2);
+    rocs::interval a(-0.7, 0.2);
 
-    interval left = lowerhalf(a);
-    interval right = upperhalf(a);
+    rocs::interval left = lowerhalf(a);
+    rocs::interval right = upperhalf(a);
 
-    BOOST_CHECK(interval(-0.7, -0.25) == left);
-    BOOST_CHECK(interval(-0.25, 0.2) == right);
+    BOOST_CHECK(rocs::interval(-0.7, -0.25) == left);
+    BOOST_CHECK(rocs::interval(-0.25, 0.2) == right);
 }

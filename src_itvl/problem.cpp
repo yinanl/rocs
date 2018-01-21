@@ -12,7 +12,7 @@
 #include "problem.h"
 
 
-
+namespace rocs {
 
 void CntlProb::write2mat_settings(const char* filename) {
 
@@ -25,7 +25,7 @@ void CntlProb::write2mat_settings(const char* filename) {
 
     mxArray *mx = mxCreateDoubleMatrix(_xdim, 2, mxREAL); // X
     double *px = mxGetPr(mx);
-    mxArray *mu = mxCreateDoubleMatrix(_vf->_unum, _udim, mxREAL); // U
+    mxArray *mu = mxCreateDoubleMatrix(_vf->_ugrid._nv, _udim, mxREAL); // U
     double *pu = mxGetPr(mu);
     mxArray *mt = mxCreateDoubleScalar(_vf->_tau); // ts
 
@@ -42,18 +42,15 @@ void CntlProb::write2mat_settings(const char* filename) {
     }
 
     std::vector< std::vector<double> > udata;
-    if (!_vf->_uset.empty()) {
-
-	udata = _vf->_uset;
-    } else if (!_vf->_ugrid._data.empty()) {
+    if (!_vf->_ugrid._data.empty()) {
 
 	udata = _vf->_ugrid._data;
     } else
 	assert(false);
 
-    for (int r = 0; r < _vf->_unum; ++r) 
+    for (int r = 0; r < _vf->_ugrid._nv; ++r) 
 	for (int c = 0; c < _udim; ++c)
-	    pu[r + c*_vf->_unum] = udata[r][c];
+	    pu[r + c*_vf->_ugrid._nv] = udata[r][c];
 
     /* write to variables in .mat */
     if (matPutVariable(pmat, "X", mx) ||
@@ -103,7 +100,7 @@ std::ostream& operator<<(std::ostream &out, const CntlProb &prob) {
     out << "- state space: " << '\n';
     out << prob._workspace << '\n';
 
-    out << "- number of controls: " << prob._vf->_unum << '\n';
+    out << "- number of controls: " << prob._vf->_ugrid._nv << '\n';
 
     // out << "- the controller:\n ";
     // prob._ctlr.print_leaves(prob._ctlr._root);
@@ -111,3 +108,5 @@ std::ostream& operator<<(std::ostream &out, const CntlProb &prob) {
   
     return out;
 }
+
+} // namespace rocs

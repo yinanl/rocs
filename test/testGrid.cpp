@@ -11,10 +11,10 @@
 
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Grid
+
+
 #include <boost/test/unit_test.hpp>
-
-
-#include "grid.h"
+#include "grids/grid.h"
 
 
 /*
@@ -29,7 +29,7 @@ BOOST_AUTO_TEST_CASE(test_init_grid)
     double xub[XD] = {10, 10, M_PI};
     double eta[XD] = {0.2, 0.2, 2*M_PI/35.0};
 
-    grid xg(XD, eta, xlb, xub);
+    rocs::grid xg(XD, eta, xlb, xub);
     xg.gridding();
     xg.print_info();
     xg.write2mat_data("grids_unicycle.mat", "xrv");
@@ -38,7 +38,7 @@ BOOST_AUTO_TEST_CASE(test_init_grid)
     // xg1.gridding(XD, eta, xlb, xub);
     // xg1.print_data();
 
-    double rp[XD] = {0.2, 0.2, 0.2};  // rate of eta
+    std::vector<double> rp(XD, 0.2);  // rate of eta
     std::vector< std::vector<double> > sub = xg.subgridding(xg._data[0], rp);
     for (size_t row = 0; row < sub.size(); ++row) {
 
@@ -65,16 +65,16 @@ BOOST_AUTO_TEST_CASE(test_grid_subset_nd)
     
     /* gridding 1 */
     double eta[XD] = {1, 0.1, 0.5};
-    grid xg(XD, eta, xlb, xub);
+    rocs::grid xg(XD, eta, xlb, xub);
     // xg.gridding();
     // xg.print_info();
     // xg.print_data();
 
     /* area 1: partially outside */
-    ivec box(XD);
-    box[0] = interval(2.6, 3.1);
-    box[1] = interval(1.1, 1.23);
-    box[2] = interval(-4, -3.9);
+    rocs::ivec box(XD);
+    box[0] = rocs::interval(2.6, 3.1);
+    box[1] = rocs::interval(1.1, 1.23);
+    box[2] = rocs::interval(-4, -3.9);
 
     std::vector<size_t> act1 = xg.subset(box, false, false);
     std::vector<size_t> ref(2);
@@ -90,16 +90,16 @@ BOOST_AUTO_TEST_CASE(test_grid_subset_nd)
 
     /* gridding 2  */
     double eta2[XD] = {1.3, 0.14, 0.4};
-    grid xg2(XD, eta2, xlb, xub);
+    rocs::grid xg2(XD, eta2, xlb, xub);
     xg2.gridding();
     // xg2.print_info();
     // xg2.print_data();
 
     /* area 2: fully inside */
-    ivec box2(XD);
-    box2[0] = interval(2.6, 3.1);
-    box2[1] = interval(1.1, 1.2);
-    box2[2] = interval(-4, -3.9);
+    rocs::ivec box2(XD);
+    box2[0] = rocs::interval(2.6, 3.1);
+    box2[1] = rocs::interval(1.1, 1.2);
+    box2[2] = rocs::interval(-4, -3.9);
     std::vector<size_t> act2 = xg2.subset(box2, true, false);
     std::vector<size_t> ref2(1);
     ref2[0] = 189;
@@ -107,10 +107,10 @@ BOOST_AUTO_TEST_CASE(test_grid_subset_nd)
     BOOST_CHECK(xg2.subset(box2, true, true).empty());
 
     /* area 3: fully inside, no empty */
-    ivec box3(XD);
-    box3[0] = interval(2.9, 5.4);
-    box3[1] = interval(-0.08, 0.42);
-    box3[2] = interval(-3.6, -3.2);
+    rocs::ivec box3(XD);
+    box3[0] = rocs::interval(2.9, 5.4);
+    box3[1] = rocs::interval(-0.08, 0.42);
+    box3[2] = rocs::interval(-3.6, -3.2);
     std::vector<size_t> act31 = xg2.subset(box3, true, false);
     std::vector<size_t> act32 = xg2.subset(box3, true, true);
     size_t d1[] = {201, 202, 203, 205, 206, 207, 209, 210, 211, 213, 214, 215, 217, 218, 219};
@@ -132,15 +132,15 @@ BOOST_AUTO_TEST_CASE(test_grid_subset_1d)
     double xub[1] = {-1.15};
     double eta[1] = {0.03};
 
-    grid xg(1, eta, xlb, xub);
+    rocs::grid xg(1, eta, xlb, xub);
     xg.gridding();
     // xg.print_info();
     // xg.print_data();
 
 
     /* area 1: partially out of range */
-    ivec box(1);
-    box[0] = interval(-1.279, 0);
+    rocs::ivec box(1);
+    box[0] = rocs::interval(-1.279, 0);
 
     std::vector<size_t> act1 = xg.subset(box, false, false);
     size_t d[] = {4, 5, 6, 7 ,8};
@@ -149,14 +149,14 @@ BOOST_AUTO_TEST_CASE(test_grid_subset_1d)
 
 
     /* area 2: completely out of range */
-    ivec box2(1);
-    box2[0] = interval(-3, -2.7);
+    rocs::ivec box2(1);
+    box2[0] = rocs::interval(-3, -2.7);
     BOOST_CHECK(xg.subset(box2, false, false).empty());
 
     
     /* area 3: on the grid boundary */
-    ivec box3(1);
-    box3[0] = interval(-1.32, -1.25);
+    rocs::ivec box3(1);
+    box3[0] = rocs::interval(-1.32, -1.25);
     
     std::vector<size_t> ref31(2);
     ref31[0] = 3;
@@ -183,7 +183,7 @@ BOOST_AUTO_TEST_CASE(test_grid_ipdl)
     double xub[XD] = {0.1, 0.05};
     double eta[XD] = {0.001, 0.001};
 
-    grid xg(XD, eta, xlb, xub);
+    rocs::grid xg(XD, eta, xlb, xub);
     xg.gridding();
     xg.print_info();
 }

@@ -12,6 +12,8 @@
 #include "grid.h"
 
 
+namespace rocs {
+    
 void grid::init(const int n, const double eta[], const double lb[], const double ub[]) {
     _dim = n;
     _gw.assign(eta, eta + n);
@@ -478,3 +480,5 @@ void grid::print_data() {
     }
     
 }
+
+} // namespace rocs

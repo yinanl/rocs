@@ -17,18 +17,21 @@ SRCSP = $(SDIR)/interval_paver.cpp $(SRCIVEC)
 SRCCP = $(SDIR)/csolver.cpp $(SDIR)/problem.cpp $(SRCSP)
 SRCGRID = $(GDIR)/grid.cpp
 
-SRC = dcdc.cpp $(SRCCP) $(SRCGRID)
+SRC = temp.cpp $(SRCCP)
 
 
 # define the executable file
-EXE = dcdc
+EXECUTABLE = temp
 
 .PHONY : clean
 
 
 # rules
-$(EXE): $(SRC) dcdc.hpp
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $(EXE) $(SRC)
+
+all: $(EXECUTABLE)
+
+$(EXECUTABLE):$(SRC) temp.hpp
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $(EXECUTABLE) $(SRC)
 
 clean:
-	rm -rf *.o *.dSYM $(EXE)
+	rm -rf *.o *.dSYM $(EXECUTABLE)

@@ -41,7 +41,11 @@ CXXFLAGS = -Wall -g $(DEBUG) $(FINAL) $(OPT) $(EXTRA_OPT) -std=c++11 -stdlib=lib
 
 # define any directories containing header files other than /usr/include
 #
-INCLUDES = -I$(BOOSTROOT)/include -I$(LINALGROOT)/include -I$(MATLABROOT)/extern/include #-I/usr/local/include
+INCLUDES = -I$(GRIDROOT) -I$(INTERVALROOT) \
+	-I$(BOOSTROOT)/include \
+	-I$(LINALGROOT)/include \
+	-I$(MATLABROOT)/extern/include \
+	-I/usr/local/include
 
 
 # define library paths in addition to /usr/lib

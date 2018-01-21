@@ -13,7 +13,7 @@
 #include "csolver.h"
 
 
-
+namespace rocs {
 
 int CSolver::bisect_axis(ivec &box) {
 
@@ -1171,7 +1171,7 @@ void CSolver::serialize_controller(const char *filename) {
     mwSize M = pow(2,H)-1;
     
     int nx = _cpb->_xdim;
-    int nu = _cpb->_vf->_unum;
+    int nu = _cpb->_vf->_ugrid._nv;
     
     /* define outputs */
     mxArray *mats = mxCreateDoubleMatrix(M, 2*nx+1, mxREAL);  // Btree
@@ -1300,3 +1300,6 @@ void CSolver::log_iterations(const char* filename, int iter) {
     
     logfile.close();
 }
+
+    
+} // namespace rocs

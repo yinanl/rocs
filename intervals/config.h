@@ -9,6 +9,8 @@
 
 //#pragma STDC FENV_ACCESS ON
 
+namespace rocs {
+
 const double EPSIVAL = 1e-6; //DBL_EPSILON; // <= 1e-9
 
 const double PINF = 1.0 / 0.0;
@@ -26,6 +28,6 @@ inline void rounddown(){ fesetround(FE_DOWNWARD); }
 inline void roundnear(){ fesetround(FE_TONEAREST); }
 inline void roundzero(){ fesetround(FE_TOWARDZERO); }
 
-
+} // namespace rocs
 
 #endif

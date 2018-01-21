@@ -15,11 +15,10 @@
 
 
 #include "vectorfield.h"
-
 #include "interval_paver.h"
 
 
-
+namespace rocs {
 
 /* typedef std::vector<ivec> (*fcn)(const ivec &x, */
 /* 				 const std::vector< std::vector<double> > &u); */
@@ -106,7 +105,7 @@ public:
 
 typedef CntlProb* PtrCntlProb;
 
-
+} // namespace rocs
 
 
 #endif

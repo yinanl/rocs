@@ -14,6 +14,7 @@
 #include <cmath>
 
 
+namespace rocs {
 
 /***** member functions *****/
 
@@ -192,11 +193,11 @@ interval operator*(const interval &x, const interval &y){
 
 	    if (x.m_sup == PINF) {
 
-		if (fabs(y.m_inf) < EPSIVAL) {// [y]=[0,*]
+		if (std::fabs(y.m_inf) < EPSIVAL) {// [y]=[0,*]
 
 		    return interval(0, PINF);
 		}
-		else if (fabs(y.m_sup) < EPSIVAL) {// [y]=[*,0]
+		else if (std::fabs(y.m_sup) < EPSIVAL) {// [y]=[*,0]
 
 		    return interval(NINF, 0);
 		}
@@ -220,11 +221,11 @@ interval operator*(const interval &x, const interval &y){
 
 	    if (y.m_sup == PINF) {
 
-		if (fabs(x.m_inf) < EPSIVAL) {// [x]=[0,*]
+		if (std::fabs(x.m_inf) < EPSIVAL) {// [x]=[0,*]
 
 		    return interval(0, PINF);
 		}
-		else if (fabs(x.m_sup) < EPSIVAL) {// [x]=[*,0]
+		else if (std::fabs(x.m_sup) < EPSIVAL) {// [x]=[*,0]
 
 		    return interval(NINF, 0);
 		}
@@ -268,11 +269,11 @@ interval operator*(const interval &x, const interval &y){
 
 	    if (y.m_inf == NINF) {
 
-		if (fabs(x.m_inf) < EPSIVAL) {// [x]=[0,*]
+		if (std::fabs(x.m_inf) < EPSIVAL) {// [x]=[0,*]
 
 		    return interval(NINF, 0);
 		}
-		else if (fabs(x.m_sup) < EPSIVAL) {// [x]=[*,0]
+		else if (std::fabs(x.m_sup) < EPSIVAL) {// [x]=[*,0]
 
 		    return interval(0, PINF);
 		}
@@ -294,11 +295,11 @@ interval operator*(const interval &x, const interval &y){
 
 	    if (x.m_inf == NINF) {
 
-		if (fabs(y.m_inf) < EPSIVAL) {// [y]=[0,*]
+		if (std::fabs(y.m_inf) < EPSIVAL) {// [y]=[0,*]
 
 		    return interval(NINF, 0);
 		}
-		else if (fabs(y.m_sup) < EPSIVAL) {// [y]=[*,0]
+		else if (std::fabs(y.m_sup) < EPSIVAL) {// [y]=[*,0]
 
 		    return interval(0, PINF);
 		}
@@ -365,13 +366,13 @@ interval operator*(const interval &x, const double a){
 interval operator/(const interval &x, const interval &y){
 
     if ( x.isempty() || y.isempty() ||
-	 (fabs(y.m_inf) < EPSIVAL && fabs(y.m_sup) < EPSIVAL)) {
+	 (std::fabs(y.m_inf) < EPSIVAL && std::fabs(y.m_sup) < EPSIVAL)) {
 
 	return interval(NAN, NAN);
     }
     else {
 
-	if (fabs(y.m_inf) < EPSIVAL) {// y.inf = 0
+	if (std::fabs(y.m_inf) < EPSIVAL) {// y.inf = 0
 
 	    if (x.m_sup < 0) {
 
@@ -386,7 +387,7 @@ interval operator/(const interval &x, const interval &y){
 		return interval(NINF, PINF);
 	    }
 	}
-	else if (fabs(y.m_sup) < EPSIVAL) {// y.sup = 0
+	else if (std::fabs(y.m_sup) < EPSIVAL) {// y.sup = 0
 	    
 	    if (x.m_sup < 0) {
 		
@@ -441,14 +442,14 @@ interval operator/(const interval &x, const interval &y){
 interval operator/(const double a, const interval &y){
 
     if (y.isempty() ||
-	(fabs(y.m_inf) < EPSIVAL && fabs(y.m_sup) < EPSIVAL)) {
+	(std::fabs(y.m_inf) < EPSIVAL && std::fabs(y.m_sup) < EPSIVAL)) {
 
 	return interval(NAN, NAN);
 
     }
     else {
 	
-	if (fabs(y.m_inf) < EPSIVAL) {// y.inf = 0
+	if (std::fabs(y.m_inf) < EPSIVAL) {// y.inf = 0
 
 	    if (a > 0) {
 
@@ -463,7 +464,7 @@ interval operator/(const double a, const interval &y){
 		return interval(NAN, NAN);
 	    }
 	}
-	else if (fabs(y.m_sup) < EPSIVAL) {// y.sup = 0
+	else if (std::fabs(y.m_sup) < EPSIVAL) {// y.sup = 0
 
 	    if (a > 0) {
 
@@ -481,7 +482,7 @@ interval operator/(const double a, const interval &y){
 	}
 	else if (y.m_inf < 0 && y.m_sup > 0) {// y.inf < 0 < y.sup
 
-	    if (fabs(a) < EPSIVAL) {
+	    if (std::fabs(a) < EPSIVAL) {
 
 		return interval(NAN, NAN);
 	    }
@@ -511,7 +512,7 @@ interval operator/(const double a, const interval &y){
 
 interval operator/(const interval &x, const double a){
 
-    if (x.isempty() || fabs(a) < EPSIVAL) {
+    if (x.isempty() || std::fabs(a) < EPSIVAL) {
 
 	return interval(NAN, NAN);
     }
@@ -547,15 +548,15 @@ bool operator==(const interval &x, const interval &y){
 	
 	if(!std::isinf(x.m_inf) && !std::isinf(x.m_sup)) {// [a,b]
 
-	    return fabs(x.m_inf - y.m_inf) < EPSIVAL && fabs(x.m_sup - y.m_sup) < EPSIVAL;
+	    return std::fabs(x.m_inf - y.m_inf) < EPSIVAL && std::fabs(x.m_sup - y.m_sup) < EPSIVAL;
 	}
 	else if (x.m_inf == NINF && !std::isinf(x.m_sup)) {// [-oo,b]
 
-	    return x.m_inf == y.m_inf && fabs(x.m_sup - y.m_sup) < EPSIVAL;
+	    return x.m_inf == y.m_inf && std::fabs(x.m_sup - y.m_sup) < EPSIVAL;
 	}
 	else if (!std::isinf(x.m_inf) && x.m_sup == PINF) {// [a,+oo]
 
-	    return fabs(x.m_inf - y.m_inf) < EPSIVAL && x.m_inf == y.m_inf;
+	    return std::fabs(x.m_inf - y.m_inf) < EPSIVAL && x.m_inf == y.m_inf;
 	}
 	else {// [-oo,+oo]
 
@@ -609,7 +610,7 @@ interval sin(const interval &x){
 	}
 	else {
 
-	    r.m_sup = sin(reml) > sin(remu) ? sin(reml) : sin(remu);
+	    r.m_sup = std::sin(reml) > std::sin(remu) ? std::sin(reml) : std::sin(remu);
 	}
 
 	if ((reml <= 3*PIHALIVAL && remu >= 3*PIHALIVAL) ||
@@ -619,7 +620,7 @@ interval sin(const interval &x){
 	}
 	else {
 
-	    r.m_inf = sin(reml) < sin(remu) ? sin(reml) : sin(remu);
+	    r.m_inf = std::sin(reml) < std::sin(remu) ? std::sin(reml) : std::sin(remu);
 	}
     }
 
@@ -649,11 +650,11 @@ interval tan(const interval &x) {
 	if ((x.m_inf-k*PIIVAL) >= PIHALIVAL)
 	    k += 1;
 
-	if (fabs(x.m_inf-k*PIIVAL + PIHALIVAL) <= EPSIVAL
+	if (std::fabs(x.m_inf-k*PIIVAL + PIHALIVAL) <= EPSIVAL
 	    || (x.m_sup-k*PIIVAL) >= PIHALIVAL)
 	    return interval(NINF, PINF);
 	else
-	    return interval(tan(x.m_inf-k*PIIVAL), tan(x.m_sup-k*PIIVAL));
+	    return interval(std::tan(x.m_inf-k*PIIVAL), std::tan(x.m_sup-k*PIIVAL));
     }
 }
 
@@ -661,7 +662,7 @@ interval tan(const interval &x) {
 /* y = atan(x), increasing in (-oo, +oo) */
 interval atan(const interval &x) {
 
-    return interval(atan(x.m_inf), atan(x.m_sup));
+    return interval(std::atan(x.m_inf), std::atan(x.m_sup));
 }
 
 
@@ -674,7 +675,7 @@ interval exp(const interval &x) {
     }
     else {
 
-	return interval(exp(x.m_inf), exp(x.m_sup));
+	return interval(std::exp(x.m_inf), std::exp(x.m_sup));
     }
 }
 
@@ -687,7 +688,7 @@ interval log(const interval &x) {
     }
     else {
 
-	return interval(log(x.m_inf), log(x.m_sup));
+	return interval(std::log(x.m_inf), std::log(x.m_sup));
     }
 }
 /* y = log_2(x) */
@@ -699,7 +700,7 @@ interval log2(const interval &x) {
     }
     else {
 
-	return interval(log2(x.m_inf), log2(x.m_sup));
+	return interval(std::log2(x.m_inf), std::log2(x.m_sup));
     }
 }
 
@@ -743,21 +744,21 @@ interval power(const interval &x, int n) {
 
 	    if (x.m_inf > 0) {
 
-		return interval(pow(x.m_inf, n), pow(x.m_sup, n));
+		return interval(pow(x.m_inf, n), std::pow(x.m_sup, n));
 	    }
 	    else if (x.m_sup < 0) {
 	    
-		return interval(pow(x.m_sup, n), pow(x.m_inf, n));
+		return interval(pow(x.m_sup, n), std::pow(x.m_inf, n));
 	    }
 	    else {
-		double powl = pow(x.m_inf, n);
-		double powu = pow(x.m_sup, n);
+		double powl = std::pow(x.m_inf, n);
+		double powu = std::pow(x.m_sup, n);
 		return interval(0, powu > powl ? powu : powl);
 	    }
 	}
 	else { // n is odd
 
-	    return interval(pow(x.m_inf, n), pow(x.m_sup, n));
+	    return interval(std::pow(x.m_inf, n), std::pow(x.m_sup, n));
 	}
 	
     }
@@ -773,11 +774,11 @@ interval sqrt(const interval &x) {
     }
     else if (x.m_inf >= 0) {
 
-	return interval(sqrt(x.m_inf), sqrt(x.m_sup));
+	return interval(std::sqrt(x.m_inf), std::sqrt(x.m_sup));
     }
     else {
 
-	return interval(0, sqrt(x.m_sup));
+	return interval(0, std::sqrt(x.m_sup));
     }
 }
 
@@ -858,7 +859,6 @@ interval upperhalf(const interval &self) {
 
 
 
-
 /*--------------------
   I/O
 --------------------*/
@@ -868,3 +868,6 @@ std::ostream& operator<< (std::ostream &out, const interval &a){
 
     return out;
 }
+
+
+} // namespace rocs

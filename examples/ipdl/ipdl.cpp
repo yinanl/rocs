@@ -1,5 +1,5 @@
 /**
- *  invertpdl.hpp
+ *  ipdl.cpp
  *
  *  Inverted pendulum [Michigan control tutorial](http://ctms.engin.umich.edu/CTMS/index.php?example=InvertedPendulum&section=SystemModeling)
  *
@@ -9,9 +9,8 @@
 
 
 #include <iostream>
-#include "../../src_itvl/csolver.h"
-
-#include "invertpdl.hpp"
+#include "src_itvl/csolver.h"
+#include "ipdl.hpp"
 
 
 
@@ -37,15 +36,15 @@ int main()
     double gub[] = {0.05, 0.01};
 
     /* define control problem */
-    CntlProb ipdlReachStay("invertpdl", XD, UD, xlb, xub, ptrIpdl);
+    rocs::CntlProb ipdlReachStay("invertpdl", XD, UD, xlb, xub, ptrIpdl);
 
     /* create a solver */
-    CSolver *solver = new CSolver(&ipdlReachStay, 100);
-    solver->init(GOAL, glb, gub);
+    rocs::CSolver *solver = new rocs::CSolver(&ipdlReachStay, 100);
+    solver->init(rocs::GOAL, glb, gub);
     
     /* solve */
     // solver->reach_stay(0.001, RELMAXG, 0.04, RELMAXW, 0.002, true);
-    solver->cobuchi(0.001, RELMAXG, 0.04, RELMAXW, 0.002, true);
+    solver->cobuchi(0.001, rocs::RELMAXG, 0.04, rocs::RELMAXW, 0.002, true);
 
     solver->print_controller_info();
 

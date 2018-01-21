@@ -10,36 +10,34 @@
 
 
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE PaverClass
+#define BOOST_TEST_MODULE ExampleDynamics
 #include <boost/test/unit_test.hpp>
 #include <boost/test/unit_test_log.hpp>
 
 #include <cmath>
 #include <iostream>
+#include "src_itvl/vectorfield.h"
+#include "examples/dcdc/dcdc.hpp"
+#include "examples/car/car.hpp"
+#include "examples/ipdl/ipdl.hpp"
+#include "examples/temp/temp.hpp"
 
-#include "vectorfield.h"
 
-#include "dcdc.hpp"
-#include "car.hpp"
-#include "invertpdl.hpp"
-#include "poly86.hpp"
-#include "temperature.hpp"
-
-typedef ivec (*fcst)(const ivec&);
+typedef rocs::ivec (*fcst)(const rocs::ivec&);
 
 /**
  * test case 1: Boost DCDC converter
  */
 BOOST_AUTO_TEST_CASE(test_dcdc)
 {
-    ivec x(2);
-    x[0] = interval(1.2, 1.25);
-    x[1] = interval(1.11, 1.12);
+    rocs::ivec x(2);
+    x[0] = rocs::interval(1.2, 1.25);
+    x[1] = rocs::interval(1.11, 1.12);
 
-    input_type U {{1}, {2}};  // two modes
+    rocs::input_type U {{1}, {2}};  // two modes
 
     DCDC dcdc = DCDC(U, TS);
-    std::vector<ivec> y = dcdc(x);
+    std::vector<rocs::ivec> y = dcdc(x);
 
     std::cout << y[0] << '\n';
     std::cout << y[1] << '\n';
@@ -54,10 +52,10 @@ BOOST_AUTO_TEST_CASE(test_dcdc)
  */
 BOOST_AUTO_TEST_CASE(test_car)
 {
-    ivec x(3);
-    x[0] = interval(8.0, 8.2);
-    x[1] = interval(0, 0.15);
-    x[2] = interval(0.3927, 0.5890);
+    rocs::ivec x(3);
+    x[0] = rocs::interval(8.0, 8.2);
+    x[1] = rocs::interval(0, 0.15);
+    x[2] = rocs::interval(0.3927, 0.5890);
 
     std::vector<std::vector<double>> U { {0.6, -0.9}, {0.9, -0.9}, {0.9, -0.6}, {0.9, -0.3} };
 
@@ -65,7 +63,7 @@ BOOST_AUTO_TEST_CASE(test_car)
     
     car *ptrCar = new car(U, tau);
 
-    std::vector<ivec> y = (*ptrCar)(x);
+    std::vector<rocs::ivec> y = (*ptrCar)(x);
 
     for(int i = 0; i < y.size(); ++i )
 	std::cout << y[i] << '\n';
@@ -98,12 +96,12 @@ BOOST_AUTO_TEST_CASE(test_ipdl)
     ipdl *ptrIpdl = new ipdl(UD, ulb, uub, mu, tau, dt);
     
     /* test time map */
-    ivec x1(2);
-    x1.setval(0, interval(0.02,0.03));
-    x1.setval(1, interval(-0.02,-0.01));
+    rocs::ivec x1(2);
+    x1.setval(0, rocs::interval(0.02,0.03));
+    x1.setval(1, rocs::interval(-0.02,-0.01));
     std::cout << "Test state:" << x1 << '\n';
 
-    std::vector<ivec> y1 = (*ptrIpdl)(x1);
+    std::vector<rocs::ivec> y1 = (*ptrIpdl)(x1);
     std::vector<double> yc;
     ptrIpdl->_ugrid.print_data();
     
@@ -121,39 +119,21 @@ BOOST_AUTO_TEST_CASE(test_ipdl)
 
 
 /**
- * test case 4: polynomial example 8.6
- */
-BOOST_AUTO_TEST_CASE(test_poly86) {
-
-    fcst f = &roa_core_86;
-    ivec box(2);
-    box[0] = interval(-1, -0.5);
-    box[1] = interval(0, 0.5);
-    ivec ref(1);
-    ref[0] = interval(NINF, 0);
-    ivec y = f(box);
-
-    std::cout << y << '\n'
-	      << ref.isout(y) << ", " << ref.isin(y) << '\n';
-}
-
-
-/**
  * test case 5: room temperature control
  */
 BOOST_AUTO_TEST_CASE(test_tpc)
 {
-    ivec x(2);
-    x[0] = interval(24, 25);
-    x[1] = interval(25, 27);
+    rocs::ivec x(2);
+    x[0] = rocs::interval(24, 25);
+    x[1] = rocs::interval(25, 27);
 
     double TS = 50;
 
-    input_type U {{1}, {2}, {3}, {4}};  // two modes
+    rocs::input_type U {{1}, {2}, {3}, {4}};  // two modes
 
     TPC tpc = TPC(U, TS);
     
-    std::vector<ivec> y = tpc(x);
+    std::vector<rocs::ivec> y = tpc(x);
 
     std::cout << y[0] << '\n';
     std::cout << y[1] << '\n';

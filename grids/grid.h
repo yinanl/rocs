@@ -25,10 +25,11 @@
 #include <mat.h>
 #include <matrix.h>
 
-#include "../intervals/interval_vector.h"
+#include "intervals/interval_vector.h"
 
 
-
+namespace rocs {
+  
 class grid {
 
  public:
@@ -204,5 +205,6 @@ class grid {
 
 };
 
+} // namespace rocs
 
 #endif

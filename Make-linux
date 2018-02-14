@@ -1,0 +1,29 @@
+# set directory of external packages
+INCDIR = /usr/include
+LIBDIR = /usr/lib
+MATDIR = /usr/local/MATLAB/R2016b
+
+
+# set all compiler and linker flags
+OPT = -O3
+#EXTRA_OPT = -fwhole-program
+
+# for armadillo
+ARMA = -DARMA_NO_DEBUG -DARMA_DONT_USE_WRAPPER
+
+CXX = g++
+
+INCS = -I$(INCDIR)/boost \
+	-I$(INCDIR)/armadillo_bits \
+	-I$(MATDIR)/extern/include \
+
+LIBS = -lblas -llapack -lmat -leng -lmx
+LIBTEST = -lboost_unit_test_framework
+
+CXXFLAGS = -g \
+	$(ARMA) $(OPT) \
+	-std=c++11
+
+LDFLAGS =-L$(MATDIR)/bin/glnxa64
+	
+

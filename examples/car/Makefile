@@ -2,46 +2,73 @@
 # BSTDIR (boost), MATDIR (matlab), LADIR (armadillo).
 # 2) get compiling and linking flags:
 # CXX, CXXFLAGS, INCS, LIBS, LIBTEST, LDFLAGS.
--include ../../configMake
+-include ../../cflags
 
-IDIR := ../../intervals
-GDIR := ../../grids
-SDIR := ../../src_itvl
 RDIR := ../../
+SDIR := $(RDIR)src
+ODIR := $(RDIR)build
 
 INCS += -I$(RDIR)
 
-# define the source files
-SRCIVEC = $(IDIR)/interval.cpp $(IDIR)/interval_vector.cpp
-SRCSP = $(SDIR)/interval_paver.cpp $(SRCIVEC)
-SRCCP = $(SDIR)/csolver.cpp $(SDIR)/problem.cpp $(SRCSP)
-SRCGRID = $(GDIR)/grid.cpp
+SRCS := $(wildcard $(SDIR)/*.cpp)
+DEPS := $(patsubst %.cpp, %.h, $(SRCS))
+OBJS := $(addprefix $(ODIR)/, $(patsubst %.cpp, %.o, $(notdir $(SRCS))))
 
-SRC01 = carReach1.cpp $(SRCGRID) $(SRCCP)
-SRC02 = carReach2.cpp $(SRCGRID) $(SRCCP)
-SRCBUCHI = carBuchi.cpp $(SRCGRID) $(SRCCP)
+ESRCS := $(wildcard *.cpp)
+EOBJS := $(patsubst %.cpp, %.o, $(ESRCS))
+EDIR := $(dir $(ESRCS))
 
-
-# define the executable file
-EXE01 = carReach1
-EXE02 = carReach2
-EXEBUCHI = carBuchi
-EXECUTABLE = carReach1 carReach2 carBuchi
+TARGETS := $(basename $(ESRCS))
 
 .PHONY : clean
 
 
+
+
 # rules
-all: $(EXECUTABLE)
+all: $(TARGETS)
 
-$(EXE01): $(SRC01) car.hpp
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $(EXE01) $(SRC01)
+carReach1: carReach1.o $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
 
-$(EXE02): $(SRC02) car.hpp
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $(EXE02) $(SRC02)
+carReach2: carReach2.o $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
 
-$(EXEBUCHI): $(SRCBUCHI) car.hpp
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $(EXEBUCHI) $(SRCBUCHI)
+carBuchi: carBuchi.o $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+
+carParking: carParking.o $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+
+testConstraints: testConstraints.cpp $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+
+showtargets:
+	@echo $(TARGETS)
 
 clean:
-	rm -rf *.o *.dSYM $(EXECUTABLE)
+	rm -rf *.o *.dSYM $(TARGETS)
+
+
+
+
+$(OBJS): | $(ODIR)
+$(ODIR):
+	mkdir $(ODIR)
+$(ODIR)/%.o: $(SDIR)/%.cpp $(SDIR)/%.h
+	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
+
+# $(EDIR)/%.o: $(EDIR)/%.cpp $(SDIR)/system.hpp car.hpp
+# 	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
+
+carReach1.o: carReach1.cpp $(SDIR)/system.hpp car.hpp
+	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
+
+carReach2.o: carReach2.cpp $(SDIR)/system.hpp car.hpp
+	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
+
+carBuchi.o: carBuchi.cpp $(SDIR)/system.hpp car.hpp
+	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
+
+carParking.o: carParking.cpp $(SDIR)/system.hpp car.hpp
+	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@

@@ -1,4 +1,3 @@
-% example from \cite{GirardGM16,RunggerZ16}
 
 addpath('../../matlab')
 %% load problem & controller
@@ -8,9 +7,7 @@ addpath('../../matlab')
 % - X : Workarea.
 % - G: Target area.
 % - ts: Sampling time.
-load('data_dcdc_spec.mat')
-load('data_dcdc_cbox.mat')
-load('data_dcdc_ctree.mat')
+load('data_dcdcInv.mat')
 
 fm= @dcdc;
 
@@ -36,7 +33,10 @@ t= 0;
 while(t<Tsim)
     
     % compute control input
-    uid= ctlr_feasible(x, ctree, cindex, cvalue);
+    xid= find(x(1)>=pavings(:,1) & x(1)<=pavings(:,2) & ...
+        x(2)>=pavings(:,3) & x(2)<=pavings(:,4)); % direct search
+    uid= find(ctlr(xid(1),:));
+%     uid= ctlr_feasible(x, ctree, cindex, cvalue);
     if(isempty(uold))
         u= U(uid(1));
     elseif(find(uid==uold))

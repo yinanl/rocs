@@ -1,4 +1,4 @@
-function plot_rectangle_angle(xc,yc,w,h,a)
+function varargout = plot_rectangle_angle(xc,yc,w,h,a)
 % plot an rectangle with an rotation.
 
 r= sqrt((w/2)^2+(h/2)^2);
@@ -27,7 +27,7 @@ x(4)= xc+r*cos(tl); y(4)= yc+r*sin(tl);
 
 
 lightblue = [176 226 255]/255;
-fill(x,y,lightblue)
+[varargout{1:nargout}] = fill(x,y,lightblue);
 % line(x,y,'Color',lightblue)
 
 

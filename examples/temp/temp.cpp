@@ -9,64 +9,89 @@
 
 #include <iostream>
 
-#include "src_itvl/csolver.h"
-#include "temp.hpp"
+#include "src/system.hpp"
+#include "src/csolver.h"
+
+#include "src/matlabio.h"
 
 
+const double r1 = 0.002;
+const double c = 16;
+const double r2 = 0.1;
+
+const double tau = 10;  // 50 secs
+const double exp1 = std::exp(-r1*tau);
+const double b1 = (1.0 - exp1)*c;
+
+
+/*
+ * 4-mode room temperature control:
+ * discrete-time interval model
+ */
+struct tpc {
+    static const int n = 2;
+    static const int m = 4;
+    
+    template<typename S>
+    tpc(S &y, const S &x, const int m) {
+	switch(m) {
+	case 1: /* mode 1: off */
+	    y[0] = exp1*x[0] + b1;
+	    y[1] = x[1];
+	    break;
+	case 2: /* mode 2: heating */
+	    y[0] = exp1*x[0] + (1.0 - exp1)*(x[1]-r2/r1) + r2*tau;
+	    y[1] = x[1]+r2*tau;
+	    break;
+	case 3: /* mode 3: cooling */
+	    y[0] = exp1*x[0] + (1.0 - exp1)*(x[1]+r2/r1) - r2*tau;
+	    y[1] = x[1]-r2*tau;
+	    break;
+	case 4: /* mode 4: on */
+	    y[0] = exp1*x[0] + (1.0 - exp1)*x[1];
+	    y[1] = x[1];
+	    break;
+	default:
+	    break;
+	}
+    }
+};
 
 
 int main()
 {
-    const double XD = 2;
-    const double UD = 1;
-    double tau = 10;  // 50 secs
-    
-    /* state space */
+    /* set the state space */
     /* x[0]= room temperature, x[1]=heater temperature */
     double xlb[] = {10, 12};
     double xub[] = {28, 30};
 
-    rocs::input_type U {{1}, {2}, {3}, {4}};  // four modes
+    /* define the control system */
+    rocs::DTSwSys<tpc> tpcReachstay("tpc", tau, tpc::n, tpc::m);
+    tpcReachstay.init_workspace(xlb, xub);
 
-    /* target area */
+    /* set the specification */
     double glb[] = {18, 20};
     double gub[] = {20, 22};
 
-    /* avoid area */
     double olb[] = {22, 26};
     double oub[] = {28, 30};
 
-    /* functor of dynamics */
-    TPC *ptrTPC = new TPC(U, tau);
-
-
-    /* define an invariance control problem */
-    rocs::CntlProb tpcRI("tpc", XD, UD, xlb, xub, ptrTPC);
-    std::cout << tpcRI << '\n';
-
-    /* use solver to design a controller */
-    rocs::CSolver *solver = new rocs::CSolver(&tpcRI);
-
-    solver->init(rocs::GOAL, glb, gub);
-    solver->init(rocs::AVOID, olb, oub);
+    /* solve the problem */
+    rocs::CSolver solver(&tpcReachstay);
+    solver.init(rocs::GOAL, glb, gub);
+    solver.init(rocs::AVOID, olb, oub);
     
-    // solver->reach_stay(0.1, ABSMAX, 0.1, ABSMAX);
-    // solver->invariance_control(0.5, ABSMAX);
-    solver->cobuchi(0.15, rocs::ABSMAX, 0.15, rocs::ABSMAX);
+    // solver.reach_stay(0.1, ABSMAX, 0.1, ABSMAX);
+    // solver.invariance_control(0.5, ABSMAX);
+    solver.cobuchi(&tpcReachstay, 0.15, rocs::ABSMAX, 0.15, rocs::ABSMAX);
+    solver.print_controller_info();
 
-    solver->print_controller_info();
-    // solver->print_controller();
+    /* save the problem data and the solution */
+    rocs::matWriter wtr("data_tpc_reachstay.mat");
+    wtr.open();
+    wtr.write_problem_setting(tpcReachstay, solver);
+    wtr.write_sptree_controller(solver);
+    wtr.close();
 
-
-    /* save controller to file */
-    tpcRI.write2mat_settings("data_tpc_spec.mat");
-    solver->write2mat_controller("data_tpc_cbox.mat");
-    solver->serialize_controller("data_tpc_ctree.mat");
-
-
-    delete solver;
-    
-    delete ptrTPC;
-
-    return 1;
+    return 0;
 }

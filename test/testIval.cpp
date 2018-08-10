@@ -16,7 +16,8 @@
 #include <boost/test/unit_test.hpp>
 //#include <boost/test/unit_test_log.hpp>
 #include <cmath>
-#include "intervals/interval.h"
+#include <iomanip>
+#include "src/interval.h"
 
 
 /*
@@ -185,6 +186,7 @@ BOOST_AUTO_TEST_CASE(test_trigonometric_fcns)
     BOOST_CHECK(interval(-1, sin(-1.1)) == sin(interval(-1.6, -1.1))); //wid = 0.5
     BOOST_CHECK(interval(sin(-1), sin(-0.5)) == sin(interval(-1, -0.5)));
     BOOST_CHECK(interval(sin(-0.2), sin(0.3)) == sin(interval(-0.2, 0.3))); //0
+    std::cout << sin(interval(-0.2, 0.3)) << '\n';
     BOOST_CHECK(interval(-1, sin(5)) == sin(interval(4.5, 5))); //3pi/2
     
     BOOST_CHECK(interval(sin(-1), sin(0.57)) == sin(interval(-1, 0.57))); //wid = 1.57
@@ -192,6 +194,7 @@ BOOST_AUTO_TEST_CASE(test_trigonometric_fcns)
     BOOST_CHECK(interval(-1, sin(3.14)) == sin(interval(3.14, 4.72))); //3pi/2
     
     BOOST_CHECK(interval(-1, sin(-3.2)) == sin(interval(-3.2, -3.2+PIIVAL))); //wid = pi
+    std::cout << sin(interval(-3.2, -3.2+PIIVAL)) << '\n';
     BOOST_CHECK(interval(-1, 0) == sin(interval(-PIIVAL, 0)));
     BOOST_CHECK(interval(-1, 1) == sin(interval(-PIIVAL/2, PIIVAL/2)));
     BOOST_CHECK(interval(sin(-1), 1) == sin(interval(-1, -1+PIIVAL)));
@@ -214,8 +217,10 @@ BOOST_AUTO_TEST_CASE(test_trigonometric_fcns)
     // wid = 3.14 < pi, pi/2 \in [inf, sup]
     BOOST_CHECK(interval(NINF, PINF) == tan(interval(-5.14, -2)));
     BOOST_CHECK(interval(tan(4.3), tan(4.5)) == tan(interval(4.3, 4.5)));  // k+=1 branch
+    std::cout << tan(interval(4.3, 4.5)) << '\n';
     BOOST_CHECK(interval(NINF, PINF) == tan(interval(4.3, 4.8)));  // k+=1 branch
     BOOST_CHECK(interval(tan(-2), tan(-1.7)) == tan(interval(-2, -1.7)));  // k+=1 branch
+    std::cout << tan(interval(-2, -1.7)) << '\n';
 }
 
 
@@ -232,11 +237,11 @@ BOOST_AUTO_TEST_CASE(test_power_root)
     BOOST_CHECK(interval(0, 0.25) == sqr(interval(0, 0.5)));
     BOOST_CHECK(interval(0, 0.25) == sqr(interval(-0.5, 0)));
 
-    BOOST_CHECK(power(interval(0, 0.5), 2) == sqr(interval(0, 0.5))); //power
-    BOOST_CHECK(power(interval(0, 0.5), 2) == sqr(interval(0, 0.5)));
-    BOOST_CHECK(interval(-1, 8) == power(interval(-1, 2), 3));
-    BOOST_CHECK(interval(0, 1) == power(interval(-1, 1), 6));
-    BOOST_CHECK(interval(-1, 2) == power(interval(-1, 2), 1));
+    BOOST_CHECK(pow(interval(0, 0.5), 2) == sqr(interval(0, 0.5))); //pow
+    BOOST_CHECK(pow(interval(0, 0.5), 2) == sqr(interval(0, 0.5)));
+    BOOST_CHECK(interval(-1, 8) == pow(interval(-1, 2), 3));
+    BOOST_CHECK(interval(0, 1) == pow(interval(-1, 1), 6));
+    BOOST_CHECK(interval(-1, 2) == pow(interval(-1, 2), 1));
 
     BOOST_CHECK(interval(1, 2) == sqrt(interval(1, 4)));//sqrt
     BOOST_CHECK(interval(0, 2) == sqrt(interval(-1, 4)));
@@ -260,7 +265,7 @@ BOOST_AUTO_TEST_CASE(test_inter_hull)
     interval g(NINF, PINF);
 
     
-    BOOST_CHECK(interval(NANIVAL, NANIVAL) == intersect(b, d)); //intersect
+    BOOST_CHECK(interval(NAN, NAN) == intersect(b, d)); //intersect
     BOOST_CHECK(c == intersect(a, c));
     BOOST_CHECK(interval(0, 0.2) == intersect(a, b));
     BOOST_CHECK(interval(0, 0) == intersect(b, c));

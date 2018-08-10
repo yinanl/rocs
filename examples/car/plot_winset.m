@@ -1,26 +1,40 @@
 
 addpath('../../matlab/')
 %% load specification
-load('data_car_spec1.mat')
-load('data_car_ctree_spec1.mat')
+load('data_carParking.mat')
 
 
-%% diplay winning set
-w= ctree(cindex(cindex(:,2)>0,1),2:7);
+%% diplay control synthesis results
 
-ct= [(w(:,1)+w(:,2))/2, (w(:,3)+w(:,4))/2, (w(:,5)+w(:,6))/2];
-dia= [w(:,2)-w(:,1), w(:,4)-w(:,3), w(:,6)-w(:,5)];
+% % plot the winset and/or its subset
+win= pavings(tag==1,:);
+uwin= ctlr(tag==1,:);
 
-figure
+% % additional condition
+cbox= win;
+% cbox= win(win(:,5)>0,:);
+% uid= uwin(win(:,5)>0,:);
+% uval= zeros(size(U,1),size(U,2),size(cbox,1));
+
+cb= cbox(1:100:end,:);
+ccenter= [(cb(:,1)+cb(:,2))/2, (cb(:,3)+cb(:,4))/2, (cb(:,5)+cb(:,6))/2];
+plot3(ccenter(:,1), ccenter(:,2), ccenter(:,3), '.', 'markersize', 6)
 hold on
 
-for i= 1:size(ct,1)
-    
-    plot3(ct(i,1), ct(i,2), ct(i,3), 'o')
-%     plot3_box([sp(i,1); sp(i,3); sp(i,5)], ...
-%         spdia(i,1), spdia(i,2), spdia(i,3), 'b', 0.3)
-    
-end
+% % % plot the center of goal area
+% wbox= pavings(tag==1,:);
+% wcenter= [(wb(:,1)+wb(:,2))/2, (wb(:,3)+wb(:,4))/2, (wb(:,5)+wb(:,6))/2];
+% plot3(wcenter(:,1), wcenter(:,2), wcenter(:,3), '.', 'markersize', 6)
 
 axis equal
-axis([X(1,:) X(2,:)])
+axis([X(1,:) X(2,:) -pi/2.5 pi/2.5])
+% view(90,0)
+
+
+%% check points
+% x= [4, 2, 0];
+% xid= find(x(1)>=win(:,1) & x(1)<=win(:,2) & ...
+%         x(2)>=win(:,3) & x(2)<=win(:,4) & ...
+%         x(3)>=win(:,5) & x(3)<=win(:,6));
+% uid= find(uwin(xid(1),:));
+% uall= U(uid,:);

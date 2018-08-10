@@ -15,7 +15,7 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/unit_test_log.hpp>
 #include <cmath>
-#include "src_itvl/interval_paver.h"
+#include "src/interval_paver.h"
 
 
 /*

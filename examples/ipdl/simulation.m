@@ -7,8 +7,7 @@ addpath('../../matlab')
 % - Workarea: X.
 % - Sampling time: ts.
 % - Target area: G.
-load('data_ipdl_spec.mat')
-load('data_ipdl_cbox_cobuchi.mat')
+load('data_ipdlCobuchi.mat')
 
 
 %% simulation
@@ -30,7 +29,6 @@ while( t <= Tsim)
     xid= find(x(1)>=pavings(:,1) & x(1)<=pavings(:,2) & ...
         x(2)>=pavings(:,3) & x(2)<=pavings(:,4)); % direct search
     uid= find(ctlr(xid(1),:));
-%     uid= ctlr_feasible(x, ctree, cindex, cvalue);  % search tree
     u= U(uid(end),:);
     
     % compute next state
@@ -88,5 +86,5 @@ ylabel({'$u$'}, 'interpreter','latex',...
     'FontName','Times', 'FontWeight','bold')
 
 % print figure
-print -depsc ipdlsim.eps
+% print -depsc ipdlsim.eps
 % % trajectory in 2-d plane

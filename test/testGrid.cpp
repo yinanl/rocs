@@ -14,7 +14,8 @@
 
 
 #include <boost/test/unit_test.hpp>
-#include "grids/grid.h"
+#include "src/grid.h"
+#include "src/matlabio.h"
 
 
 /*
@@ -32,7 +33,11 @@ BOOST_AUTO_TEST_CASE(test_init_grid)
     rocs::grid xg(XD, eta, xlb, xub);
     xg.gridding();
     xg.print_info();
-    xg.write2mat_data("grids_unicycle.mat", "xrv");
+
+    rocs::matWriter wtr("grids_unicycle.mat");
+    wtr.open();
+    wtr.write_uniform_grids(xg, "xrv");
+    wtr.close();
     
     // grid xg1;
     // xg1.gridding(XD, eta, xlb, xub);

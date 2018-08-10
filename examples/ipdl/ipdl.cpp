@@ -1,61 +1,96 @@
 /**
  *  ipdl.cpp
  *
- *  Inverted pendulum [Michigan control tutorial](http://ctms.engin.umich.edu/CTMS/index.php?example=InvertedPendulum&section=SystemModeling)
+ *  The example of stabilization of an inverted pendulum.
  *
- *  Created by yinan li on April 26, 2017.
+ *  Created by Yinan Li on May 10, 2018.
  *  Hybrid Systems Group, University of Waterloo.
  */
 
 
 #include <iostream>
-#include "src_itvl/csolver.h"
-#include "ipdl.hpp"
+#include <cmath>
+
+#include "src/system.hpp"
+#include "src/csolver.h"
+
+#include "src/matlabio.h"
 
 
+const double m = 0.2;
+const double b = 0.1;
+const double J = 0.006;
+const double g = 9.8;
+const double l = 0.3;
+
+/* user defined dynamics */
+struct ipdlode {
+
+    static const int n = 2;  // system dimension
+    static const int nu = 1;  // control dimension
+    
+    double a1; // = (m*g*l) / (J + m*l*l);
+    double a2; // = b / (J + m*l*l);
+    double a3; // = l / (J + m*l*l);
+
+    /* template constructor
+     * @param[out] dx
+     * @param[in] x
+     * @param u
+     */
+    template<typename S>
+    ipdlode(S *dx, const S *x, rocs::Rn u) :
+	a1((m*g*l) / (J + m*l*l)), a2(b / (J + m*l*l)), a3(l / (J + m*l*l)) {
+	dx[0] = x[1];
+	dx[1] = a1*sin(x[0]) - a2*x[1] + a3*cos(x[0])*u[0];
+    }
+};
 
 
-int main()
-{
-    /* state and input space */
-    const int XD = 2;
-    const int UD = 1;
-    double xlb[XD] = {-2, -3.2};
-    double xub[XD] = {2, 3.2};
-    double ulb[UD] = {-10};
-    double uub[UD] = {10};
-    double mu[UD] = {0.05};
-    double tau = 0.01;  // sampling time
-    double dt = 0.002;  // ode integration step
+int main() {
 
-    /* inverted pendulum dynamics */
-    ipdl *ptrIpdl = new ipdl(UD, ulb, uub, mu, tau, dt);
+    /* set the state space */
+    double xlb[2] = {-2, -3.2};
+    double xub[2] = {2, 3.2};
+    
+    /* set the control values */
+    double ulb[1] = {-10};
+    double uub[1] = {10};
+    double mu[1] = {0.05};
 
-    /* specification */
+    /* set the sampling time and disturbance */
+    double t = 0.01;
+    double delta = 0.01;
+    /* parameters for computing the flow */
+    int kmax = 5;
+    double tol = 0.01;
+    double alpha = 0.5;
+    double beta = 2;
+    rocs::params controlparams(kmax, tol, alpha, beta);
+    
+    /* define the control system */
+    rocs::CTCntlSys<ipdlode> ipdl("inverted pendulum", t, ipdlode::n, ipdlode::nu, delta, &controlparams);
+    ipdl.init_workspace(xlb, xub);
+    ipdl.init_inputset(mu, ulb, uub);
+    ipdl.allocate_flows();
+
+    /* set the specifications */
     double glb[] = {-0.05, -0.01};
     double gub[] = {0.05, 0.01};
 
-    /* define control problem */
-    rocs::CntlProb ipdlReachStay("invertpdl", XD, UD, xlb, xub, ptrIpdl);
+    /* solve the problem */
+    rocs::CSolver solver(&ipdl, 100);
+    solver.init(rocs::GOAL, glb, gub);
+    solver.cobuchi(&ipdl, 0.001, rocs::RELMAXG, 0.04, rocs::RELMAXW, 0.002, true);
+    solver.print_controller_info();
 
-    /* create a solver */
-    rocs::CSolver *solver = new rocs::CSolver(&ipdlReachStay, 100);
-    solver->init(rocs::GOAL, glb, gub);
+    /* save the problem data and the solution */
+    rocs::matWriter wtr("data_ipdlCobuchi.mat");
+    wtr.open();
+    wtr.write_problem_setting(ipdl, solver);
+    wtr.write_sptree_controller(solver);
     
-    /* solve */
-    // solver->reach_stay(0.001, RELMAXG, 0.04, RELMAXW, 0.002, true);
-    solver->cobuchi(0.001, rocs::RELMAXG, 0.04, rocs::RELMAXW, 0.002, true);
-
-    solver->print_controller_info();
-
-    /* save the specification and controller */
-    ipdlReachStay.write2mat_settings("data_ipdl_spec.mat");
-    // solver->serialize_controller("data_ipdl_ctree_cobuchi.mat");
-    solver->write2mat_controller("data_ipdl_cbox_cobuchi.mat");
+    ipdl.release_flows();
     
-
-    delete solver;
-    delete ptrIpdl;
-
-    return 1;
+    return 0;
 }

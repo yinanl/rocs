@@ -2,33 +2,46 @@
 # BSTDIR (boost), MATDIR (matlab), LADIR (armadillo).
 # 2) get compiling and linking flags:
 # CXX, CXXFLAGS, INCS, LIBS, LIBTEST, LDFLAGS.
--include ../../configMake
+-include ../../cflags
 
-IDIR := ../../intervals
-GDIR := ../../grids
-SDIR := ../../src_itvl
 RDIR := ../../
+SDIR := ../../src
+ODIR := ../../build
 
 INCS += -I$(RDIR)
 
-# define the source files
-SRCIVEC = $(IDIR)/interval.cpp $(IDIR)/interval_vector.cpp
-SRCSP = $(SDIR)/interval_paver.cpp $(SRCIVEC)
-SRCCP = $(SDIR)/csolver.cpp $(SDIR)/problem.cpp $(SRCSP)
-SRCGRID = $(GDIR)/grid.cpp
+SRCS := $(wildcard $(SDIR)/*.cpp)
+DEPS := $(patsubst %.cpp, %.h, $(SRCS))
+OBJS := $(addprefix $(ODIR)/, $(patsubst %.cpp, %.o, $(notdir $(SRCS))))
 
-SRC = dcdc.cpp $(SRCCP) $(SRCGRID)
+ESRCS := $(wildcard *.cpp)
+EOBJS := $(patsubst %.cpp, %.o, $(ESRCS))
+EDIR := $(dir $(ESRCS))
 
-
-# define the executable file
-EXE = dcdc
+TARGETS := $(basename $(ESRCS))
 
 .PHONY : clean
 
 
 # rules
-$(EXE): $(SRC) dcdc.hpp
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $(EXE) $(SRC)
+all: $(TARGETS)
+
+dcdc: dcdc.o $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+
+display:
+	@echo $(OBJS)\
+	@echo $(EDIR)
 
 clean:
-	rm -rf *.o *.dSYM $(EXE)
+	rm -rf *.o *.dSYM $(TARGETS)
+
+
+$(OBJS): | $(ODIR)
+$(ODIR):
+	mkdir $(ODIR)
+$(ODIR)/%.o: $(SDIR)/%.cpp $(SDIR)/%.h
+	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
+
+$(EDIR)/%.o: $(EDIR)/%.cpp $(SDIR)/system.hpp
+	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@

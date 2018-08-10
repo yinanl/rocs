@@ -8,9 +8,9 @@ addpath('../../matlab/')
 % - ts: Sampling time.
 % - G: Target area.
 % - xobs: obstacles.
-load('data_car_spec1.mat') % X, U, ts, G, xobs
-load('data_car_ctree_spec1.mat') % ctree, cindex, cvalue
-load('data_car_cbox_spec1.mat') % ctlr, pavings, tag
+load('data_carReach1.mat')
+% load('data_carReach2.mat')
+% load('data_carBuchi.mat')
 
 vf= @car;
 fm= @carflow;
@@ -35,7 +35,6 @@ while(x(1)>G(1,2) || x(1)<G(1,1) ||...
         x(2)>=pavings(:,3) & x(2)<=pavings(:,4) & ...
         x(3)>=pavings(:,5) & x(3)<=pavings(:,6));
     uid= find(ctlr(xid(1),:));
-%     uid= ctlr_feasible(x, ctree, cindex, cvalue);
     
     u= U(uid(end),:);
     

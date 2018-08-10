@@ -1,71 +1,60 @@
 /**
- *  DemoCarBuchi.cpp
+ *  carBuchi.cpp
  *
- *  Buchi objective of a 2d car \cite{Gunther2016}
+ *  Buchi objective of a vehicle.
  *  
- *  Created by Yinan Li on June 4, 2017.
+ *  Created by Yinan Li on May 12, 2018.
  *
  *  Hybrid Systems Group, University of Waterloo.
  */
 
 
 #include <iostream>
-#include "src_itvl/problem.h"
-#include "src_itvl/csolver.h"
+
+#include "src/system.hpp"
+#include "src/csolver.h"
+
+#include "src/matlabio.h"
+
 #include "car.hpp"
-
-
 
 
 int main()
 {
-    const int XD = 3;
-    const int UD = 2;
-    
-    /* state space */
+    /* State space */
     double xlb[] = {7.3, 0, -M_PI};
     double xub[] = {10, 2, M_PI};
 
-    /* control space */
+    /* Control values */
     double ulb[] = {-1.0, -1.0};
     double uub[] = {1.0, 1.0};
     double mu[] = {0.3, 0.3};
 
-    /* functor of dynamics */
-    double tau = 0.3;
-    car *ptrCar = new car(UD, ulb, uub, mu, tau);
+    /* Control system */
+    rocs::DTCntlSys<carde> carBuchi("Buchi", h, carde::n, carde::m);
+    carBuchi.init_workspace(xlb, xub);
+    carBuchi.init_inputset(mu, ulb, uub);
 
-    /* create a control problem */
-    rocs::CntlProb carReach("vehicle", XD, UD, xlb, xub, ptrCar);
-    std::cout << carReach << '\n';
-
-    /* specifications */
+    /* Specifications */
     double glb[] = {9, 0, -M_PI};  // goal area
     double gub[] = {9.5, 0.5, M_PI};
     
     double olb[] = {8, 0.3, -M_PI};  // obstacle
     double oub[] = {8.4, 1.2, M_PI};
     
-    /* create a solver */
-    rocs::CSolver *solver = new rocs::CSolver(&carReach);
-    solver->init(rocs::GOAL, glb, gub);
-    solver->init(rocs::AVOID, olb, oub);
+    /* Solve the problem */
+    rocs::CSolver solver(&carBuchi);
+    solver.init(rocs::GOAL, glb, gub);
+    solver.init(rocs::AVOID, olb, oub);
+    solver.buchi(&carBuchi, rocs::ABSMAX, 0.2);
+    solver.print_controller_info();
     
-    solver->buchi(rocs::ABSMAX, 0.2);
-
-    solver->print_controller_info();
+    /* Save the specification and controller */
+    rocs::matWriter wtr("data_carBuchi.mat");
+    wtr.open();
+    wtr.write_problem_setting(carBuchi, solver);
+    wtr.write_sptree_controller(solver);
+    wtr.close();
     
-    /* save controller to file */
-    carReach.write2mat_settings("data_car_spec3.mat");
-    solver->write2mat_controller("data_car_cbox_spec3.mat");
-    solver->serialize_controller("data_car_ctree_spec3.mat");
-
-    std::cout << '\n';
-    
-
-    delete solver;
-
-    delete ptrCar;
-
-    return 1;
+    return 0;
 }

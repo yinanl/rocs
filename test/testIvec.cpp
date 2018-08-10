@@ -16,7 +16,7 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/unit_test_log.hpp>
 #include <cmath>
-#include "intervals/interval_vector.h"
+#include "src/interval_vector.h"
 
 
 /*
@@ -50,7 +50,8 @@ BOOST_AUTO_TEST_CASE(test_init_basics)
     BOOST_CHECK(3 == b.getdim());
     BOOST_CHECK(2 == b.maxwidth());
     BOOST_CHECK(0 == b.maxdim());
-
+    std::cout << b.maxwidth() << '\n';
+    
     double binfe[] = {-1, -0.1, 0};
     std::vector<double> infexp(binfe, binfe + sizeof(binfe)/sizeof(double));
     double bsupe[] = {1, 0.01, 2};
@@ -64,6 +65,11 @@ BOOST_AUTO_TEST_CASE(test_init_basics)
     BOOST_CHECK(infexp == b.getinf());
     BOOST_CHECK(supexp == b.getsup());
     BOOST_CHECK(rexp == b.radius());
+    std::vector<double> brad = b.radius();
+    for(int i = 0; i < 3; ++i)
+	std::cout << brad[i] << ',';
+    std::cout << '\n';
+
 }
 
 /*

@@ -30,7 +30,7 @@ nin= nargin;
 if(nin > 4)
     for i=1:size(mx,1)
         for j=1:size(my,2)
-            plot(mx(i,j), my(i,j),'.')
+%             plot(mx(i,j), my(i,j),'.')
 
             x=[mx(i,j); my(i,j)];
             for k= 1:nf
@@ -45,7 +45,7 @@ if(nin > 4)
 else
     for i=1:size(mx,1)
         for j=1:size(my,2)
-            plot(mx(i,j), my(i,j),'.')
+%             plot(mx(i,j), my(i,j),'.')
 
             x=[mx(i,j); my(i,j)];
             for k= 1:nf

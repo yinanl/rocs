@@ -1,12 +1,13 @@
 /**
  *  car.hpp
  *
- *  Dynamics of 2d car [example from \cite{Gunther2016}]
+ *  Dynamics of 2d car
  *  - dynamics
  *  - constraints
  *  - datasets
  *
- *  Created by yinan li on Feb. 21, 2017.
+ *  Created by Yinan Li on Feb. 21, 2017.
+ *  Revised by Yinan Li on May 12, 2018.
  *
  *  Hybrid Systems Group, University of Waterloo.
  */
@@ -19,105 +20,181 @@
 #include <vector>
 #include <cmath>
 
-#include "src_itvl/vectorfield.h"
 
+/* user defined dynamics */
+const double h = 0.3;  // sampling time
+struct carde {
 
+    static const int n = 3;  // system dimension
+    static const int m = 2;
 
-/**
- * Discrete-time dynamics
- * @param h sampling time
- * @param x system state: [x,y,theta], n=3
- * @param u control array (size of 2, velocity and steering angle)
- * @param nu the number of different control values
- */
-template <class XT, class UT>
-std::vector<XT> carvf(const XT &x, const UT &u, const double h)
-{
-    double alpha, at, r;
+    /**
+     * Discrete-time dynamics
+     * @param h sampling time
+     * @param x system state: [x,y,theta], n=3
+     * @param u control array (size of 2, velocity and steering angle)
+     * @param nu the number of different control values
+     */
+    template<typename S>
+    carde(S &dx, const S &x, rocs::Rn u) {
+	double alpha, at, r;
+	alpha = atan(tan(u[1]) / 2);
 
-    /* define output array of interval vectors */
-    std::vector<XT> y(u.size());
-
-    XT dx(3);
-    for (int i = 0; i < u.size(); ++i) {
-
-	alpha = atan(tan(u[i][1]) / 2);
-
-	if (std::fabs(u[i][0]) < 1e-6) {
-      
-	    y[i] = x;
+	if (std::fabs(u[0]) < 1e-6) {
+	    dx = x;
 	}
-	else if (std::fabs(u[i][1]) < 1e-6) {
+	else if (std::fabs(u[1]) < 1e-6) {
 
-	    dx[0] = x[0] + u[i][0]* cos(x[2])*h;
-	    dx[1] = x[1] + u[i][0]* sin(x[2])*h;
+	    dx[0] = x[0] + u[0]* cos(x[2])*h;
+	    dx[1] = x[1] + u[0]* sin(x[2])*h;
 	    dx[2] = x[2];
-
-	    y[i] = dx;
 	}
 	else {
-
-	    at = alpha + u[i][0] * tan(u[i][1]) * h / 2;
-	    r = 2 * sin(u[i][0]*tan(u[i][1])*h/2) / (cos(alpha) * tan(u[i][1]));
+	    at = alpha + u[0] * tan(u[1]) * h / 2;
+	    r = 2 * sin(u[0]*tan(u[1])*h/2) / (cos(alpha) * tan(u[1]));
       
 	    dx[0] = x[0] + r * cos(at + x[2]);
-
 	    dx[1] = x[1] + r * sin(at + x[2]);
-
-	    dx[2] = x[2] + u[i][0] * tan(u[i][1]) * h;
-
-	    y[i] = dx;
+	    dx[2] = x[2] + u[0] * tan(u[1]) * h;
 	}
-    
     }
+    
+}; // struct carde
 
+
+/*** constraints ***/
+const double H = 1.0; // car width
+const double L = 2.0; // car length
+const double d = 2.0; // marginal parking space
+const double D = 0.5; // distance to the curb
+
+/* rear and front car corners collide with the car body */
+template<typename T>
+T cst_v5(const T &x) {
+    T y(4);
+    y[0] = sin(x[2])*(x[0]) - cos(x[2])*(x[1]-H) - H/2.0;
+    y[1] = cos(x[2])*(x[0]) + sin(x[2])*(x[1]-H) - L/2.0;
+    y[2] = -sin(x[2])*(x[0]) + cos(x[2])*(x[1]-H) - H/2.0;
+    y[3] = -cos(x[2])*(x[0]) - sin(x[2])*(x[1]-H) - L/2.0;
+    return y;
+}
+template<typename T>
+T cst_v6(const T &x) {
+    T y(4);
+    y[0] = sin(x[2])*(x[0]-L) - cos(x[2])*(x[1]-H) - H/2.0;
+    y[1] = cos(x[2])*(x[0]-L) + sin(x[2])*(x[1]-H) - L/2.0;
+    y[2] = -sin(x[2])*(x[0]-L) + cos(x[2])*(x[1]-H) - H/2.0;
+    y[3] = -cos(x[2])*(x[0]-L) - sin(x[2])*(x[1]-H) - L/2.0;
+    return y;
+}
+template<typename T>
+T cst_v7(const T &x) {
+    T y(4);
+    y[0] = sin(x[2])*(x[0]-(2*L+d)) - cos(x[2])*(x[1]-H) - H/2.0;
+    y[1] = cos(x[2])*(x[0]-(2*L+d)) + sin(x[2])*(x[1]-H) - L/2.0;
+    y[2] = -sin(x[2])*(x[0]-(2*L+d)) + cos(x[2])*(x[1]-H) - H/2.0;
+    y[3] = -cos(x[2])*(x[0]-(2*L+d)) - sin(x[2])*(x[1]-H) - L/2.0;
+    return y;
+}
+template<typename T>
+T cst_v8(const T &x) {
+    T y(4);
+    y[0] = sin(x[2])*(x[0]-(3*L+d)) - cos(x[2])*(x[1]-H) - H/2.0;
+    y[1] = cos(x[2])*(x[0]-(3*L+d)) + sin(x[2])*(x[1]-H) - L/2.0;
+    y[2] = -sin(x[2])*(x[0]-(3*L+d)) + cos(x[2])*(x[1]-H) - H/2.0;
+    y[3] = -cos(x[2])*(x[0]-(3*L+d)) - sin(x[2])*(x[1]-H) - L/2.0;
     return y;
 }
 
+/* the car body collides with the rear car area: consider 4 corners */
+template<typename T>
+T cst_v1rear(const T &x) {
+    T y(2);
+    y[0] = x[0] + cos(x[2])*(L/2.0) - sin(x[2])*(H/2.0) - L;
+    y[1] = x[1] + sin(x[2])*(L/2.0) + cos(x[2])*(H/2.0) - H;
+    return y;
+}
+template<typename T>
+T cst_v2rear(const T &x) {
+    T y(2);
+    y[0] = x[0] + cos(x[2])*(L/2.0) - sin(x[2])*(-H/2.0) - L;
+    y[1] = x[1] + sin(x[2])*(L/2.0) + cos(x[2])*(-H/2.0) - H;
+    return y;
+}
+template<typename T>
+T cst_v3rear(const T &x) {
+    T y(2);
+    y[0] = x[0] + cos(x[2])*(-L/2.0) - sin(x[2])*(-H/2.0) - L;
+    y[1] = x[1] + sin(x[2])*(-L/2.0) + cos(x[2])*(-H/2.0) - H;
+    return y;
+}
+template<typename T>
+T cst_v4rear(const T &x) {
+    T y(2);
+    y[0] = x[0] + cos(x[2])*(-L/2.0) - sin(x[2])*(H/2.0) - L;
+    y[1] = x[1] + sin(x[2])*(-L/2.0) + cos(x[2])*(H/2.0) - H;
+    return y;
+}
 
-/**
- * Derived functor for 2d car dynamics.
- */
-class car : public rocs::VFunctor {
-    
-public:
+/* the car body collides with the front car area: consider 4 corners */
+template<typename T>
+T cst_v1front(const T &x) {
+    T y(3);
+    y[0] = x[0] + cos(x[2])*(L/2.0) - sin(x[2])*(H/2.0) - (3.0*L+d);
+    y[1] = x[1] + sin(x[2])*(L/2.0) + cos(x[2])*(H/2.0) - H;
+    y[2] = -x[0] - cos(x[2])*(L/2.0) + sin(x[2])*(H/2.0) + (2.0*L+d);
+    return y;
+}
+template<typename T>
+T cst_v2front(const T &x) {
+    T y(3);
+    y[0] = x[0] + cos(x[2])*(L/2.0) - sin(x[2])*(-H/2.0) - (3*L+d);
+    y[1] = x[1] + sin(x[2])*(L/2.0) + cos(x[2])*(-H/2.0) - H;
+    y[2] = -x[0] - cos(x[2])*(L/2.0) + sin(x[2])*(-H/2.0) + (2.0*L+d);
+    return y;
+}
+template<typename T>
+T cst_v3front(const T &x) {
+    T y(3);
+    y[0] = x[0] + cos(x[2])*(-L/2.0) - sin(x[2])*(-H/2.0) - (3*L+d);
+    y[1] = x[1] + sin(x[2])*(-L/2.0) + cos(x[2])*(-H/2.0) - H;
+    y[2] = -x[0] - cos(x[2])*(-L/2.0) + sin(x[2])*(-H/2.0) + (2.0*L+d);
+    return y;
+}
+template<typename T>
+T cst_v4front(const T &x) {
+    T y(3);
+    y[0] = x[0] + cos(x[2])*(-L/2.0) - sin(x[2])*(H/2.0) - (3*L+d);
+    y[1] = x[1] + sin(x[2])*(-L/2.0) + cos(x[2])*(H/2.0) - H;
+    y[2] = -x[0] - cos(x[2])*(-L/2.0) + sin(x[2])*(H/2.0) + (2.0*L+d);
+    return y;
+}
 
-    /* constructors */
-    car() {}
-    car(rocs::input_type &u, double h): VFunctor(u, h) {}
-    car(rocs::grid ug, double h) : VFunctor(ug, h) {}
-    car(const int dim, const double lb[], const double ub[],
-	const double mu[], double h) : VFunctor(dim, lb, ub, mu, h) {}
-    
-    
-    /* override operator () */
-    virtual std::vector<rocs::ivec> operator()(const rocs::ivec &x) {
-
-	if (!_ugrid._data.empty())
-	    return carvf(x, _ugrid._data, _tau);
-	else {
-	    std::cout <<
-		"Callback of car vectorfield failed: no input data.\n";
-	    assert(false);
-	}
-    }
-
-    virtual std::vector<rocs::state_type> operator()(const rocs::state_type &x) {
-
-	if (!_ugrid._data.empty())
-	    return carvf(x, _ugrid._data, _tau);
-	else {
-	    std::cout <<
-		"Callback of car vectorfield failed: no input data.\n";
-	    assert(false);
-	}
-    }
-
-
-    virtual ~car() {}
-};
-
-
+/* the car body collides with the curb area */
+template<typename T>
+T cst_v1curb(const T &x) {
+    T y(1);
+    y[0] = x[1] + sin(x[2])*(L/2.0) + cos(x[2])*(H/2.0) + D;
+    return y;
+}
+template<typename T>
+T cst_v2curb(const T &x) {
+    T y(1);
+    y[0] = x[1] + sin(x[2])*(L/2.0) + cos(x[2])*(-H/2.0) + D;
+    return y;
+}
+template<typename T>
+T cst_v3curb(const T &x) {
+    T y(1);
+    y[0] = x[1] + sin(x[2])*(-L/2.0) + cos(x[2])*(-H/2.0) + D;
+    return y;
+}
+template<typename T>
+T cst_v4curb(const T &x) {
+    T y(1);
+    y[0] = x[1] + sin(x[2])*(-L/2.0) + cos(x[2])*(H/2.0) + D;
+    return y;
+}
 
 
 #endif

@@ -2,66 +2,54 @@
 # BSTDIR (boost), MATDIR (matlab), LADIR (armadillo).
 # 2) get compiling and linking flags:
 # CXX, CXXFLAGS, INCS, LIBS, LIBTEST, LDFLAGS.
--include ../configMake
+-include ../cflags
 
 
 # define variables
-IDIR := ../intervals
-GDIR := ../grids
-SDIR := ../src_itvl
-RDIR := ../
+SDIR := ../src
+ODIR := ../build
 
+INCS += -I../
 
-INCS += -I$(RDIR)
-
+SRCS := $(wildcard $(SDIR)/*.cpp)
+DEPS := $(patsubst %.cpp, %.h, $(SRCS))
+OBJS := $(addprefix $(ODIR)/, $(patsubst %.cpp, %.o, $(notdir $(SRCS))))
 
 ESRCS := $(wildcard */*.cpp)
-EDIRS := $(sort $(dir $(ESRCS)))
+EDIRS := $(sort $(dir $(ESRCS)))  # use "sort" to remove the duplicate
 EINCS := $(wildcard */*.hpp)
 
 TARGETS := $(basename $(ESRCS))
 
-
-SRCS := $(wildcard $(IDIR)/*.cpp) \
-	$(wildcard $(GDIR)/*.cpp) \
-	$(wildcard $(SDIR)/*.cpp)
-
-OBJS := $(patsubst %.cpp, %.o, $(SRCS))
-DEPS := $(patsubst %.cpp, %.h, $(SRCS))
-
-
 .PHONY : clean
 
-define rules =
- $(1): $$($(1).cpp) $$($(OBJS))
-	$$($(CXX)) $$($(CXXFLAGS)) $$($(INCS)) $$($(LDFLAGS)) $$($(LIBS)) -o $$($(1)) $$($(1).cpp) $$($(OBJS))
-endef
 
-$(foreach case, $(TARGETS), $(eval $(call rules, $(case))))
+$(ODIR)/%.o: %.cpp %.h
+	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
 
 # rules
-all: $(TARGETS)
-
-#$(TARGETS):
-#	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
-
 examples:
 	for dir in $(EDIRS); do \
 		$(MAKE) -C $$dir;\
 	done
 
-testExamples: testVF.cpp $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) $(LIBTEST) -o $@ $^
+car:
+	cd ./car && $(MAKE)
+dcdc:
+	cd ./dcdc && $(MAKE)
+ipdl:
+	cd ./ipdl && $(MAKE)
+temp:
+	cd ./temp && $(MAKE)
+vdp:
+	cd ./vdp && $(MAKE)
 
-%.o: %.cpp %.h
-	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
-
-
-disp:
+showtargets:
 	@echo $(TARGETS)
 
 
-DELS := $(addsuffix .dSYM, $(TARGETS) testExamples)
+DELS := $(addsuffix .o, $(TARGETS))
+
 
 clean:
-	rm -rf $(OBJS) $(DELS) $(TARGETS) testExamples
+	rm -rf $(OBJS) $(DELS) $(TARGETS)

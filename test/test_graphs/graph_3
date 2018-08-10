@@ -1,0 +1,51 @@
+#graph_3: designed mainly for testing “controlled_reach_set”
+#graph structure:
+
+
+#the number of edges and vertices
+nE=32
+nV=14
+nU=5
+
+#trans=[from, to, control_index, time, weight, edge_index]
+trans=0,12,2,0.5,0.1,0
+trans=1,2,1,0.6,0.1,1
+trans=1,12,1,0.3,0.1,2
+trans=1,5,3,1,0.5,3
+trans=1,8,4,0.3,0.3,4
+trans=2,3,4,0.9,0.3,5
+trans=2,4,2,0.1,0.1,6
+trans=2,9,2,3,0.1,7
+trans=2,5,2,1.1,0.1,8
+trans=3,6,0,1,0.1,9
+trans=3,13,0,0.5,0.1,10
+trans=13,3,3,0.8,0.1,11
+trans=13,6,3,0.4,0.1,12
+trans=13,2,3,1,0.1,13
+trans=13,8,4,1,0.1,14
+trans=4,0,2,1,0.1,15
+trans=5,4,3,1.5,0.2,16
+trans=5,7,1,0.7,0.1,17
+trans=6,0,4,1,0.1,18
+trans=6,4,4,1,0.1,19
+trans=7,6,3,0.1,0.1,20
+trans=7,9,3,0.2,0.1,21
+trans=8,10,0,1.3,0.1,22
+trans=9,4,3,1.6,0.1,23
+trans=9,0,1,0.5,0.1,24
+trans=9,1,0,0.2,0.1,25
+trans=10,8,2,1,0.1,26
+trans=10,1,2,1,0.1,27
+trans=10,11,3,1.4,0.1,28
+trans=11,8,4,1.4,0.1,29
+trans=12,9,1,0.7,0.1,30
+trans=12,7,3,0.7,0.1,31
+
+goals=0,4,7,9,12
+
+#expected results
+exp_reach=0,1,2,4,5,6,7,9,12
+exp_edge_blocked=9,12,13,27
+
+#exp_inv=0,4,9,12
+#exp_edge_blocked_i=21

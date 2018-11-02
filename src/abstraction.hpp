@@ -14,17 +14,13 @@
 
 #include <armadillo>
 #include <boost/dynamic_bitset.hpp>
+#include <functional>
 
 #include "transition.h"
 #include "system.hpp"
 
 
 namespace rocs {
-
-    /**
-     * Boolean function defining a set.
-     */
-    typedef bool (*gset)(const ivec &x);
     
     /**
      * Weighting function (of edges) of transitions.
@@ -45,12 +41,15 @@ namespace rocs {
 	fts _ts;  /**< the transition system to be constructed */
   
 	/**
-	 * Constructors: default and the other two with vector field functor.
+	 * Constructors: initialize user-defined
+	 * 1) system dynamics, and 
+	 * 2) weighting function.
 	 *
-	 * Assign user defined system dynamics and weighting function to an abstraction.
 	 * @param sys the pointer to a system object.
+	 * @param wf the weighting function.
 	 */
-	abstraction(S *sys):_ptrsys(sys) {}
+	abstraction(S *sys):_ptrsys(sys), _wf(NULL) {}
+	abstraction(S *sys, WGT wf):_ptrsys(sys), _wf(wf) {}
 
 	/**
 	 * State initialization
@@ -105,7 +104,7 @@ namespace rocs {
 	 * @param g the function determining whether x is inside the set.
 	 * @return a list of indicies.
 	 */
-	std::vector<size_t> get_discrete_states(gset g);
+	std::vector<size_t> get_discrete_states(std::function<bool(const ivec &)> g);
   
 
 	/**
@@ -128,7 +127,7 @@ namespace rocs {
     
 
     template<typename S>
-    std::vector<size_t> abstraction<S>::get_discrete_states(gset g) {
+    std::vector<size_t> abstraction<S>::get_discrete_states(std::function<bool(const ivec &)> g) {
 	std::vector<size_t> r;
 	if (_x._nv>0 && !_x._data.empty()) {
 	    ivec x(_x._dim);

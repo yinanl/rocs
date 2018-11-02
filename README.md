@@ -53,7 +53,6 @@ Simulations of the examples can be found under the folder *examples*:
 - *examples/dcdc*: DCDC converter invariance control.
 - *examples/car*: Control a unicycle to a goal area while avoiding obstacles as well as automatic parallel parking.
 - *examples/ipdl*: Regulate an inverted pendulum to the upright position.
-- *examples/poly*: Polynomial systems region of attraction computation.
 - *examples/temp*: Control the room temperature (4-mode system) to a desired temperature (a setpoint) and keep the temperature around the setpoint.
 - *examples/vdp*: Estimation of the region of attraction (ROA) for Van der Pol equations.
 

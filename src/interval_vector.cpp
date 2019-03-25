@@ -40,30 +40,24 @@ namespace rocs {
      */
     ivec& ivec::operator=(const ivec &x) {
 
-	if (this == &x) {
-
-	    return (*this);
-	}
-	else {
-
-	    if (_dim != x._dim) {
-
-		_dim = x._dim;
-		delete[] _itvls;
-	    }
-	    if (x._itvls == NULL) {
-
-		_itvls = NULL;
-	    } else {
-
-		_itvls = new interval[_dim];
-	    }
-
-	    for (int i = 0; i < _dim; i++)
-		_itvls[i] = x._itvls[i];
-
-	    return (*this);
-	}
+	if (this != &x) {
+            if (_dim != x._dim)
+                _dim = x._dim;
+            
+            if (x._itvls == NULL) {
+                delete[] _itvls;
+                _itvls = NULL;
+                
+            } else {
+                interval* temp = new interval[_dim];
+                delete[] _itvls;  // delete memory first to avoid memory leaks.
+                _itvls = temp;
+                for (int i = 0; i < _dim; i++)
+                    _itvls[i] = x._itvls[i];
+            }
+        }
+        
+        return (*this);
     }
 
 

@@ -84,16 +84,10 @@ namespace rocs {
 
     SPtree& SPtree::operator=(const SPtree &other) {
 
-	if (this == &other) {
-
-	    return (*this);
-	}
-	else {
-
+	if (this != &other)
 	    _root = copyHelper(other._root);
-
-	    return (*this);
-	}
+	
+	return (*this);
     }
 
 

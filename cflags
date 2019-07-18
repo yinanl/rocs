@@ -1,6 +1,6 @@
 # set directory of external packages
 BSTDIR := /usr/local/opt/boost
-MATDIR := /Applications/MATLAB_R2016a.app
+MATDIR := /Applications/MATLAB_R2019a.app
 LADIR := /usr/local/opt/armadillo
 
 # set the root dir

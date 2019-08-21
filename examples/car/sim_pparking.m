@@ -44,12 +44,23 @@ while(x(1)>G(1,2) || x(1)<G(1,1) ||...
         x(3)>=pavings(:,5) & x(3)<=pavings(:,6));
     uid= find(ctlr(xid(1),:));
     
-%     u= U(uid(end),:);
-    uall= U(uid,:);
-%     [val, ind]= min(norm(uall-repmat(usim(isim-1,:),size(uall,1),1), 2)); % min change
-    [val, ind]= min(abs(uall(:,1)));
-    u= uall(ind,:);
-    
+    if (isempty(uid))
+        error("Invalid controller.");
+    else
+%         % select a random u from all valid control values
+%         pick=randperm(numel(uid));
+%         u= U(uid(pick(1)),:);
+        
+        % select the minimum value
+        uall= U(uid,:);
+        [val, ind]= min(abs(uall(:,1)));
+        %[val, ind]= min(norm(uall-repmat(usim(isim-1,:),size(uall,1),1), 2)); % min change
+        u= uall(ind,:);
+        
+%         % select the first/last value
+%         u= U(uid(end),:);
+    end    
+   
 %     xx= fm(ts,x',u);
 %     t= t+ts;
 %     x= xx';

@@ -65,32 +65,15 @@ namespace rocs {
     }//matWriter::write_input_values
     
 
-    void matWriter::write_goal_area(const ivec &goal, const char *varname) {
-	if (_pmat == NULL) {open();}
-	
-	int n = goal.getdim();
-	mxArray *g = mxCreateDoubleMatrix(n, 2, mxREAL); // G (goal)
-	double *ptrg = mxGetPr(g);
-	for (int i = 0; i < n; ++i) {
-	    ptrg[i] = goal[i].getinf();
-	    ptrg[i+n] = goal[i].getsup();
-	}
-	if (matPutVariable(_pmat, varname, g)!=0) {
-	    std::cout << "matWriter::write_goal_area: Error writing goal area.\n";
-	}
-	mxDestroyArray(g);
-    }//matWriter::write_goal_area
-    
-
-    void matWriter::write_unsafe_area(const std::vector<ivec> &obs, const char *varname) {
-	if (!obs.empty()) {
-	    mwSize dims[3] = {(mwSize)obs[0].getdim(), 2, obs.size()};
+    void matWriter::write_ivec_array(const std::vector<ivec> &arr, const char *varname) {
+	if (!arr.empty()) {
+	    mwSize dims[3] = {(mwSize)arr[0].getdim(), 2, arr.size()};
 	    mxArray *us = mxCreateNumericArray(3, dims, mxDOUBLE_CLASS, mxREAL);
 	    double *ptrus = mxGetPr(us);
 	    
 	    for (int r = 0; r < dims[0]; ++r) {
 		for (int p = 0; p < dims[2]; ++p) {
-		    ivec obstacle = obs[p];
+		    ivec obstacle = arr[p];
 		    ptrus[r + p*dims[0]*dims[1]] = obstacle[r].getinf();
 		    ptrus[r + dims[0] + p*dims[0]*dims[1]] = obstacle[r].getsup();
 		}
@@ -101,7 +84,7 @@ namespace rocs {
 	    }
 	    mxDestroyArray(us);
 	}
-    }//matWriter::write_unsafe_area
+    }//matWriter::write_ivec_array
 
 
     void matWriter::write_sptree_leaves(const SPtree &c, SPnode *ptrn) {

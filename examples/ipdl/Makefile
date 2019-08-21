@@ -26,8 +26,6 @@ TARGETS := $(basename $(ESRCS))
 # rules
 all: $(TARGETS)
 
-# $(EDIR)/%: $(EDIR)/%.o $(OBJS)
-# 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
 ipdl: ipdl.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
 
@@ -41,5 +39,8 @@ $(ODIR):
 $(ODIR)/%.o: $(SDIR)/%.cpp $(SDIR)/%.h
 	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
 
-$(EDIR)/%.o: $(EDIR)/%.cpp $(SDIR)/system.hpp
+%.o: %.cpp $(SDIR)/system.hpp
 	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
+
+# $(EDIR)/%.o: $(EDIR)/%.cpp $(SDIR)/system.hpp
+#	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@

@@ -45,7 +45,9 @@ int main()
     /* Solve the problem */
     rocs::CSolver solver(&carBuchi);
     solver.init(rocs::GOAL, glb, gub);
+    solver.init_goal_area();
     solver.init(rocs::AVOID, olb, oub);
+    solver.init_avoid_area();
     solver.buchi(&carBuchi, rocs::ABSMAX, 0.2);
     solver.print_controller_info();
     

@@ -73,16 +73,19 @@ int main()
     /* eps = 0.03 */
     rocs::CSolver solver1(&vdproa);
     solver1.init(rocs::GOAL, &roa_core<rocs::ivec>, 0.01);
+    solver1.init_goal_area();
     solver1.cobuchi(&vdproa, 0.03, rocs::ABSMAX, 0.03, rocs::ABSMAX);
     solver1.print_controller_info();
     /* eps = 0.01 */
     rocs::CSolver solver2(&vdproa);
     solver2.init(rocs::GOAL, &roa_core<rocs::ivec>, 0.01);
+    solver2.init_goal_area();
     solver2.cobuchi(&vdproa, 0.01, rocs::ABSMAX, 0.01, rocs::ABSMAX);
     solver2.print_controller_info();
     /* eps = 0.005 */
     rocs::CSolver solver3(&vdproa);
     solver3.init(rocs::GOAL, &roa_core<rocs::ivec>, 0.01);
+    solver3.init_goal_area();
     solver3.cobuchi(&vdproa, 0.005, rocs::ABSMAX, 0.005, rocs::ABSMAX);
     solver3.print_controller_info();
     

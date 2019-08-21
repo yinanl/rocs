@@ -40,6 +40,9 @@ carBuchi: carBuchi.o $(OBJS)
 carParking: carParking.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
 
+carFullmap: carFullmap.o $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+
 testConstraints: testConstraints.cpp $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
 
@@ -47,7 +50,7 @@ showtargets:
 	@echo $(TARGETS)
 
 clean:
-	rm -rf *.o *.dSYM $(TARGETS)
+	rm -rf *.o *.dSYM $(TARGETS) $(ODIR)/*.o
 
 
 
@@ -58,17 +61,5 @@ $(ODIR):
 $(ODIR)/%.o: $(SDIR)/%.cpp $(SDIR)/%.h
 	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
 
-# $(EDIR)/%.o: $(EDIR)/%.cpp $(SDIR)/system.hpp car.hpp
-# 	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
-
-carReach1.o: carReach1.cpp $(SDIR)/system.hpp car.hpp
-	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
-
-carReach2.o: carReach2.cpp $(SDIR)/system.hpp car.hpp
-	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
-
-carBuchi.o: carBuchi.cpp $(SDIR)/system.hpp car.hpp
-	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
-
-carParking.o: carParking.cpp $(SDIR)/system.hpp car.hpp
+%.o: %.cpp $(SDIR)/system.hpp car.hpp
 	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@

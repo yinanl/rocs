@@ -79,7 +79,9 @@ int main()
     /* solve the problem */
     rocs::CSolver solver(&tpcReachstay);
     solver.init(rocs::GOAL, glb, gub);
+    solver.init_goal_area();
     solver.init(rocs::AVOID, olb, oub);
+    solver.init_avoid_area();
     
     // solver.reach_stay(0.1, ABSMAX, 0.1, ABSMAX);
     // solver.invariance_control(0.5, ABSMAX);

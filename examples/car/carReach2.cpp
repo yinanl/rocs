@@ -38,39 +38,39 @@ int main()
     /* set the specifications */
     double glb[] = {9, 0, -M_PI};  // goal area
     double gub[] = {9.5, 0.5, M_PI};
-    
-    double olb1[] = {8.2, 0, -M_PI};  // obstacles
-    double oub1[] = {8.4, 8.5, M_PI};
-    
-    double olb2[] = {8.4, 8.3, -M_PI};
-    double oub2[] = {9.3, 8.5, M_PI};
-    
-    double olb3[] = {9.3, 7.1, -M_PI};
-    double oub3[] = {10.0, 7.3, M_PI};
-    
-    double olb4[] = {8.4, 5.9, -M_PI};
-    double oub4[] = {9.3, 6.1, M_PI};
+    double OBS[14][3] = {
+			{8.2, 0, -M_PI},
+			{8.4, 8.5, M_PI}, // block 1
+			
+			{8.4, 8.3, -M_PI},
+			{9.3, 8.5, M_PI},
 
-    double olb5[] = {9.3, 4.7, -M_PI};
-    double oub5[] = {10.0, 4.9, M_PI};
-    
-    double olb6[] = {8.4, 3.5, -M_PI};
-    double oub6[] = {9.3, 3.7, M_PI};
+			{9.3, 7.1, -M_PI},
+			{10.0, 7.3, M_PI},
 
-    double olb7[] = {9.3, 2.3, -M_PI};
-    double oub7[] = {10.0, 2.5, M_PI};
+			{8.4, 5.9, -M_PI},
+			{9.3, 6.1, M_PI},
+
+			{9.3, 4.7, -M_PI},
+			{10.0, 4.9, M_PI},
+
+			{8.4, 3.5, -M_PI},
+			{9.3, 3.7, M_PI},
+
+			{9.3, 2.3, -M_PI},
+			{10.0, 2.5, M_PI}
+    }; // obstacles
 
     
     /* solve the problem */
     rocs::CSolver solver(&carReach);
     solver.init(rocs::GOAL, glb, gub);
-    solver.init(rocs::AVOID, olb1, oub1);
-    solver.init(rocs::AVOID, olb2, oub2);
-    solver.init(rocs::AVOID, olb3, oub3);
-    solver.init(rocs::AVOID, olb4, oub4);
-    solver.init(rocs::AVOID, olb5, oub5);
-    solver.init(rocs::AVOID, olb6, oub6);
-    solver.init(rocs::AVOID, olb7, oub7);
+    solver.init_goal_area();
+    for (size_t i = 0; i < 7; ++i) {
+	solver.init(rocs::AVOID, OBS[2*i], OBS[2*i+1]);
+    }
+    solver.init_avoid_area();
+    
     solver.reachability_control(&carReach, 0.2, rocs::ABSMAX);
     solver.print_controller_info();
     

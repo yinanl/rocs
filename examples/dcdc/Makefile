@@ -26,7 +26,10 @@ TARGETS := $(basename $(ESRCS))
 # rules
 all: $(TARGETS)
 
-dcdc: dcdc.o $(OBJS)
+dcdcInv: dcdcInv.o $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+
+dcdcReachStay: dcdcReachStay.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
 
 display:
@@ -43,5 +46,5 @@ $(ODIR):
 $(ODIR)/%.o: $(SDIR)/%.cpp $(SDIR)/%.h
 	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
 
-$(EDIR)/%.o: $(EDIR)/%.cpp $(SDIR)/system.hpp
+%.o: %.cpp $(SDIR)/system.hpp
 	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@

@@ -1,18 +1,17 @@
 /**
- *  dcdc.cpp
+ *  dcdc.hpp
  *
- *  A DCDC converter invariance control example.
+ *  Dynamics of a boost dcdc converter.
  *
- *  Created by Yinan Li on May 10, 2018.
+ *  Created by Yinan Li on Aug. 21, 2019.
+ *
  *  Hybrid Systems Group, University of Waterloo.
  */
 
-#include <iostream>
+#ifndef _dcdc_h
+#define _dcdc_h
 
-#include "src/system.hpp"
-#include "src/csolver.h"
-
-#include "src/matlabio.h"
+#include "src/interval_vector.h"
 
 
 /* Parameters of the model */
@@ -74,36 +73,4 @@ struct dcde {
     
 };
 
-
-int main()
-{
-    /* set the state space */
-    // double xlb[] = {-2, -1.5};
-    // double xub[] = {2, 3};
-    double xlb[] = {-2, 0.70};
-    double xub[] = {2, 1.50};
-
-    /* define the control system */
-    rocs::DTSwSys<dcde> dcdcInv("dcdc", tau, dcde::n, dcde::m);
-    dcdcInv.init_workspace(xlb, xub);
-    
-    /* set the specifications */
-    double glb[] = {1.15, 1.09};
-    double gub[] = {1.55, 1.17};
-
-    /* solve the problem */
-    rocs::CSolver solver(&dcdcInv);
-    solver.init(rocs::GOAL, glb, gub);
-    solver.invariance_control(&dcdcInv, 0.001, rocs::RELMAXG);
-    solver.print_controller_info();
-
-
-    /* save the problem data and the solution */
-    rocs::matWriter wtr("data_dcdcInv.mat");
-    wtr.open();
-    wtr.write_problem_setting(dcdcInv, solver);
-    wtr.write_sptree_controller(solver);
-    wtr.close();
-
-    return 0;
-}
+#endif

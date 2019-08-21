@@ -45,7 +45,9 @@ int main()
     /* solve the problem */
     rocs::CSolver solver(&carReach);
     solver.init(rocs::GOAL, glb, gub);
+    solver.init_goal_area();
     solver.init(rocs::AVOID, olb, oub);
+    solver.init_avoid_area();
     solver.reachability_control(&carReach, 0.2, rocs::ABSMAX);
     solver.print_controller_info();
     

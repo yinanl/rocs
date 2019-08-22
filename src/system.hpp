@@ -40,15 +40,13 @@ namespace rocs {
 	grid _ugrid;  /**< a grid of controls */
 	
 	/**
-	 * Constructors (with/without control).
+	 * Constructor.
 	 * @param name control problem name.
 	 * @param xd dimension of state space.
 	 * @param ws state space (an interval vector).
 	 */
-	System(const char *name, const double t, const int xd, const int ud):
-	    _name(name),_tau(t),_xdim(xd),_workspace(xd),_udim(ud) {}//with controls
-	System(const char *name, const double t, const int xd):
-	    _name(name),_tau(t),_xdim(xd),_workspace(xd),_udim(1) {}//no controls
+	System(const char *name, const double t, const int xd, const int ud = 1):
+	    _name(name),_tau(t),_xdim(xd),_workspace(xd),_udim(ud) {} //treat as no control if don't specify it.
 
 
 	/**
@@ -80,7 +78,7 @@ namespace rocs {
 	 * Initialize the input set {U}:
 	 * @param U an array of selected input values (double).
 	 */
-	void init_inputset(vecRn U) {
+	void init_inputset(vecRn &U) {
 	    _ugrid._nv = U.size();
 	    _ugrid._dim = U[0].size();
 	    _ugrid._data = U;
@@ -105,14 +103,9 @@ namespace rocs {
 	DTCntlSys(const char *name, const double t, const int xd, const int ud):
 	    System(name, t, xd, ud) {}
 	
-	std::vector<ivec> get_reach_set(const ivec &x0) {
-	    
-	    std::vector<ivec> xt(_ugrid._nv, ivec(F::n));
-	    
+	void get_reach_set(std::vector<ivec> &xt, const ivec &x0) {
 	    for (size_t i = 0; i < _ugrid._nv; ++i)
 		F(xt[i], x0, _ugrid._data[i]);
-
-	    return xt;
 	}
     
     };
@@ -126,14 +119,9 @@ namespace rocs {
 	DTSwSys(const char *name, const double t, const int xd, const int m):
 	    System(name, t, xd) {_ugrid._nv = m; _ugrid._dim = 1;}
 	
-	std::vector<ivec> get_reach_set(const ivec &x0) {
-	    
-	    std::vector<ivec> xt(_ugrid._nv, ivec(F::n));
-	    
+	void get_reach_set(std::vector<ivec> &xt, const ivec &x0) {
 	    for (size_t i = 0; i < _ugrid._nv; ++i)
 		F(xt[i], x0, i+1);
-
-	    return xt;
 	}
     
     };
@@ -147,10 +135,8 @@ namespace rocs {
 	DTSys(const char *name, const double t, const int xd):
 	    System(name, t, xd) {_ugrid._nv = 1; _ugrid._dim = 1;}
 	
-	std::vector<ivec> get_reach_set(const ivec &x0) {      
-	    std::vector<ivec> xt(1, ivec(F::n));
+	void get_reach_set(std::vector<ivec> &xt, const ivec &x0) {      
 	    F(xt[0], x0);
-	    return xt;
 	}
     
     };
@@ -204,13 +190,9 @@ namespace rocs {
 	    }
 	}
     
-	std::vector<ivec> get_reach_set(const ivec &x0) {
-	    std::vector<ivec> xt(_ugrid._nv, ivec(F::n));
-	    for (size_t i = 0; i < _ugrid._nv; ++i) {
+	void get_reach_set(std::vector<ivec> &xt, const ivec &x0) {
+	    for (size_t i = 0; i < _ugrid._nv; ++i)
 		_flows[i]->reachset_robust(xt[i], x0, _ptrparams->eps);
-	    }
-
-	    return xt;
 	}
     
     };
@@ -244,12 +226,9 @@ namespace rocs {
 	    }
 	}
     
-	std::vector<ivec> get_reach_set(const ivec &x0) {
-	    std::vector<ivec> xt(_ugrid._nv, ivec(F::n));
-	    for (size_t i = 0; i < _ugrid._nv; ++i) {
+	void get_reach_set(std::vector<ivec> &xt, const ivec &x0) {
+	    for (size_t i = 0; i < _ugrid._nv; ++i)
 		_flows[i]->reachset_robust(xt[i], x0, _ptrparams->eps);
-	    }
-	    return xt;
 	}
     
     };
@@ -280,10 +259,8 @@ namespace rocs {
 	    }
 	}
     
-	std::vector<ivec> get_reach_set(const ivec &x0) {
-	    std::vector<ivec> xt(1, ivec(F::n));
+	void get_reach_set(std::vector<ivec> &xt, const ivec &x0) {
 	    _flows[0]->reachset_robust(xt[0], x0, _ptrparams->eps);
-	    return xt;
 	}
     
     };

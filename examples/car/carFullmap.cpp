@@ -37,7 +37,7 @@ int main()
     carReach.init_inputset(mu, ulb, uub);
 
     /* set precision */
-    const double e = 0.2;
+    const double e = 0.1;
     const double ehalf = e/2.0;
 
     /* set the specifications */

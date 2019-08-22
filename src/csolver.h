@@ -361,29 +361,22 @@ namespace rocs {
 			   std::stack<SPnode*> &l1, std::stack<SPnode*> &l2,
 			   double evaleps /* 0.01 */) {
 	SPnode *current;
-	ivec box;
-	std::vector<ivec> fbox;
-
+	std::vector<ivec> y(_nu, ivec(_xdim));
 	short t, ut;
-
 	while (!l.empty()) {
-
 	    current = l.top();
 	    l.pop();
-
-	    box = current->_box;  // leaves
-	    fbox = ptrsys->get_reach_set(box);  // a vector of boxes corresponding to controls
+	    ptrsys->get_reach_set(y, current->_box);
 
 	    /* update control info */
-	    t = 0;
-	
-	    for (int u = 0; u < fbox.size(); ++ u ) {
+	    t = 0;	
+	    for (int u = 0; u < y.size(); ++ u ) {
 	    
-		ut = paver_test(_ctlr, fbox[u]); // interval inclusion test
+		ut = paver_test(_ctlr, y[u]); // interval inclusion test
 
 		if (ut == 1) {
 
-		    if (_ctlr._root->_box.isin(fbox[u])) {
+		    if (_ctlr._root->_box.isin(y[u])) {
 		    
 			if (t != 1)
 			    t = 1;
@@ -413,31 +406,23 @@ namespace rocs {
 
 	    /* save new tag in b0 & b1 */
 	    if (t == 0) {
-
 		current->_b0 = true;
 		current->_b1 = false;
-
 		l0.push(current);
 	    }
 	    else if (t == 1) {
-
 		current->_b0 = false;
 		current->_b1 = true;
-
 		l1.push(current);
 	    }
 	    else {
-
 		current->_b0 = true;
 		current->_b1 = true;
-
-		if (box.maxwidth() < evaleps) {
-
+		if (current->_box.maxwidth() < evaleps) {
 		    l2.push(current);
 		}
 		else {
-
-		    _ctlr.expand(current, bisect_axis(box));
+		    _ctlr.expand(current, bisect_axis(current->_box));
 		    l.push(current->_left);
 		    l.push(current->_right);
 		}

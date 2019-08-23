@@ -502,7 +502,7 @@ namespace rocs {
 	
 	}  // end while
 
-	_winsize = pow(vol, 1.0/_xdim);
+	_winsize = std::pow(vol, 1.0/_xdim);
     }
 
 

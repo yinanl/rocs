@@ -228,7 +228,7 @@ namespace rocs {
 
 	size_t H = sol._ctlr.height(sol._ctlr._root);
 	mwSize L = sol._ctlr.leafcount(sol._ctlr._root);
-	mwSize M = pow(2,H)-1;
+	mwSize M = std::pow(2,H)-1;
     
 	int nx = sol._xdim;
     

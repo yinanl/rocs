@@ -14,38 +14,6 @@
 
 namespace rocs {
     /**
-     * Set operations. 
-     */
-    ivec intersect(const ivec &x, const ivec &y) {
-
-    	assert(x._dim == y._dim);
-
-    	ivec r(x._dim);
-    
-    	for (int i = 0; i < x._dim; ++i) {
-
-    	    r.setval(i, intersect(x[i], y[i]));
-    	}
-
-    	return r;
-    }
-
-    ivec hull(const ivec &x, const ivec &y) {
-
-    	assert(x._dim == y._dim);
-
-    	ivec r(x._dim);
-    
-    	for (int i = 0; i < x._dim; ++i) {
-
-    	    r.setval(i, hull(x[i], y[i]));
-    	}
-
-    	return r;
-    }
-
-
-    /**
      * Boolean operation overloads.
      */
     bool operator==(const ivec &lhs, const ivec &rhs) {

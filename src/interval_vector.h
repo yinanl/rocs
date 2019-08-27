@@ -80,31 +80,28 @@ namespace rocs {
 	 * \brief A [] operator accessing elements.
 	 */
 	interval& operator[](const int i) const { return _itvls[i];}
+	
+	/**
+	 * \brief An empty test.
+	 *
+	 * x = \empty if exists an empty dimension.
+	 */
+	bool isempty() const;
   
 	/**
 	 * \brief Get the lower bound of an interval vector.
 	 *
 	 * (a1.inf,a2.inf,...,an.inf]), vec = [a1] x [a2] x... [an]
 	 */
-	std::vector<double> getinf() const {
-	    std::vector<double> inf(_dim);
-	    for (int i = 0; i < _dim; ++i)
-		inf[i] = _itvls[i].getinf();
-
-	    return inf;
-	}
+	std::vector<double> getinf() const;
+	
 	/**
 	 * \brief Get the upper bound of an interval vector.
 	 *
 	 * (a1.sup, a2.sup,..., an.sup), vec = [a1] x [a2] x... [an]
 	 */
-	std::vector<double> getsup() const {
-	    std::vector<double> sup(_dim);
-	    for (int i = 0; i < _dim; ++i) 
-		sup[i] = _itvls[i].getsup();
-
-	    return sup;
-	}
+	std::vector<double> getsup() const;
+	
 	/**
 	 * \brief Get the dimension of an interval vector.
 	 */
@@ -113,143 +110,71 @@ namespace rocs {
 	 * \brief Set the value to a specified dimension of the interval vector.
 	 */
 	void setval(int axis, const interval &x) { _itvls[axis] = x;}
-
-	/**
-	 * \brief An empty test.
-	 *
-	 * x = \empty if exists an empty dimension.
-	 */
-	bool isempty() const {
-	    if (_itvls == NULL || _dim == 0)
-		return true;
-    
-	    for (int i = 0; i < _dim; ++i) {
-		if (_itvls[i].isempty())
-		    return true;
-	    }
-
-	    return false;
-	}
+	
 	/**
 	 * \brief Get the width of each dimension.
 	 *
 	 * (w[a1],w[a2],...w[an]), vec = [a1] x [a2] x... [an]
 	 */
-	std::vector<double> width() const {
-	    std::vector<double> width(_dim);
-	    for (int i = 0; i < _dim; ++i)
-		width[i] = _itvls[i].width();
-
-	    return width;
-	}
+	std::vector<double> width() const;
+	
 	/**
 	 * \brief Get the radius of each dimension.
 	 *
 	 * (w[a1]/2,w[a2]/2,...w[an]/2), vec = [a1] x [a2] x... [an]
 	 */
-	std::vector<double> radius() const {
-	    std::vector<double> radius(_dim);
-	    for (int i = 0; i < _dim; ++i)
-		radius[i] = _itvls[i].width() / 2;
-
-	    return radius;
-	}
+	std::vector<double> radius() const;
+	
 	/**
 	 * \brief Get the center point of an interval vector.
 	 *
 	 * (mid[a1],mid[a2],...mid[an]), vec = [a1] x [a2] x... [an]
 	 */
-	std::vector<double> mid() const {
-	    std::vector<double> mid(_dim);
-	    for (int i = 0; i < _dim; ++i)
-		mid[i] = _itvls[i].mid();
-
-	    return mid;
-	}
+	std::vector<double> mid() const;
+	
 	/**
 	 * \brief Get the maximum width of all dimensions.
 	 *
 	 * max([a1],[a2],...[an]), vec = [a1] x [a2] x... [an]
 	 */
-	double maxwidth() const {
-	    double wid = 0;
-	    for (int i = 0; i < _dim; ++i) {
-		if (wid < _itvls[i].width()) {
-		    wid = _itvls[i].width();
-		}
-	    }
-
-	    return wid;
-	}
+	double maxwidth() const;
+	
 	/**
 	 * \brief Determine the dimension which has the maximum width.
 	 */
-	int maxdim() const {
-	    int maxi = 0;
-	    double wid = 0;
-	    for (int i = 0; i < _dim; ++i) {
-		if (wid < _itvls[i].width()) {
-		    wid = _itvls[i].width();
-		    maxi = i;
-		}
-	    }
-
-	    return maxi;
-	}
-
+	int maxdim() const;
 
 	/**
 	 * \brief A test to see if an interval vector is outside the other.
 	 *
 	 * x.isout(y), 1 if x, y are disjoint
 	 */
-	bool isout(const ivec &y) const {
-	    for (int i = 0; i < _dim; ++i) {
-		if (_itvls[i].isout(y[i]))
-		    return true;
-	    }
-
-	    return false;
-	}
-	bool isout(const std::vector<double> &y) const {
-	    for (int i = 0; i < _dim; ++i) {
-		if (_itvls[i].isout(y[i]))
-		    return true;
-	    }
-
-	    return false;
-	}
+	bool isout(const ivec &y) const;
+	bool isout(const std::vector<double> &y) const;
+	
 	/**
 	 * \brief A test to see if an interval vector is inside the other.
 	 *
 	 * x.isin(y), 1 if y is contained in x
 	 */
-	bool isin(const ivec &y) const {
-	    for (int i = 0; i < _dim; ++i) {
-		if (! _itvls[i].isin(y[i]))
-		    return false;
-	    }
-
-	    return true;
-	}
-	bool isin(const std::vector<double> &y) const {
-	    for (int i = 0; i < _dim; ++i) {
-		if (! _itvls[i].isin(y[i]))
-		    return false;
-	    }
-
-	    return true;
-	}
+	bool isin(const ivec &y) const;
+	bool isin(const std::vector<double> &y) const;
   
 	/**
 	 * Intersection of two interval vectors.
 	 */
 	friend ivec intersect(const ivec&, const ivec&);
+	
 	/**
 	 * Interval hull of two interval vectors.
 	 */
 	friend ivec hull(const ivec&, const ivec&);
-  
+
+	/**
+	 * \brief Bisect x along a given dimension to lowerhalf and upperhalf.
+	 */
+	friend ivec lowerhalf(const ivec&, const int);
+	friend ivec upperhalf(const ivec&, const int);
 
 	/**
 	 * Operation overloads between interval vectors.
@@ -273,13 +198,6 @@ namespace rocs {
 	friend ivec operator*(const ivec&, const double);
   
 	/**
-	 * \brief Bisect x along a given dimension to lowerhalf and upperhalf.
-	 */
-	friend ivec lowerhalf(const ivec&, const int);
-	friend ivec upperhalf(const ivec&, const int);
-
-  
-	/**
 	 * \brief A linear affine operation on an interval vector.
 	 * y = A[x] + b (b=0 -> y = A[x])
 	 * y = A * xc + |A|*|xr|, x = xc + [xr]
@@ -295,24 +213,135 @@ namespace rocs {
     };
 
 
-    // /**************** Inline functions ***************/
-    // inline ivec intersect(const ivec &x, const ivec &y) {
-    // 	assert(x._dim == y._dim);
-    // 	ivec r(x._dim);
-    // 	for (int i = 0; i < x._dim; ++i) {
-    // 	    r.setval(i, intersect(x[i], y[i]));
-    // 	}
-    // 	return r;
-    // }
+    /**************** Inline functions ***************/
+    inline bool ivec::isempty() const {
+	if (_itvls == NULL || _dim == 0)
+	    return true;
+    
+	for (int i = 0; i < _dim; ++i) {
+	    if (_itvls[i].isempty())
+		return true;
+	}
 
-    // inline ivec hull(const ivec &x, const ivec &y) {
-    // 	assert(x._dim == y._dim);
-    // 	ivec r(x._dim);
-    // 	for (int i = 0; i < x._dim; ++i) {
-    // 	    r.setval(i, hull(x[i], y[i]));
-    // 	}
-    // 	return r;
-    // }
+	return false;
+    }
+
+    inline std::vector<double> ivec::getinf() const {
+	std::vector<double> inf(_dim);
+	for (int i = 0; i < _dim; ++i)
+	    inf[i] = _itvls[i].getinf();
+
+	return inf;
+    }
+    inline std::vector<double> ivec::getsup() const {
+	std::vector<double> sup(_dim);
+	for (int i = 0; i < _dim; ++i) 
+	    sup[i] = _itvls[i].getsup();
+
+	return sup;
+    }
+
+    inline std::vector<double> ivec::width() const {
+	std::vector<double> width(_dim);
+	for (int i = 0; i < _dim; ++i)
+	    width[i] = _itvls[i].width();
+
+	return width;
+    }
+
+    inline std::vector<double> ivec::radius() const {
+	std::vector<double> radius(_dim);
+	for (int i = 0; i < _dim; ++i)
+	    radius[i] = _itvls[i].width() / 2;
+
+	return radius;
+    }
+
+    inline std::vector<double> ivec::mid() const {
+	std::vector<double> mid(_dim);
+	for (int i = 0; i < _dim; ++i)
+	    mid[i] = _itvls[i].mid();
+
+	return mid;
+    }
+
+    inline double ivec::maxwidth() const {
+	double wid = 0;
+	for (int i = 0; i < _dim; ++i) {
+	    if (wid < _itvls[i].width()) {
+		wid = _itvls[i].width();
+	    }
+	}
+
+	return wid;
+    }
+
+    inline int ivec::maxdim() const {
+	int maxi = 0;
+	double wid = 0;
+	for (int i = 0; i < _dim; ++i) {
+	    if (wid < _itvls[i].width()) {
+		wid = _itvls[i].width();
+		maxi = i;
+	    }
+	}
+
+	return maxi;
+    }
+
+    inline bool ivec::isout(const ivec &y) const {
+	for (int i = 0; i < _dim; ++i) {
+	    if (_itvls[i].isout(y[i]))
+		return true;
+	}
+
+	return false;
+    }
+
+    inline bool ivec::isout(const std::vector<double> &y) const {
+	for (int i = 0; i < _dim; ++i) {
+	    if (_itvls[i].isout(y[i]))
+		return true;
+	}
+
+	return false;
+    }
+
+    inline bool ivec::isin(const ivec &y) const {
+	for (int i = 0; i < _dim; ++i) {
+	    if (! _itvls[i].isin(y[i]))
+		return false;
+	}
+
+	return true;
+    }
+    
+    inline bool ivec::isin(const std::vector<double> &y) const {
+	for (int i = 0; i < _dim; ++i) {
+	    if (! _itvls[i].isin(y[i]))
+		return false;
+	}
+
+	return true;
+    }
+    
+    inline ivec intersect(const ivec &x, const ivec &y) {
+    	assert(x._dim == y._dim);
+    	ivec r(x._dim);
+    	for (int i = 0; i < x._dim; ++i) {
+    	    r.setval(i, intersect(x[i], y[i]));
+    	}
+    	return r;
+    }
+
+    inline ivec hull(const ivec &x, const ivec &y) {
+    	assert(x._dim == y._dim);
+    	ivec r(x._dim);
+    	for (int i = 0; i < x._dim; ++i) {
+    	    r.setval(i, hull(x[i], y[i]));
+    	}
+    	return r;
+    }
     
 
     // inline bool operator==(const ivec &lhs, const ivec &rhs) {

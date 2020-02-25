@@ -27,7 +27,7 @@ template <> struct Op<rocs::interval>
   static Base myOne() { return myInteger(1);}
   static Base myTwo() { return myInteger(2); }
   static rocs::interval myPos(const rocs::interval& x) { return x; }
-  static rocs::interval myNeg(const rocs::interval& x) { return 0-x; }
+  static rocs::interval myNeg(const rocs::interval& x) { return -x; }
   static rocs::interval& myCadd(rocs::interval& x, const rocs::interval& y) { return x+=y; }
   static rocs::interval& myCsub(rocs::interval& x, const rocs::interval& y) { return x-=y; }
   static rocs::interval& myCmul(rocs::interval& x, const rocs::interval& y) { return x*=y; }

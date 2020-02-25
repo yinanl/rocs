@@ -108,7 +108,7 @@ namespace rocs {
 	 * \brief Negation
 	 * Return a new interval with lower and upper bounds negated.
 	 */
-	interval operator-();
+	interval operator-() const;
         /**
 	 * \brief Add a real value x to (*this) interval.
 	 */
@@ -231,7 +231,7 @@ namespace rocs {
 
     
     /** Inline member functions */
-    inline interval interval::operator-() {
+    inline interval interval::operator-() const {
 	return interval(- m_sup, - m_inf);
     }
     

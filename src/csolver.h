@@ -632,10 +632,14 @@ namespace rocs {
 		/* l1 <- 0, l2 <- 0, only x = 1 */
 		while (!l1.empty()) {
 		    l1.top()->_tag = 0;
+		    l1.top()->_b0 = true;
+		    l1.top()->_b1 = false;
 		    l1.pop();
 		}
 		while (!l2.empty()) {
 		    l2.top()->_tag = 0;
+		    l2.top()->_b0 = true;
+		    l2.top()->_b1 = false;
 		    l2.pop();
 		}
 
@@ -672,7 +676,8 @@ namespace rocs {
 
 	std::stack<SPnode*> G10, G11, G12;
 	std::stack<SPnode*> G20, G21, G22;
-	std::stack<SPnode*> l;
+	// std::stack<SPnode*> l;
+	std::stack<SPnode*> l, ll0, ll2;
 	init_leafque(G10, G21, G12);
 
 	std::cout << "<outer iter>:<# of inner iters>,<current precision parameter>\n";
@@ -695,12 +700,16 @@ namespace rocs {
 		/* G2<- G20 U G22, G2 starts from empty */
 		std::stack<SPnode*> G2;
 		while (!G20.empty()) {
-		    G20.top()->_tag = 1;
+		    // G20.top()->_tag = 1;
+		    G20.top()->_b0 = false;
+		    G20.top()->_b1 = true;
 		    G2.push(G20.top());
 		    G20.pop();
 		}
 		while (!G22.empty()) {
-		    G22.top()->_tag = 1;
+		    // G22.top()->_tag = 1;
+		    G22.top()->_b0 = false;
+		    G22.top()->_b1 = true;
 		    G2.push(G22.top());
 		    G22.pop();
 		}
@@ -716,15 +725,17 @@ namespace rocs {
 	    Gold1 = G11.size();
 	    /* G1<- G10 U G12 */
 	    if (!G12.empty()) {
-	    
 		swap(l, G12);
-		pre_cntl(ptrsys, l, G10, G11, G12, eps);
+		// pre_cntl(ptrsys, l, G10, G11, G12, eps);
+		pre_cntl(ptrsys, l, ll0, G11, ll2, eps);
 	    }
 	    if (!G10.empty()) {
-	    
 		swap(l, G10);
-		pre_cntl(ptrsys, l, G10, G11, G12, eps);
+		// pre_cntl(ptrsys, l, G10, G11, G12, eps);
+		pre_cntl(ptrsys, l, ll0, G11, ll2, eps);
 	    }
+	    swap(ll0, G10); // G10 is empty as a result of swap(l, G10)
+	    swap(ll2, G12);
 
 	    std::cout << eps << '\n';
 

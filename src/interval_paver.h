@@ -200,7 +200,7 @@ namespace rocs {
     void tagging(APPROXTYPE approx);
 
     /**
-     * Tag negation (1-->0, 0-->1).
+     * Tag negation (1-->0, 0-->1, 2-->2, -1-->-1).
      */
     void negate();
 

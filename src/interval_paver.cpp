@@ -306,8 +306,8 @@ namespace rocs {
 
 	    std::vector<SPnode*> lev = leaves(_root);
 	    for (size_t i = 0; i < lev.size(); ++i) {
-
-		lev[i]->_tag = ~ lev[i]->_tag;
+		if (lev[i]->_tag > 0 && lev[i]->_tag < 2)
+		    lev[i]->_tag ^= 1;  // flip between 0 and 1
 	    }
 
 	    tagging(EXACT);

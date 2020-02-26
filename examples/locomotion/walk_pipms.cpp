@@ -44,6 +44,7 @@ const double dz2[] = {-0.05, 0.05};
 
 int main()
 {
+    /* Make sure the subfolder pipms is created. */
     const char *filename = "pipms/data_walk_pipms_D2_004.mat";
     
     /* Sampling time */
@@ -80,9 +81,9 @@ int main()
     // double eta[] = {0.005, 0.005};
     double eta[] = {0.004, 0.004};
     rocs::abstraction<WalkStep> abst1(&step1);
-    abst1.init_state(n, eta, xlb, xub);
+    abst1.init_state(eta, xlb, xub);
     rocs::abstraction<WalkStep> abst2(&step2);
-    abst2.init_state(n, eta, xlb, xub);
+    abst2.init_state(eta, xlb, xub);
 
 
     /* Assign transitions */
@@ -101,8 +102,9 @@ int main()
     RobustSet Rq1(xfoot1, vxapex1, w1*w1, z0, Dx, ds1, dz1);
     //InterSetPIPMs Rinter(&Rq1, &Rq2);
     
-    tb = clock();
+    
     /* Solve the second semi-step */
+    tb = clock();
     std::function<bool(const rocs::ivec &)> in_target =
     	std::bind(&RobustSet::in_robust_set, &Rq2, std::placeholders::_1);
     std::vector<size_t> target = abst2.get_discrete_states(in_target);
@@ -111,18 +113,18 @@ int main()
     /* Determine the guard set */
     std::vector<size_t> guard;
     rocs::ivec x(n);
-    for (int i = 0; i < solver2._winset.size(); ++i) {
-    	if (solver2._winset[i]) {
-	    for (int j = 0; j < n; ++j) {
-		x.setval(j, rocs::interval(abst1._x._data[i][j]-abst1._x._gw[j]/2,
-					   abst1._x._data[i][j]+abst1._x._gw[j]/2));
-	    }
-	    // if (Rinter.in_interset(x)) {
-	    // 	guard.push_back(i);
-	    // }
-	    if (Rq1.in_robust_tube(x)) {
-		guard.push_back(i);
-	    }
+    for (int i = 0; i < solver2._win.size(); ++i) {
+    	if (solver2._win[i]) {
+    	    for (int j = 0; j < n; ++j) {
+    		x.setval(j, rocs::interval(abst1._x._data[i][j]-abst1._x._gw[j]/2,
+    					   abst1._x._data[i][j]+abst1._x._gw[j]/2));
+    	    }
+    	    // if (Rinter.in_interset(x)) {
+    	    // 	guard.push_back(i);
+    	    // }
+    	    if (Rq1.in_robust_tube(x)) {
+    		guard.push_back(i);
+    	    }
     	}
     }
     /* Solve the first semi-step */
@@ -144,9 +146,9 @@ int main()
     wtr.write_real_array(target, "goalset");
     wtr.write_real_array(guard, "guardset");
     wtr.write_real_array(initial, "initset");
-    //wtr.write_transitions(abst2._ts);
+    // wtr.write_transitions(abst2._ts);
     wtr.write_discrete_controller(solver2, "leastctlr2", "optctlr2");
-    //wtr.write_transitions(abst1._ts);
+    // wtr.write_transitions(abst1._ts);
     wtr.write_discrete_controller(solver1, "leastctlr1", "optctlr1");
     wtr.close();
     

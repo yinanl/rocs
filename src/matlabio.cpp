@@ -428,12 +428,12 @@ namespace rocs {
 	for (size_t row = 0; row < dsol._ts->_nx; ++row) {
 
 	    /* write optimal controller [winset, optctlr, value] */
-	    popt[row] = dsol._winset[row];
+	    popt[row] = dsol._win[row];
 	    popt[row + dsol._ts->_nx] = dsol._optctlr[row];
 	    popt[row + dsol._ts->_nx * 2] = dsol._value[row];
 
 	    /* write least restrictive controller */
-	    pleast[row] = dsol._winset[row];
+	    pleast[row] = dsol._win[row];
 	    for (size_t col = 0; col < dsol._ts->_nu; ++col) {
 		pleast[row + dsol._ts->_nx * (col + 1)] = dsol._leastctlr[col + row * dsol._ts->_nu];
 	    }

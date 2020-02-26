@@ -23,9 +23,9 @@ Three simulation cases are designed to evaluate the control performance based on
     * Sliding Model (SM)
   2. robust margin sets and tubes for different modes.
 
-- *walk_pipms.cpp*: generates a control strategy from the initial to final robust margin set in PIPM (for Fig. 19 in [1]).
-- *walk_pipm_ppm.cpp*: generates a control strategy from the initial robust margin set in PIPM to the final robust margin set in PPM (for Fig. 20 in [1]).
-- *integrated_pipms.cpp*, *integrated_pipm_ppm.cpp*, *integrated_ppm_pipm.cpp*, *integrated_pipm_mcm.cpp*, *integrated_mcm_pipm.cpp*: generate local control strategies for the integrated case.
+- *walk_pipms.cpp*: generates a control strategy from the initial to final robust margin set in PIPM (for Fig. 19 in [1]). (Note: Make sure that a subfolder *pipms* is created before running the executable.)
+- *walk_pipm_ppm.cpp*: generates a control strategy from the initial robust margin set in PIPM to the final robust margin set in PPM (for Fig. 20 in [1]). (Note: Make sure that a subfolder *pipm2ppm* is created before running the executable.)
+- *integrated_pipms.cpp*, *integrated_pipm_ppm.cpp*, *integrated_ppm_pipm.cpp*, *integrated_pipm_mcm.cpp*, *integrated_mcm_pipm.cpp*: generate local control strategies for the integrated case. (Note: Make sure that subfolders *integrated/pipms_2*, *integrated/pipm2ppm*, *integrated/ppm2pipm*, *integrated/pipm2mcm*, *integrated/mcm2pipm* are created before running the executables, respectively.)
 
 
 ### Matlab scripts for controlled dynamics simulation

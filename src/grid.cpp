@@ -1,7 +1,7 @@
 /**
  *  grid.cpp
  *
- *  The grid class definition.
+ *  Source file for grid class
  *
  *  Created by Yinan Li on Jan. 21, 2017.
  *
@@ -13,67 +13,19 @@
 
 
 namespace rocs {
-    
-    void grid::init(const int n, const double eta[], const double lb[], const double ub[]) {
-	_dim = n;
-	_gw.assign(eta, eta + n);
-
-	ivec cp(n);
-    
-	_nv = 1;
-	_size.resize(n);
-	_valmin.resize(n);
-	for (int i = 0; i < _dim; ++i) {
-
-	    cp[i] = interval(lb[i], ub[i]);
-
-	    _size[i] = floor((ub[i] - lb[i]) / _gw[i]) + 1;
-
-	    _nv *= _size[i];
-
-	    _valmin[i] = ((ub[i]-lb[i])-floor((ub[i]-lb[i])/eta[i])*eta[i]) / 2. + lb[i];
-	}
-
-	_bds = cp;  // copy assignment (deep copy)
-    }
-
-    void grid::init(const int n, const double eta[], const ivec &x) {
-	_dim = n;
-	_gw.assign(eta, eta + n);
-
-	ivec cp(n);
-    
-	_nv = 1;
-	_size.resize(n);
-	_valmin.resize(n);
-
-	std::vector<double> lb = x.getinf();
-	std::vector<double> ub = x.getsup();
-    
-	for (int i = 0; i < _dim; ++i) {
-	    _size[i] = floor((ub[i] - lb[i]) / _gw[i]) + 1;
-	    _nv *= _size[i];
-	    cp[i] = interval(lb[i], ub[i]);
-	    _valmin[i] = ((ub[i]-lb[i])-floor((ub[i]-lb[i])/eta[i])*eta[i]) / 2. + lb[i];
-	}
-
-	_bds = cp;  // copy assignment (deep copy)
-    }
-
 
     void grid::gridding() {
 	_data.resize(_nv, std::vector<double>(_dim));
 	griddingHelper(_data, _valmin, _gw, _size, _nv);
     }
 
-    void grid::gridding(const int n, const double eta[],
-			const double lb[], const double ub[]) {    
-	init(n, eta, lb, ub);
+    void grid::gridding(const double eta[], const double lb[], const double ub[]) {
+	init(eta, lb, ub);
 	gridding();
     }
 
-    void grid::gridding(const int n, const double eta[], const ivec &x) {
-	init(n, eta, x);
+    void grid::gridding(const double eta[], const ivec &x) {
+	init(eta, x);
 	gridding();
     }
 
@@ -88,196 +40,212 @@ namespace rocs {
 	    number[k] = ceil(1.0 / rp[k]);
 	    subgw[k] = _gw[k] / number[k];
 	    nv *= number[k];
+	    // xmin[k] = xc[k] - _gw[k]/2. + rp[k]*_gw[k]/2.;
 	    xmin[k] = xc[k] - _gw[k]/2. + subgw[k]/2.;
 	}
     
 	std::vector< std::vector<double> > sub(nv, std::vector<double> (_dim));
 	griddingHelper(sub, xmin, subgw, number, nv);
+	
 	return sub;
     }
 
-    void grid::griddingHelper(std::vector<std::vector<double> > &data,
-			      const std::vector<double> &xmin,
-			      const std::vector<double> &gw,
-			      const std::vector<size_t> number,
-			      const size_t nv) {
+    // void grid::griddingHelper(std::vector<std::vector<double> > &data,
+    // 			      const std::vector<double> &xmin,
+    // 			      const std::vector<double> &gw,
+    // 			      const std::vector<size_t> number,
+    // 			      const size_t nv) {
 
-	size_t a, b, r, ik;
+    // 	size_t a, b, r, ik;
 
-	for (size_t i = 0; i < nv; ++i) {
-	    r = i;
-	    a = number[0];
-	    b = 1;
+    // 	for (size_t i = 0; i < nv; ++i) {
+    // 	    r = i;
+    // 	    a = number[0];
+    // 	    b = 1;
 
-	    for (int k = 0; k < _dim; ++k) {
-		ik = (r % a) / b;
-		data[i][k] = xmin[k] + ik * gw[k];
+    // 	    for (int k = 0; k < _dim; ++k) {
+    // 		ik = (r % a) / b;
+    // 		data[i][k] = xmin[k] + ik * gw[k];
 	    
-		if (k < _dim - 1) {
-		    r -= ik * b;
-		    a *= number[k+1];
-		    b *= number[k];
-		} //end if
-	    } //end for k
-	} //end for i
+    // 		if (k < _dim - 1) {
+    // 		    r -= ik * b;
+    // 		    a *= number[k+1];
+    // 		    b *= number[k];
+    // 		} //end if
+    // 	    } //end for k
+    // 	} //end for i
+    // }
+    void grid::griddingHelper(std::vector<std::vector<double> > &data,
+    			      const std::vector<double> &xmin,
+    			      const std::vector<double> &gw,
+    			      const std::vector<size_t> number,
+    			      const size_t nv) {
+
+    	size_t r, ik;
+    	for (size_t i = 0; i < nv; ++i) {
+    	    r = i;
+    	    for (int k = 0; k < _dim; ++k) {
+    		ik = r % number[k];
+    		data[i][k] = xmin[k] + ik * gw[k];
+    		r = r / number[k];
+    	    } //end for k
+    	} //end for i
     }
 
 
-    size_t grid::val_to_id(std::vector<double> val) {
+    // size_t grid::val_to_id(std::vector<double> val) {
 
-	assert(val.size() == _dim);
+    // 	assert(val.size() == _dim);
 
-	size_t index = 0;
-	size_t a = 1;
+    // 	size_t id = 0;
+    // 	size_t a = 1;
     
-	for (int k = 0; k < _dim; ++k) {
+    // 	for (int k = 0; k < _dim; ++k) {
 
-	    index += a * round((val[k] - _valmin[k]) / _gw[k]);
+    // 	    id += a * round((val[k] - _valmin[k]) / _gw[k]);
 
-	    a *= _size[k];
+    // 	    a *= _size[k];
+    // 	}
+
+    // 	return id;
+    // }
+    size_t grid::val_to_id(std::vector<double> val) {
+    	assert(val.size() == _dim);
+	if (_bds.isout(val)) {
+	    throw std::runtime_error("rocs::grid:val_to_id: the input value is not in the state space.\n");
 	}
+    	size_t id = 0;
+    	for (int k = _dim - 1; k > 0; --k) {
+    	    id = _size[k-1] * (id + round((val[k]-_valmin[k])/_gw[k]));
+    	}
+    	id += round((val[0]-_valmin[0])/_gw[0]);
+    	return id;
+    }
 
-	return index;
+    void grid::id_to_val(std::vector<double> &val, size_t id) const {
+	if (id > _nv) {
+	    throw std::runtime_error("rocs::grid:id_to_val: input id is out of range.\n");
+	}
+	size_t ik;
+	for (int k = 0; k < _dim; ++k) {
+	    ik = id % _size[k];
+	    val[k] = _valmin[k] + ik * _gw[k];
+	    id = id / _size[k];
+	}
     }
 
 
     std::vector<size_t> grid::subset(ivec &box, bool boxin, bool strictin) {
-
 	assert(_bds.getdim() == _dim);
-
 	std::vector<size_t> ss;
 
-	if (_bds.isout(box))  // if box is out of range, return empty
+	if (_bds.isout(box))  /* if box is out of range, return empty */
 	    return ss;
 
 	ivec x;
-	if (_bds.isin(box)) {  // if box is not fully inside, check boxin
-
+	if (_bds.isin(box)) {  /* if box is not fully inside, check boxin */
 	    x = box;
-	}
-	else {
-
-	    if (boxin) {
-	    
+	} else {
+	    if (boxin)
 		return ss;
-	    }
-	    else {
-
-		x = intersect(box, _bds);  // take the intersection
-	    }
+	    else 
+		x = intersect(box, _bds);  /* take the intersection */
 	}
-
     
 	/* box and _bds have intersections */
-	std::vector<int> il(_dim);
-	std::vector<int> iu(_dim);
-
-	std::vector<double> xl = x.getinf();
-	std::vector<double> xu = x.getsup();
-	
-	if (strictin) {  // only collect those fully inside box area
-
+	std::vector<int> il(_dim), iu(_dim);
+	std::vector<double> xl(_dim), xu(_dim), xmin(_dim), xmax(_dim);
+	x.getinf(xl); x.getsup(xu);
+	_bds.getinf(xmin); _bds.getsup(xmax);
+	// /********** logging **********/
+	// std::cout << "Index range of each dimension:\n";
+	// /********** logging **********/
+	if (strictin) { /* only collect those fully inside box area */
 	    for (int k = 0; k < _dim; ++k) {
-
 		/* compute the index of the lower bound */
-		if (fabs(xl[k] - _bds.getinf()[k]) < EPSIVAL) {
-
+		if (fabs(xl[k]-xmin[k]) < EPSIVAL) {
 		    /* case 1: box.inf == _bds.inf */
 		    il[k] = 0;
-		}
-		else if (fabs(fmod(xl[k]-_valmin[k], _gw[k]) - _gw[k]/2.) < EPSIVAL) {
-
+		} else if (fabs(fmod(xl[k]-_valmin[k], _gw[k]) - _gw[k]/2.) < EPSIVAL) {
 		    /* case 2: box.inf is on the boundary of a grid */
 		    il[k] = ceil((xl[k] - _valmin[k]) / _gw[k]);
-		}
-		else {
-
-		    /* case 3: rest of the cases */
+		} else {/* case 3: rest of the cases */
 		    il[k] = ceil((xl[k] - _valmin[k]) / _gw[k] + 0.5);
 		}
+		// /********** logging **********/
+		// std::cout << il[k] << ", ";
+		// /********** logging **********/
 
 		/* compute the index of the upper bound */
-		if (fabs(xu[k] - _bds.getsup()[k]) < EPSIVAL) {
-
+		if (fabs(xu[k] - xmax[k]) < EPSIVAL) {
 		    iu[k] = _size[k] - 1;
-		}
-		else if (fabs(fmod(xu[k]-_valmin[k], _gw[k]) - _gw[k]/2.) < EPSIVAL) {
-
+		} else if (fabs(fmod(xu[k]-_valmin[k], _gw[k]) - _gw[k]/2.) < EPSIVAL) {
 		    iu[k] = floor((xu[k] - _valmin[k]) / _gw[k]);
-		}
-		else {
-
+		} else {
 		    iu[k] = floor((xu[k] - _valmin[k]) / _gw[k] - 0.5);
 		}
+		// /********** logging **********/
+		// std::cout << iu[k] << '\n';
+		// /********** logging **********/
 	    }
-	
-	}
-	else {
-
+	} else { /* intersected box area */
 	    for (int k = 0; k < _dim; ++k) {
-
 		if (fabs(fmod(xl[k]-_valmin[k], _gw[k]) - _gw[k]/2.) < EPSIVAL) {
-		
 		    il[k] = ceil((xl[k] - _valmin[k]) / _gw[k]);
-		}
-		else {
-		
+		} else {
 		    il[k] = round((xl[k] - _valmin[k]) / _gw[k]);
 		}
-
 		if (fabs(fmod(xu[k]-_valmin[k], _gw[k]) - _gw[k]/2.) < EPSIVAL) {
-		
 		    iu[k] = floor((xu[k] - _valmin[k]) / _gw[k]);
-		}
-		else {
-		
+		} else {
 		    iu[k] = round((xu[k] - _valmin[k]) / _gw[k]);
 		}
 	    }
 	}
-
-	size_t n = 1;  // n is the number of subset grids
-	std::vector<size_t> base(_dim);
-	base[0] = 1;
+	// /********** logging **********/
+	// for (int k = 0; k < _dim; ++k) {
+	// 	std::cout << "[" << il[k] << " " << iu[k] << "]";
+	// 	if (k < _dim - 1)
+	// 	    std::cout << 'x';
+	// 	else
+	// 	    std::cout << '\n';
+	// }
+	// /********** logging **********/
+	size_t n = 1;
 	std::vector<size_t> range(_dim);
 	for (int k = 0; k < _dim; ++k) {
-
 	    if ( (iu[k] - il[k]) < 0) {
-	    
 		return ss;
-	    }
-	    else {
-	    
+	    } else {
 		range[k] = iu[k] - il[k] + 1;
-
 		n *= range[k];
-
-		if (k > 0)
-		    base[k] = _size[k - 1] * base[k - 1];
 	    }
 	}
 
 	/* generate indices using the index range in each dimension */
 	ss.resize(n);
 	ss[0] = 0;
-	for (int k = 0; k < _dim; ++k) {
-
-	    ss[0] += base[k] * il[k];
-	}
-
-	size_t len = 1;
-	for (int k = 0; k < _dim; ++k) {
-
-	    for (size_t j = 1; j < range[k]; ++j) {
-
-		for (size_t h = 0; h < len; ++h) {
-
-		    ss[h + j*len] = ss[h] + base[k] * j;
-		}
+	for (int k = 0; k < _dim; ++k)
+	    ss[0] += _base[k] * il[k];
+	size_t r, id;
+	for (size_t l = 1; l < n; ++l) {
+	    r = l; id = ss[0];
+	    for (int k = 0; k < _dim; ++k) {
+		// std::cout << "r=" << r << ", range=" << range[k] << ", base=" << _base[k] <<'\n';
+		id += (r % range[k])*_base[k];
+		r /= range[k];
 	    }
-
-	    len *= range[k];
+	    ss[l] = id;
 	}
+	// size_t len = 1;
+	// for (int k = 0; k < _dim; ++k) {
+	//     for (size_t j = 1; j < range[k]; ++j) {
+	// 	for (size_t h = 0; h < len; ++h) {
+	// 	    ss[h + j*len] = ss[h] + _base[k] * j;
+	// 	}
+	//     }
+	//     len *= range[k];
+	// }
     
 	return ss;
     }

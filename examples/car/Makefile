@@ -28,6 +28,9 @@ TARGETS := $(basename $(ESRCS))
 # rules
 all: $(TARGETS)
 
+carAbst: carAbst.o $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+
 carReach1: carReach1.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
 

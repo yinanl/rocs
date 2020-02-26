@@ -94,6 +94,7 @@ namespace rocs {
 	 * (a1.inf,a2.inf,...,an.inf]), vec = [a1] x [a2] x... [an]
 	 */
 	std::vector<double> getinf() const;
+	void getinf(std::vector<double> &inf) const;
 	
 	/**
 	 * \brief Get the upper bound of an interval vector.
@@ -101,6 +102,7 @@ namespace rocs {
 	 * (a1.sup, a2.sup,..., an.sup), vec = [a1] x [a2] x... [an]
 	 */
 	std::vector<double> getsup() const;
+	void getsup(std::vector<double> &sup) const;
 	
 	/**
 	 * \brief Get the dimension of an interval vector.
@@ -233,12 +235,20 @@ namespace rocs {
 
 	return inf;
     }
+    inline void ivec::getinf(std::vector<double> &inf) const {
+	for (int i = 0; i < _dim; ++i)
+	    inf[i] = _itvls[i].getinf();
+    }
     inline std::vector<double> ivec::getsup() const {
 	std::vector<double> sup(_dim);
 	for (int i = 0; i < _dim; ++i) 
 	    sup[i] = _itvls[i].getsup();
 
 	return sup;
+    }
+    inline void ivec::getsup(std::vector<double> &sup) const {
+	for (int i = 0; i < _dim; ++i) 
+	    sup[i] = _itvls[i].getsup();
     }
 
     inline std::vector<double> ivec::width() const {

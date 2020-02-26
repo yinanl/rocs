@@ -77,8 +77,8 @@ void reachability_control(rocs::abstraction<WalkStep> &abst1, const double s1[],
     /* Determine the guard set */
     std::vector<size_t> guard;
     rocs::ivec x(abst1._x._dim);
-    for (int i = 0; i < solver2._winset.size(); ++i) {
-    	if (solver2._winset[i]) {
+    for (int i = 0; i < solver2._win.size(); ++i) {
+    	if (solver2._win[i]) {
     	    for (int j = 0; j < abst1._x._dim; ++j) {
     		x.setval(j, rocs::interval(abst1._x._data[i][j]-abst1._x._gw[j]/2,
     					   abst1._x._data[i][j]+abst1._x._gw[j]/2));
@@ -158,9 +158,9 @@ int main()
     /* Abstraction */
     double eta[] = {0.003, 0.003};
     rocs::abstraction<WalkStep> abst1(&step1);
-    abst1.init_state(n, eta, xlb, xub);
+    abst1.init_state(eta, xlb, xub);
     rocs::abstraction<WalkStep> abst2(&step2);
-    abst2.init_state(n, eta, xlb, xub);
+    abst2.init_state(eta, xlb, xub);
     /* Save grids */
     rocs::matWriter wtr("integrated/pipm2ppm/data_grids_pipm2ppm.mat");
     wtr.open();

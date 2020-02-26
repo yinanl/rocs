@@ -44,10 +44,12 @@ namespace rocs {
 	while (!stk.empty()) {
 	    current = stk.top();
 	    stk.pop();
+	    // std::cout<< j << ", " << current->_box << ", "; //logging
 
 	    if (c.isleaf(current)) { //write leaves
 		lower = current->_box.getinf();
 		upper = current->_box.getsup();
+		// std::cout<< j << ", " << current->_box << std::endl; //for logging
 		for (int i = 0; i < node->_box.getdim(); ++ i)
 		    _txtfile << lower[i] << ' ' << upper[i] << ' ';
 
@@ -64,7 +66,74 @@ namespace rocs {
 
 	    if (current->_right)
 		stk.push(current->_right);
-	    
+
+	    // std::cout << std::endl; //logging
+	}
+    }//txtWriter::write_sptree_leaves
+
+    void txtWriter::write_post_transitions(const fts &nts, const grid &g,
+					   const double xlb[], const double xub[]) {
+	if (!_txtfile.is_open()) {open();}
+
+	size_t n = nts._nx;
+	size_t m = nts._nu;
+	size_t i = 0;
+	bool inx = true;
+	for (size_t row = 0; row < n; ++row) {
+	    inx = true;
+	    for (int k = 0; k < g._dim; ++k) {
+		if (g._data[row][k] > xub[k] || g._data[row][k] < xlb[k]) {
+		    inx = false;
+		    break;
+		}
+	    }
+	    if (inx) {
+		// std::cout << row << ':';
+		// for (int k = 0; k < g._dim; ++k)
+		//     std::cout << g._data[row][k] << ',';
+		// std::cout << '\n';
+		for (size_t col = 0; col < m; ++col) {
+		    // std::cout << nts._npost[row*m+col] << '\n';
+		    for (size_t l = 0; l < nts._npost[row*m+col]; ++l) {
+			_txtfile << ++i << ' ';
+			_txtfile << row << ' ' << col << ' ' << nts._idpost[nts._ptrpost[row*m+col]+l];
+			_txtfile << '\n';
+		    }
+		}
+	    }
+	}
+    }
+
+    void txtWriter::write_pre_transitions(const fts &nts, const grid &g,
+					  const double xlb[], const double xub[]) {
+	if (!_txtfile.is_open()) {open();}
+
+	size_t n = nts._nx;
+	size_t m = nts._nu;
+	size_t i = 0;
+	bool inx = true;
+	for (size_t row = 0; row < n; ++row) {
+	    inx = true;
+	    for (int k = 0; k < g._dim; ++k) {
+		if (g._data[row][k] > xub[k] || g._data[row][k] < xlb[k]) {
+		    inx = false;
+		    break;
+		}
+	    }
+	    if (inx) {
+		std::cout << row << ':';
+		for (int k = 0; k < g._dim; ++k)
+		    std::cout << g._data[row][k] << ',';
+		std::cout << '\n';
+		for (size_t col = 0; col < m; ++col) {
+		    // std::cout << nts._npost[row*m+col] << '\n';
+		    for (size_t l = 0; l < nts._npre[row*m+col]; ++l) {
+			_txtfile << ++i << ' ';
+			_txtfile << nts._idpre[nts._ptrpre[row*m+col]+l] << ' ' << col << ' ' << row;
+			_txtfile << '\n';
+		    }
+		}
+	    }
 	}
     }
 

@@ -57,6 +57,7 @@ const double zeta_r2[] = {-1000000, -0.1};
 
 int main()
 {
+    /* Make sure the subfolder pipm2ppm is created. */
     const char *filename = "pipm2ppm/data_walk_pipm2ppm_D1_005.mat";
     /* Sampling time */
     double tau = 0.02; //<=0.05
@@ -94,9 +95,9 @@ int main()
     
     /* Abstraction */
     rocs::abstraction<WalkStep> abst1(&step1);
-    abst1.init_state(n, eta, xlb, xub);
+    abst1.init_state(eta, xlb, xub);
     rocs::abstraction<WalkStep> abst2(&step2);
-    abst2.init_state(n, eta, xlb, xub);
+    abst2.init_state(eta, xlb, xub);
 
 
     /* Assign transitions */
@@ -131,8 +132,8 @@ int main()
     /* Determine the guard set */
     std::vector<size_t> guard;
     rocs::ivec x(n);
-    for (int i = 0; i < solver2._winset.size(); ++i) {
-    	if (solver2._winset[i]) {
+    for (int i = 0; i < solver2._win.size(); ++i) {
+    	if (solver2._win[i]) {
 	    for (int j = 0; j < n; ++j) {
 		x.setval(j, rocs::interval(abst1._x._data[i][j]-abst1._x._gw[j]/2,
 					   abst1._x._data[i][j]+abst1._x._gw[j]/2));

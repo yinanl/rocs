@@ -46,7 +46,7 @@ namespace rocs {
 	 * @param ws state space (an interval vector).
 	 */
 	System(const char *name, const double t, const int xd, const int ud = 1):
-	    _name(name),_tau(t),_xdim(xd),_workspace(xd),_udim(ud) {} //treat as no control if don't specify it.
+	    _name(name),_tau(t),_xdim(xd),_workspace(xd),_udim(ud),_ugrid(ud) {} //treat as no control if don't specify it.
 
 
 	/**
@@ -71,7 +71,7 @@ namespace rocs {
 	 * @param ub[] an array of upper bound.
 	 */
 	void init_inputset(const double mu[], const double lb[], const double ub[]) {
-	    _ugrid.init(_udim, mu, lb, ub);
+	    _ugrid.init(mu, lb, ub);
 	    _ugrid.gridding();
 	}
 	/**

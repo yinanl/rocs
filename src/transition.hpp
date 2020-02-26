@@ -33,7 +33,7 @@ class fts {
 				    for each state and input [n x m] */
     std::vector<size_t> _ptrpost;  /**< [Nx x Nu] the index in _npost of the first post 
 				      for state i under input j: _ptrpost[i*Nu+j] */
-    std::vector<double> _cost;  /**< [_ntrans] a list of costs for each transition */
+    std::vector<double> _cost;  /**< [Nx x Nu] a list of costs for every state i under input j */
 
     /**
      * Constructor: assign all numbers 0.
@@ -45,7 +45,9 @@ class fts {
      * @param m number of inputs
      */
     fts(size_t n, size_t m) : _nx(n), _nu(m), _ntrans(0),
-			      _npre(n*m), _ptrpre(n*m), _npost(n*m), _ptrpost(n*m) {}
+			      _npre(n*m,0), _ptrpre(n*m,0),
+			      _npost(n*m,0), _ptrpost(n*m,0),
+			      _cost(n*m, 0) {}
 
     /**
      * Initialization: assign numbers of states and inputs, number of transitions is 0.
@@ -60,6 +62,7 @@ class fts {
 	_npre.resize(n*m, 0);
 	_ptrpost.resize(n*m, 0);
 	_ptrpre.resize(n*m, 0);
+	_cost.resize(n*m, 0);
     }
 
 
@@ -85,12 +88,8 @@ class fts {
      * @param ju a input id.
      * @return a list of costs of transitions from ix under ju.
      */
-    std::vector<double> get_cost(const size_t ix, const size_t ju) {
-
-	std::vector<double>::iterator ptr = _cost.begin() + _ptrpost[ix*_nu+ju];
-	std::vector<double> costs(ptr, ptr + _npost[ix*_nu+ju]);
-
-	return costs;
+    double get_cost(const size_t ix, const size_t ju) {
+	return _cost[ix*_nu+ju];
     }
     
 

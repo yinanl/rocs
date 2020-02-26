@@ -59,8 +59,8 @@ public:
 	     Mode md, const double xc) : System(name, t, xd, ud),
 					 _md(md), _xloc(xc) {}
 
-    std::vector<rocs::ivec> get_reach_set(const rocs::ivec &x) {    
-	std::vector<rocs::ivec> y(_ugrid._nv, _xdim);
+    void get_reach_set(std::vector<rocs::ivec> &y, const rocs::ivec &x) {    
+	// std::vector<rocs::ivec> y(_ugrid._nv, _xdim);
 	double d1, d2;
 	rocs::Rn w;
 	
@@ -128,7 +128,7 @@ public:
 	    break;
 	}
 
-	return y;
+	// return y;
     }// get_reach_set()
     
 };

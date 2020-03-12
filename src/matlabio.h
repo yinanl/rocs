@@ -19,7 +19,7 @@
 
 #include "grid.h"
 #include "csolver.h"
-#include "transition.h"
+#include "transition.hpp"
 #include "dsolver.h"
 
 

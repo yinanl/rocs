@@ -85,7 +85,10 @@ int main()
     
     // solver.reach_stay(0.1, ABSMAX, 0.1, ABSMAX);
     // solver.invariance_control(0.5, ABSMAX);
-    solver.cobuchi(&tpcReachstay, 0.15, rocs::ABSMAX, 0.15, rocs::ABSMAX);
+    double ei[]{0.15, 0.15};
+    double er[]{0.15, 0.15};
+    // solver.cobuchi(&tpcReachstay, 0.15, rocs::ABSMAX, 0.15, rocs::ABSMAX);
+    solver.cobuchi(&tpcReachstay, ei, er);
     solver.print_controller_info();
 
     /* save the problem data and the solution */

@@ -63,24 +63,37 @@ namespace rocs {
 	flowTaylor(const P u, params *pdata,
 		   const double T=0.01, const double delta=0,
 		   const double K=1.0):
-	    _tau(T),_delta(delta),_K(K),_parameters(pdata),
-	    _p(F::n),_u(F::n),_xenc(F::n) {
+	    _tau(T),_delta(delta),_K(K),_kbar(1),_wbar(0),
+	    _parameters(pdata),_p(F::n),_u(F::n),_xenc(F::n) {
 	    
 	    F(frems, yrems, u);
 	    F(fterms, yterms, u);
-	    
 	    construct_helper();
+	    
+#ifdef LOGGING
+	    std::cout << "LOGGING: Taylor model.\n"
+		      << "K=" << _K
+		      << ", log((1-alpha)*delta/K)=" << _logdel1
+		      << ", log(tau)=" << _logdel2
+		      << '\n';
+#endif
 	}
 	flowTaylor(params *pdata,
 		   const double T=0.01, const double delta=0,
 		   const double K=1.0):
-	    _tau(T),_delta(delta),_K(K),_parameters(pdata),
-	    _p(F::n),_u(F::n),_xenc(F::n) {
+	    _tau(T),_delta(delta),_K(K),_kbar(1),_wbar(0),
+	    _parameters(pdata),_p(F::n),_u(F::n),_xenc(F::n) {
 	    
 	    F(frems, yrems);
 	    F(fterms, yterms);
-
 	    construct_helper();
+#ifdef LOGGING
+	    std::cout << "LOGGING: Taylor model.\n"
+		      << "K=" << _K
+		      << ", log((1-alpha)*delta/K)=" << _logdel1
+		      << ", log(tau)=" << _logdel2
+		      << '\n';
+#endif
 	}
 	/**
 	 * Pre-computation of some coefficients:
@@ -153,12 +166,15 @@ namespace rocs {
 		    yrems[j][i] = frems[j][i-1];
 		    w1 = yrems[j][i].width() > w1 ? yrems[j][i].width() : w1;
 		}
+#ifdef LOGGING
 		std::cout << "K for " << i << "th derivative= " << w1/w0 << '\n';
+#endif
 		
 		K = w1/w0 > K ? w1/w0 : K;
 	    }
+#ifdef LOGGING
 	    std::cout << "K= " << K << '\n';
-
+#endif
 	    return K;
 	}
 
@@ -216,7 +232,9 @@ namespace rocs {
 	 * @return 1 if success and 0 otherwise.
 	 */
 	bool compute_reachset_valid(ivec &y, const ivec &x) {
-
+#ifdef LOGGING
+	    std::cout << "LOGGING: compute_reachset_valid.\n";
+#endif
 	    /* compute valid reach set first */
 	    bool accept = false;
 	    for (int j = 0; j < F::n; ++j) {
@@ -236,6 +254,9 @@ namespace rocs {
 		ratio = 0;
 		for (int j = 0; j < F::n; ++j) {
 		    fterms[j].eval(k-1);
+#ifdef LOGGING
+		    std::cout << fterms[j][k-1] << ',';
+#endif
 		    yterms[j][k] = _tau * fterms[j][k-1]/double(k);
 
 		    y[j] += yterms[j][k];  // tight enclosure: f^[i]([x])t^i
@@ -246,12 +267,26 @@ namespace rocs {
 		    a = _u[j].width()/_p[j].width();
 		    ratio = ratio >= a ? ratio : a;
 		}
-		
-		++k;  // k is 1 order higher
-	    }
+#ifdef LOGGING
+		std::cout << "\ny[" << k << "] = ";
+		for (int j = 0; j < F::n; ++j) {
+		    std::cout << y[j];
+		    if (j < F::n-1)
+			std::cout << 'x';
+		    else
+			std::cout << '\n';
+		}
+#endif
+		++k;
+	    } /* end while */
+	    
+#ifdef LOGGING
+	    std::cout << "Before validation: "
+		      << "k=" << k-1 << ", kbar=" << _kbar << '\n';
+#endif
 
 	    /*** verify k ***/
-	    do {
+	    do {/* the current k is the actual k+1 because of ++k */
 		eval_taylor_apriori(_p, k);
 		for (int j = 0; j < F::n; ++j) { // compute u: f^[k](p)t^k[0,1]
 		    _u[j] = yrems[j][k] * I;
@@ -279,7 +314,11 @@ namespace rocs {
 		++k;
 		
 	    } while (k <= _parameters->kmax);
-
+#ifdef LOGGING
+	    std::cout << "After validation: "
+		      << "k=" << k << ", kbar=" << _kbar
+		      << ", accept= " << accept << '\n';
+#endif
 	    
 	    /*** output a tight enclosure ***/
 	    for (int j = 0; j < F::n; ++j)  // the remainder term (k term)
@@ -356,8 +395,8 @@ namespace rocs {
 	params *_parameters;  /**< The pointer to a parameters class. */
 
 	double _logdel1, _logdel2;  /**< The variables to store intermediate info. */
-	ivec _p;
-	ivec _u;
+	ivec _p;  /**< sum of yterms[i]*[0,1] */
+	ivec _u;  /**< yrem*/
 	ivec _xenc;
 
 	/**

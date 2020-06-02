@@ -166,9 +166,9 @@ namespace rocs {
 	    for (int k = 0; k < n; ++k)
 		xbds.setval(k, interval(xmin[k], xmax[k]));
 	    
-	    // ivec ie2(n);
-	    // for (int j = 0; j < n; ++j)
-	    // 	ie2.setval(j, interval(-e2[j],e2[j]));
+	    ivec ie2(n);
+	    for (int j = 0; j < n; ++j)
+	    	ie2.setval(j, interval(-e2[j],e2[j]));
 	
 	    ivec y0(n);
 	    std::vector<ivec> yt(nu, ivec(n));
@@ -193,7 +193,7 @@ namespace rocs {
 		if (!yt.empty()) {
 		    /* loop inputs */
 		    for (size_t col = 0; col < nu; ++col) {
-			// yt[col] = yt[col] + ie2; /* this operation is slow */
+			// yt[col] += ie2;
 		    
 			/* Skip the yt[col] that is out of the domain _bds.
 			 * No need to delete the transitions to avoid area, since they are sinks.

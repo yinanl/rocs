@@ -24,11 +24,10 @@ INCS := -I$(BSTDIR)/include \
 LIBS := -larmadillo -lmat -leng -lmx
 LIBTEST := -lboost_unit_test_framework-mt
 
-CXXFLAGS := -Wall -g\
-	$(DEBUG) $(OPT) $(EXTRA_OPT) \
+CXXFLAGS := -Wall -Wextra -g\
+	$(DEBUG) $(OPT) $(EXTRA_OPT)\
 	-std=c++11 -stdlib=libc++
 
 LDFLAGS := -L$(BSTDIR)/lib \
 	-L$(LADIR)/lib \
 	-L$(MATDIR)/bin/maci64 -rpath $(MATDIR)/bin/maci64
-

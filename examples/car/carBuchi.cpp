@@ -48,7 +48,8 @@ int main()
     solver.init_goal_area();
     solver.init(rocs::AVOID, olb, oub);
     solver.init_avoid_area();
-    solver.buchi(&carBuchi, rocs::ABSMAX, 0.2);
+    const double eta[]{0.2, 0.2, 0.2};
+    solver.buchi(&carBuchi, eta);
     solver.print_controller_info();
     
     /* Save the specification and controller */

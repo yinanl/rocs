@@ -70,23 +70,30 @@ int main()
     vdproa.allocate_flows();
 
     /* compute ROA */
+    double approx[]{0.01, 0.01};
     /* eps = 0.03 */
-    rocs::CSolver solver1(&vdproa);
-    solver1.init(rocs::GOAL, &roa_core<rocs::ivec>, 0.01);
+    double e1[]{0.03, 0.03};
+    rocs::CSolver solver1(&vdproa, rocs::ABSMAX);
+    solver1.init(rocs::GOAL, &roa_core<rocs::ivec>, approx);
     solver1.init_goal_area();
-    solver1.cobuchi(&vdproa, 0.03, rocs::ABSMAX, 0.03, rocs::ABSMAX);
+    solver1.cobuchi(&vdproa, e1, e1);
+    // solver1.cobuchi(&vdproa, 0.03, rocs::ABSMAX, 0.03, rocs::ABSMAX);
     solver1.print_controller_info();
     /* eps = 0.01 */
-    rocs::CSolver solver2(&vdproa);
-    solver2.init(rocs::GOAL, &roa_core<rocs::ivec>, 0.01);
+    double e2[]{0.01, 0.01};
+    rocs::CSolver solver2(&vdproa, rocs::ABSMAX);
+    solver2.init(rocs::GOAL, &roa_core<rocs::ivec>, approx);
     solver2.init_goal_area();
-    solver2.cobuchi(&vdproa, 0.01, rocs::ABSMAX, 0.01, rocs::ABSMAX);
+    solver2.cobuchi(&vdproa, e2, e2);
+    // solver2.cobuchi(&vdproa, 0.01, rocs::ABSMAX, 0.01, rocs::ABSMAX);
     solver2.print_controller_info();
     /* eps = 0.005 */
+    double e3[]{0.005, 0.005};
     rocs::CSolver solver3(&vdproa);
-    solver3.init(rocs::GOAL, &roa_core<rocs::ivec>, 0.01);
+    solver3.init(rocs::GOAL, &roa_core<rocs::ivec>, approx);
     solver3.init_goal_area();
-    solver3.cobuchi(&vdproa, 0.005, rocs::ABSMAX, 0.005, rocs::ABSMAX);
+    solver3.cobuchi(&vdproa, e3, e3);
+    // solver3.cobuchi(&vdproa, 0.005, rocs::ABSMAX, 0.005, rocs::ABSMAX);
     solver3.print_controller_info();
     
     

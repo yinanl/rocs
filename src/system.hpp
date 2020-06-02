@@ -13,11 +13,10 @@
 #ifndef _system_h_
 #define _system_h_
 
-
+#include <stdlib.h>
 #include "grid.h"
 #include "interval.h"
 #include "interval_vector.h"
-
 #include "flow_taylor.hpp"
 
 
@@ -171,7 +170,7 @@ namespace rocs {
 	
 	CTCntlSys(const char *name, const double t, const int xd, const int ud,
 		  const double d, params *p):
-	    ContinuousTime(name, t, xd, d, p) {}
+	    ContinuousTime(name, t, xd, ud, d, p) {}
 
 	
 	void allocate_flows() {
@@ -191,8 +190,16 @@ namespace rocs {
 	}
     
 	void get_reach_set(std::vector<ivec> &xt, const ivec &x0) {
-	    for (size_t i = 0; i < _ugrid._nv; ++i)
-		_flows[i]->reachset_robust(xt[i], x0, _ptrparams->eps);
+	    for (size_t i = 0; i < _ugrid._nv; ++i) {
+		// _flows[i]->reachset_robust(xt[i], x0, _ptrparams->eps);
+		if (!_flows[i]->reachset_robust(xt[i], x0, _ptrparams->eps)) {
+		    std::cout << "Not valid reachable set for x = " << x0 << '\n'
+			      << "Current control input u = ";
+		    for (size_t j = 0; j < _ugrid._dim; ++j)
+			std::cout << _ugrid._data[i][j] << '\n';
+		    exit(EXIT_FAILURE);
+		}
+	    }
 	}
     
     };
@@ -227,8 +234,15 @@ namespace rocs {
 	}
     
 	void get_reach_set(std::vector<ivec> &xt, const ivec &x0) {
-	    for (size_t i = 0; i < _ugrid._nv; ++i)
-		_flows[i]->reachset_robust(xt[i], x0, _ptrparams->eps);
+	    for (size_t i = 0; i < _ugrid._nv; ++i) {
+		if(!_flows[i]->reachset_robust(xt[i], x0, _ptrparams->eps)) {
+		    std::cout << "Not valid reachable set for x = " << x0 << '\n'
+			      << "Current control input u = ";
+		    for (size_t j = 0; j < _ugrid._dim; ++j)
+			std::cout << _ugrid._data[i][j] << '\n';
+		    exit(EXIT_FAILURE);
+		}
+	    }
 	}
     
     };
@@ -260,7 +274,10 @@ namespace rocs {
 	}
     
 	void get_reach_set(std::vector<ivec> &xt, const ivec &x0) {
-	    _flows[0]->reachset_robust(xt[0], x0, _ptrparams->eps);
+	    if(!_flows[0]->reachset_robust(xt[0], x0, _ptrparams->eps)) {
+		std::cout << "Not valid reachable set for x = " << x0 << '\n';
+		exit(EXIT_FAILURE);
+	    }
 	}
     
     };

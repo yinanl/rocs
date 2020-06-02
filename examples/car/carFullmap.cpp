@@ -37,8 +37,7 @@ int main()
     carReach.init_inputset(mu, ulb, uub);
 
     /* set precision */
-    const double e = 0.1;
-    const double ehalf = e/2.0;
+    const double e[] = {0.2, 0.2, 0.2};
 
     /* set the specifications */
     double glb[] = {9, 0, -theta};  // goal area
@@ -89,35 +88,27 @@ int main()
 			 { 9.3, 2.3, -theta},
 			 { 10, 2.5, theta}
     }; // obstacles
-
-
     
     /* initialize problem setting */
     rocs::CSolver solver(&carReach);
-    
     solver.init(rocs::GOAL, glb, gub);
     solver.init_goal_area();
     double OBS1[30][3];
     for (size_t i = 0; i < 15; ++i) {
-	OBS1[2*i][0] = OBS[2*i][0] - ehalf < xlb[0]? OBS[2*i][0] : OBS[2*i][0] - ehalf ;
-	OBS1[2*i][1] = OBS[2*i][1] - ehalf < xlb[1]? OBS[2*i][1] : OBS[2*i][1] - ehalf;
+	OBS1[2*i][0] = OBS[2*i][0] - e[0]/2.0 < xlb[0]? OBS[2*i][0] : OBS[2*i][0] - e[0]/2.0;
+	OBS1[2*i][1] = OBS[2*i][1] - e[1]/2.0 < xlb[1]? OBS[2*i][1] : OBS[2*i][1] - e[1]/2.0;
 	OBS1[2*i][2] = OBS[2*i][2];
-	OBS1[2*i+1][0] = OBS[2*i+1][0] + ehalf > xub[0]? OBS[2*i+1][0] : OBS[2*i+1][0] + ehalf;
-	OBS1[2*i+1][1] = OBS[2*i+1][1] + ehalf > xub[1]? OBS[2*i+1][1] : OBS[2*i+1][1] + ehalf;
+	OBS1[2*i+1][0] = OBS[2*i+1][0] + e[0]/2.0 > xub[0]? OBS[2*i+1][0] : OBS[2*i+1][0] + e[0]/2.0;
+	OBS1[2*i+1][1] = OBS[2*i+1][1] + e[1]/2.0 > xub[1]? OBS[2*i+1][1] : OBS[2*i+1][1] + e[1]/2.0;
 	OBS1[2*i+1][2] = OBS[2*i+1][2];
     	solver.init(rocs::AVOID, OBS1[2*i], OBS1[2*i+1]);
     }
     solver.init_avoid_area();
     solver.print_controller_info();
-
-
     
     /* solve the problem: use interval paver_test */
-    // solver.reachability_control(&carReach, e, rocs::ABSMAX);
-    solver.cobuchi(&carReach, e, rocs::ABSMAX, e, rocs::ABSMAX);
+    solver.reachability_control(&carReach, e);
     solver.print_controller_info();
-
-    
     
     /* save the problem data and the solution */
     rocs::matWriter wtr("data_carFullmap.mat");

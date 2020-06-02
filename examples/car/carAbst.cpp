@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
 
     /* Robustness margins */
     double e1[] = {0,0};
-    double e2[] = {0,0};
+    double e2[] = {0.001, 0.001};
     
     /* define the control system */
     rocs::DTCntlSys<carde> car("reach goal", h, carde::n, carde::m);

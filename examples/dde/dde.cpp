@@ -95,9 +95,10 @@ int main()
     // double gub[] = {1, 1};
 
     // /* solve the problem */
-    // rocs::CSolver solver(&ddeInv);
+    // rocs::CSolver solver(&ddeInv, rocs::RELMAXG);
+    // double eps[]{0.001, 0.001};
     // solver.init(rocs::GOAL, glb, gub);
-    // solver.invariance_control(&ddeInv, 0.001, rocs::RELMAXG);
+    // solver.invariance_control(&ddeInv, eps);
     // solver.print_controller_info();
 
 
@@ -106,9 +107,11 @@ int main()
     double xub[] = {2, 2, 2, 2};
     rocs::DTSys<dde4> ddeInv("dcdc", 1, dde4::n);
     ddeInv.init_workspace(xlb, xub);
-    rocs::CSolver solver(&ddeInv);
-    solver.init(rocs::GOAL, &cset<rocs::ivec>, 0.1);
-    solver.invariance_control(&ddeInv, 0.01, rocs::ABSMAX);
+    
+    rocs::CSolver solver(&ddeInv, rocs::ABSMAX);
+    double eps[]{0.1, 0.1, 0.1, 0.1};
+    solver.init(rocs::GOAL, &cset<rocs::ivec>, eps);
+    solver.invariance_control(&ddeInv, eps);
     solver.print_controller_info();
     std::cout << solver._ctlr._root->_box.getdim() <<'\n';
 

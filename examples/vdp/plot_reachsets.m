@@ -127,12 +127,10 @@ for p= 1:3
     axis equal
     axis([xbl-xwid/2 xbl+xwid*1.5 ybl-ywid/2 ybl+ywid*1.5])
     xlabel({'$x_1$'}, 'interpreter','latex',...
-        'FontUnits','points', 'FontSize',16,...
-        'FontName','Times', 'FontWeight','bold')
+        'FontSize',16, 'FontName','Times', 'FontWeight','bold')
     
     ylabel({'$x_2$'}, 'interpreter','latex',...
-        'FontUnits','points', 'FontSize',16,...
-        'FontName','Times', 'FontWeight','bold')
+        'FontSize',16, 'FontName','Times', 'FontWeight','bold')
 
 end
 
@@ -181,12 +179,10 @@ q.LineWidth= 2;
 % % format display
 axis([O(1,1),O(1,2),O(2,1),O(2,2)])
 xlabel({'$x_1$'}, 'interpreter','latex',...
-    'FontUnits','points', 'FontSize',16,...
-    'FontName','Times', 'FontWeight','bold')
+    'FontSize',16, 'FontName','Times', 'FontWeight','bold')
 
 ylabel({'$x_2$'}, 'interpreter','latex',...
-    'FontUnits','points', 'FontSize',16,...
-    'FontName','Times', 'FontWeight','bold')
+    'FontSize',16, 'FontName','Times', 'FontWeight','bold')
 
 % % annotation
 a1= annotation('ellipse',[.57 .55 .03 .03], 'Color', green);

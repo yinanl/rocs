@@ -177,61 +177,37 @@ int main() {
     double glb[] = {L+L/2.0+ceps, 0.5, -M_PI*3.0/180.0};
     double gub[] = {L+L/2.0+d-2*ceps, 0.6, M_PI*3.0/180.0};
     
-    rocs::CSolver solver(&carParking);
+    rocs::CSolver solver(&carParking, rocs::ABSMAX);
     solver.init(rocs::GOAL, glb, gub);
     solver.init_goal_area();
-    
-    solver.init(rocs::AVOID, &cst_v5<rocs::ivec>, ceps);
-    solver.init(rocs::AVOID, &cst_v6<rocs::ivec>, ceps);
-    solver.init(rocs::AVOID, &cst_v7<rocs::ivec>, ceps);
-    solver.init(rocs::AVOID, &cst_v8<rocs::ivec>, ceps);
-    solver.init(rocs::AVOID, &cst_v1rear<rocs::ivec>, ceps);
-    solver.init(rocs::AVOID, &cst_v1front<rocs::ivec>, ceps);
-    solver.init(rocs::AVOID, &cst_v1curb<rocs::ivec>, ceps);
-    solver.init(rocs::AVOID, &cst_v2rear<rocs::ivec>, ceps);
-    solver.init(rocs::AVOID, &cst_v2front<rocs::ivec>, ceps);
-    solver.init(rocs::AVOID, &cst_v2curb<rocs::ivec>, ceps);
-    solver.init(rocs::AVOID, &cst_v3rear<rocs::ivec>, ceps);
-    solver.init(rocs::AVOID, &cst_v3front<rocs::ivec>, ceps);
-    solver.init(rocs::AVOID, &cst_v3curb<rocs::ivec>, ceps);
-    solver.init(rocs::AVOID, &cst_v4rear<rocs::ivec>, ceps);
-    solver.init(rocs::AVOID, &cst_v4front<rocs::ivec>, ceps);
-    solver.init(rocs::AVOID, &cst_v4curb<rocs::ivec>, ceps);
+    const double e[]{ceps, ceps, ceps};
+    solver.init(rocs::AVOID, &cst_v5<rocs::ivec>, e);
+    solver.init(rocs::AVOID, &cst_v6<rocs::ivec>, e);
+    solver.init(rocs::AVOID, &cst_v7<rocs::ivec>, e);
+    solver.init(rocs::AVOID, &cst_v8<rocs::ivec>, e);
+    solver.init(rocs::AVOID, &cst_v1rear<rocs::ivec>, e);
+    solver.init(rocs::AVOID, &cst_v1front<rocs::ivec>, e);
+    solver.init(rocs::AVOID, &cst_v1curb<rocs::ivec>, e);
+    solver.init(rocs::AVOID, &cst_v2rear<rocs::ivec>, e);
+    solver.init(rocs::AVOID, &cst_v2front<rocs::ivec>, e);
+    solver.init(rocs::AVOID, &cst_v2curb<rocs::ivec>, e);
+    solver.init(rocs::AVOID, &cst_v3rear<rocs::ivec>, e);
+    solver.init(rocs::AVOID, &cst_v3front<rocs::ivec>, e);
+    solver.init(rocs::AVOID, &cst_v3curb<rocs::ivec>, e);
+    solver.init(rocs::AVOID, &cst_v4rear<rocs::ivec>, e);
+    solver.init(rocs::AVOID, &cst_v4front<rocs::ivec>, e);
+    solver.init(rocs::AVOID, &cst_v4curb<rocs::ivec>, e);
     solver.init_avoid_area();
     
     solver._ctlr.retract();
     solver.print_controller_info();
 
-    // /* setting 1: wide space */
-    // double glb[] = {3.25, 0.5, -M_PI*3.0/180.0};  // goal area
-    // double gub[] = {3.75, 0.6, M_PI*3.0/180.0};
-    
-    // double olb1[] = {0.0, 0.0, alb};  // rear car: [0,2]x[0,1]
-    // double oub1[] = {3.0, 1.7, aub};
-    // double olb2[] = {5.0, 0.0, alb};  // front car: [6,8]x[0,1]
-    // double oub2[] = {8.0, 1.7, aub};
-
-    // /* setting 2: narrow space */
-    // double glb[] = {3.02, 0.5, -M_PI*3.0/180.0};  // goal area
-    // double gub[] = {3.22, 0.6, M_PI*3.0/180.0};
-    
-    // double olb1[] = {0.0, 0.0, alb};  // rear car: [0,2]x[0,1]
-    // double oub1[] = {3.0, 1.7, aub};
-    // double olb2[] = {3.3, 0.0, alb};  // front car: [4.3,6.3]x[0,1]
-    // double oub2[] = {6.3, 1.7, aub};
-
-    // rocs::CSolver solver(&carParking);
-    // solver.init(rocs::GOAL, glb, gub);
-    // solver.init(rocs::AVOID, olb1, oub1);
-    // Solver.init(rocs::AVOID, olb2, oub2);
-
-    // solver.cobuchi(&carParking, 0.1, rocs::RELMAXG, 0.2, rocs::RELMAXW, 0.04, true);
-    // solver.print_controller_info();
-
-
     /* solve the problem */
-    double seps = 0.02;
-    solver.cobuchi(&carParking, seps, rocs::ABSMAX, 0.2, rocs::ABSMAX, seps, true);
+    const double ei[] = {0.02, 0.02, 0.02};
+    const double er[] = {0.2, 0.2, 0.2};
+    const double ermin[] = {0.02, 0.02, 0.02};
+    solver.cobuchi(&carParking, ei, er, true, ermin);
+    // solver.cobuchi(&carParking, seps, rocs::ABSMAX, 0.2, rocs::ABSMAX, seps, true);
     solver.print_controller_info();
 
     /* save data to file */

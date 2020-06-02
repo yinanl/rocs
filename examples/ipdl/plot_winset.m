@@ -7,8 +7,7 @@ addpath('../../matlab')
 % - Workarea: X.
 % - Sampling time: ts.
 % - Target area: G.
-load('data_ipdl_spec.mat')
-load('data_ipdl_cbox_cobuchi.mat')
+load('data_ipdlCobuchi.mat')
 
 
 %% diplay winning set

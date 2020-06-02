@@ -79,11 +79,13 @@ int main() {
     double gub[] = {0.05, 0.01};
 
     /* solve the problem */
-    rocs::CSolver solver(&ipdl, 100);
+    rocs::CSolver solver(&ipdl, rocs::RELMAX, 100);
     solver.init(rocs::GOAL, glb, gub);
     solver.init_goal_area();
-    
-    solver.cobuchi(&ipdl, 0.001, rocs::RELMAXG, 0.04, rocs::RELMAXW, 0.002, true);
+    double ei[]{0.001, 0.001};
+    double er[]{0.04, 0.04};
+    double ermin[]{0.002, 0.002};
+    solver.cobuchi(&ipdl, ei, er, true, ermin);
     solver.print_controller_info();
 
     /* save the problem data and the solution */

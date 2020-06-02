@@ -15,7 +15,7 @@
 
 namespace rocs {
 
-    int CSolver::bisect_axis(ivec &box) {
+    int CSolver::bisect_axis(ivec &box, const double eps[]) {
 
 	int axis = 0;
 	double ri, r = 0;
@@ -24,25 +24,14 @@ namespace rocs {
 	case ABSMAX:
 	    axis = box.maxdim();
 	    break;
-
-	case RELMAXW:
-	
+	case RELMAX:
 	    for (int i = 0; i < _xdim; ++i) {
-		ri = box[i].width()/_ctlr._root->_box.width()[i];
+		ri = box[i].width()/eps[i];
 		if (ri > r) {
 		    axis = i;
 		    r = ri;
-		}  // end if
-	    }  // end for
-	    break;
-	case RELMAXG:
-	    for (int i = 0; i < _xdim; ++i) {
-		ri = box[i].width()/_goalsize[i];
-		if (ri > r) {
-		    axis = i;
-		    r = ri;
-		}  // end if
-	    }  // end for
+		}
+	    }
 	    break;
 	default:
 	    break;
@@ -58,7 +47,7 @@ namespace rocs {
 	for (int i = 0; i < _xdim; ++i) {      
 	    area[i] = interval(lb[i], ub[i]);
 	}
-	init(ap, area);    
+	init(ap, area);
     }
     void CSolver::init(SPEC ap, ivec &area) {
 	assert(!_ctlr.isempty());
@@ -71,9 +60,9 @@ namespace rocs {
 	
 	    init_refine(_ctlr._root, area, itag);
 	}
-
 	_ctlr.tagging(EXACT);
-    
+
+	compute_winsize();  // get the initial volume of the winning set
     }
 
 
@@ -183,7 +172,7 @@ namespace rocs {
     }
 
 
-    void CSolver::init(SPEC ap, fcst f, const double eps/* 0.01 */) {
+    void CSolver::init(SPEC ap, fcst f, const double eps[]) {
 
 	assert(!_ctlr.isempty());
 
@@ -204,7 +193,7 @@ namespace rocs {
 	else // outer if obstacle
 	    _ctlr.tagging(OUTER);
 
-	// compute_winsize();
+	compute_winsize();
     }
 
     /* Initialize function constraint:
@@ -213,7 +202,7 @@ namespace rocs {
      * f(x) <= 0
      */
     void CSolver::paver_init(SPtree &sp, fcst f, bool inner, short itag,
-			     const double eps/* 0.01 */) {
+			     const double eps[]) {
 
 	if (sp.isempty())
 	    return;
@@ -228,9 +217,30 @@ namespace rocs {
 	sivia(sp, sp._root, y, f, inner, itag, eps);
     }
 
+    /* refine node in _ctlr by new constraint function */
+    void CSolver::init_refine(SPtree &sp, fcst f, bool inner, short itag,
+			      const double eps[]) {
+
+	if (sp.isempty())
+	    return;
+
+	std::vector<SPnode*> lev = sp.leaves(sp._root);
+    
+	ivec y = f(sp._root->_box);
+	for (int i = 0; i < y.getdim(); ++i) {
+	    y[i] = interval(NINF, 0);
+	}
+
+	/* refine each leaf */
+	size_t nl = sp.leafcount(sp._root);
+	for (size_t i = 0; i < nl; ++i) {
+	    sivia(sp, lev[i], y, f, inner, itag, eps);
+	}
+    
+    }
 
     void CSolver::sivia(SPtree &sp, SPnode *ptrnode, ivec &cst, fcst fcn,
-			bool inner, short itag, const double eps/* 0.01 */) {
+			bool inner, short itag, const double eps[]) {
 
 	if (sp.isempty() || ptrnode == NULL)
 	    return;
@@ -252,8 +262,10 @@ namespace rocs {
 
 	if (cst.isout(fbox)) // outside _tag unchanged
 	    return;
-	
-	if (box.maxwidth() < eps) { // undetermined
+
+	/* compute the split axis */
+	int axis = bisect_axis(box, eps);
+	if (box[axis].width() < eps[axis]) {
 	    if (!inner && ptrnode->_tag != -1) { // outer approximation
 		ptrnode->_tag = itag;
 		ptrnode->_b0 = false;
@@ -261,34 +273,21 @@ namespace rocs {
 	    } // _tag unchanged if inner
 	    return;
 	}
-
-	/* precision not satisfied: expansion */
-	sp.expand(ptrnode, bisect_axis(box));  // bisect relatively maximum axis
+	sp.expand(ptrnode, axis);
+	
+	// if (box.maxwidth() < eps) { // undetermined
+	//     if (!inner && ptrnode->_tag != -1) { // outer approximation
+	// 	ptrnode->_tag = itag;
+	// 	ptrnode->_b0 = false;
+	// 	ptrnode->_b1 = b1;
+	//     } // _tag unchanged if inner
+	//     return;
+	// }
+	// /* precision not satisfied: expansion */
+	// sp.expand(ptrnode, bisect_axis(box));  // bisect relatively maximum axis
 
 	sivia(sp, ptrnode->_left, cst, fcn, inner, itag, eps);
 	sivia(sp, ptrnode->_right, cst, fcn, inner, itag, eps);
-    
-    }
-
-    /* refine node in _ctlr by new constraint function */
-    void CSolver::init_refine(SPtree &sp, fcst f, bool inner, short itag,
-			      const double eps/* 0.01 */) {
-
-	if (sp.isempty())
-	    return;
-
-	std::vector<SPnode*> lev = sp.leaves(sp._root);
-    
-	ivec y = f(sp._root->_box);
-	for (int i = 0; i < y.getdim(); ++i) {
-	    y[i] = interval(NINF, 0);
-	}
-
-	/* refine each leaf */
-	size_t nl = sp.leafcount(sp._root);
-	for (size_t i = 0; i < nl; ++i) {
-	    sivia(sp, lev[i], y, f, inner, itag, eps);
-	}
     
     }
 
@@ -318,8 +317,6 @@ namespace rocs {
 		    stk.push(current->_left);
 	    }
 	} // end while
-	compute_goalsize();
-	compute_winsize();
     }
 
     void CSolver::init_avoid_area() {
@@ -349,53 +346,34 @@ namespace rocs {
 	} // end while
     }
 
-    void CSolver::compute_goalsize() {
-        std::vector<double> lb(_xdim, PINF);
-	std::vector<double> ub(_xdim, NINF);
-
-        std::stack<SPnode*> stk;
-        stk.push(_ctlr._root);
-
-        SPnode *current;
-        std::vector<double> ubs, lbs;
-        while (!stk.empty()) {
-
-	    current = stk.top();
-	    stk.pop();
-
-	    if (current->_tag == 1) {
-	    	lbs = current->_box.getinf();
-	    	ubs = current->_box.getsup();
-	    	for (int i = 0; i < _xdim; ++i) {
-
-	    	    lb[i] = lb[i] > lbs[i] ? lbs[i] : lb[i];
-	    	    ub[i] = ub[i] < ubs[i] ? ubs[i] : ub[i];
-	    	}
-	    }
-	    else {
-	    	if (!_ctlr.isleaf(current)) {
-		
-	    	    if (current->_right)
-	    		stk.push(current->_right);
-
-	    	    if (current->_left)
-	    		stk.push(current->_left);
-	    	}
-	    
-	    }
-        }
-
-	// std::cout << _goalsize.size() << "\n";
-	// std::cout << _xdim << '\n';
-	// std::cout << "The goal size is (";
-        for (int i = 0; i < _goalsize.size(); ++i) {
-	    _goalsize[i] = ub[i] - lb[i];
-	    // std::cout << _goalsize[i] << ", ";
-        }
-
-        // std::cout << ")\n";
+    void CSolver::compute_winsize() {
+    	double v, vol = 0;
+    	std::vector<double> w(_xdim);
+    	std::stack<SPnode*> stk;
+    	stk.push(_ctlr._root);
+    	SPnode *current;
+    	while (!stk.empty()) {
+    	    current = stk.top();
+    	    stk.pop();
+    	    v = 1;
+    	    if (current->_tag == 1) {
+    		w = current->_box.width();
+    		for (int i = 0; i < _xdim; ++i) {
+    		    v *= w[i];
+    		}
+    		vol += v;
+    	    } else {
+    		if (!_ctlr.isleaf(current)) {
+    		    if (current->_right)
+    			stk.push(current->_right);
+    		    if (current->_left)
+    			stk.push(current->_left);
+    		}
+    	    }  // end if
+    	}  // end while
+    	// _winsize = std::pow(vol, 1.0/_xdim);
+	_winsize = v;
     }
-
 
     short CSolver::paver_test(SPtree &sp, ivec &box) {
 
@@ -463,53 +441,7 @@ namespace rocs {
     }
 
 
-    void CSolver::compute_winsize() {
-
-	double v, vol = 0;
-	std::vector<double> w(_xdim);
-    
-	std::stack<SPnode*> stk;
-	stk.push(_ctlr._root);
-
-	SPnode *current;
-	while (!stk.empty()) {
-
-	    current = stk.top();
-	    stk.pop();
-
-	    v = 1;
-	    if (current->_tag == 1) {
-		w = current->_box.width();
-		for (int i = 0; i < _xdim; ++i) {
-
-		    v *= w[i];
-		}
-
-		vol += v;
-	    }
-	    else {
-
-		if (!_ctlr.isleaf(current)) {
-		
-		    if (current->_right)
-			stk.push(current->_right);
-
-		    if (current->_left)
-			stk.push(current->_left);
-		}
-	    
-	    }  // end if
-	
-	}  // end while
-
-	_winsize = std::pow(vol, 1.0/_xdim);
-    }
-
-
-
-
     /* fixed-point algorithms */
-
     void CSolver::init_leafque(std::stack<SPnode*> &l0,
 			       std::stack<SPnode*> &l1,
 			       std::stack<SPnode*> &l2) {

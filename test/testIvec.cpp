@@ -20,48 +20,57 @@
 
 
 /*
-  test case 1: initialization
+  test case 1: constructors and printing
 */
-BOOST_AUTO_TEST_CASE(test_init_basics)
+BOOST_AUTO_TEST_CASE(test_initialization)
 {
-    rocs::ivec a; // test constructors
-    rocs::ivec b(3);
-
-    b.setval(0, rocs::interval(-1, 1)); // test setting elements in 2 ways
-    b[1] = rocs::interval(-0.1, 0.01);
-    b[2] = rocs::interval(0, 2);
+    rocs::ivec a(3);  // the constructor ivec(int n)
+    std::cout << a << std::endl;
+    a.setval(0, rocs::interval(-1, 1)); 
+    a[1] = rocs::interval(-0.1, 0.01);
+    a[2] = rocs::interval(0, 2);
+    std::cout << a << std::endl;
+    rocs::ivec b{rocs::interval(-1, 1),
+		 rocs::interval(-0.1, 0.01),
+		 rocs::interval(0, 2)};  // the initialize_list constructor
+    rocs::ivec c(b);  // copy constructor
+    rocs::ivec d = b;  // assignment constructor
+    rocs::ivec e;
+    std::cout << e << std::endl;
     
-    rocs::ivec c(b); //test copy constructor, equal to "ivec d = b;"
-    rocs::ivec d(3);
-    d = b; //test assignment
-    
-    rocs::ivec e(2);
-    e[0] = rocs::interval(1, 0);
-    e[1] = rocs::interval(rocs::NINF, rocs::PINF);
-
-    /* test isempty() */
-    BOOST_CHECK(a.isempty()); 
-    BOOST_CHECK(!b.isempty());
-    BOOST_CHECK(!c.isempty());
-    BOOST_CHECK(!d.isempty());
+    BOOST_CHECK_EQUAL(a, b);
+    BOOST_CHECK_EQUAL(a, c);
+    BOOST_CHECK_EQUAL(a, d);
     BOOST_CHECK(e.isempty());
+}
 
-    /* test setters and getters */
-    BOOST_CHECK(3 == b.getdim());
-    BOOST_CHECK(2 == b.maxwidth());
-    BOOST_CHECK(0 == b.maxdim());
-    std::cout << b.maxwidth() << '\n';
+/*
+  test case 2: property access functions
+*/
+BOOST_AUTO_TEST_CASE(test_property_access_functions)
+{
+    rocs::ivec b{rocs::interval(-1, 1),
+		 rocs::interval(-0.1, 0.01),
+		 rocs::interval(0, 2)};
+    rocs::ivec f{rocs::interval(1, 0),
+		 rocs::interval(rocs::NINF, rocs::PINF)};
     
-    double binfe[] = {-1, -0.1, 0};
-    std::vector<double> infexp(binfe, binfe + sizeof(binfe)/sizeof(double));
-    double bsupe[] = {1, 0.01, 2};
-    std::vector<double> supexp(bsupe, bsupe + sizeof(bsupe)/sizeof(double));
-
-    std::vector<double> rexp(3);
-    rexp[0] = 1;
-    rexp[1] = 0.055;
-    rexp[2] = 1;
-
+    /* test isempty() */
+    BOOST_CHECK(!b.isempty());
+    BOOST_CHECK(f.isempty());
+    
+    /* test setters and getters */
+    BOOST_CHECK_EQUAL(3, b.getdim());
+    BOOST_CHECK_CLOSE(2., b.maxwidth(), 1e-9);
+    BOOST_CHECK_EQUAL(0, b.maxdim());
+    
+    std::vector<double> infexp{-1., -0.1, 0.};
+    std::vector<double> supexp{1., 0.01, 2.};
+    std::vector<double> rexp{1., 0.055, 1.};
+    
+    // BOOST_CHECK_EQUAL(infexp, b.getinf());
+    // BOOST_CHECK_EQUAL(supexp, b.getsup());
+    // BOOST_CHECK_EQUAL(rexp, b.radius());
     BOOST_CHECK(infexp == b.getinf());
     BOOST_CHECK(supexp == b.getsup());
     BOOST_CHECK(rexp == b.radius());
@@ -73,56 +82,50 @@ BOOST_AUTO_TEST_CASE(test_init_basics)
 }
 
 /*
-  test case 2: printing
+  test case 3: test set operations
 */
-BOOST_AUTO_TEST_CASE(test_printing)
+BOOST_AUTO_TEST_CASE(test_set_operations)
 {
-    rocs::ivec a(3);
-
-    a.setval(0, rocs::interval(-1, 1)); 
-    a[1] = rocs::interval(-0.1, 0.01);
-    a[2] = rocs::interval(0, 2);
-    
-    std::cout << a << std::endl;
-}
-
-/*
-  test case 3: test accessing elements
-*/
-BOOST_AUTO_TEST_CASE(test_intersection)
-{
-    rocs::ivec a(3);
-
-    a.setval(0, rocs::interval(-1, 1));
-    a[1] = rocs::interval(-0.1, 0.01);
-    a[2] = rocs::interval(0, 2);
-    
-    rocs::ivec x(3);
-    rocs::ivec y(3);
-
-    x[0] = rocs::interval(1.11, 2.3);
-    x[1] = rocs::interval(-0.5, 0);
-    x[2] = rocs::interval(0, 2);
-
-    y[0] = rocs::interval(-1, 1);
-    y[1] = rocs::interval(-0.1, -0.08);
-    y[2] = rocs::interval(0.1, 1.15);
+    rocs::ivec a{rocs::interval(-1, 1),
+		 rocs::interval(-0.1, 0.01),
+		 rocs::interval(0, 2)};
+    rocs::ivec x{rocs::interval(1.11, 2.3),
+		 rocs::interval(-0.5, 0),
+		 rocs::interval(0, 2)};
+    rocs::ivec y{rocs::interval(-1, 1),
+		 rocs::interval(-0.1, -0.08),
+		 rocs::interval(0.1, 1.15)};
 
     rocs::ivec z = y;
     z[1] = rocs::interval(2, 1);
-
     BOOST_CHECK(a.isout(x));
     BOOST_CHECK(a.isin(y));
     BOOST_CHECK(a.isout(z));
 
-    
-    double arr1[] = {0, 0, 0}; // inside
-    std::vector<double> s1(arr1, arr1 + sizeof(arr1)/sizeof(double));
-    double arr2[] = {1, 1, 1}; // outside
-    std::vector<double> s2(arr2, arr2 + sizeof(arr2)/sizeof(double));
-
+    std::vector<double> s1{0, 0, 0};
+    std::vector<double> s2{1, 1, 1};
     BOOST_CHECK(a.isin(s1));
     BOOST_CHECK(a.isout(s2));
+
+    
+    rocs::ivec b{rocs::interval(0.3, 0.5),
+		 rocs::interval(0.1, 2),
+		 rocs::interval(-3, -1)};
+    rocs::ivec c{rocs::interval(4, 7),
+		 rocs::interval(3, 4)};
+    rocs::ivec d{rocs::interval(0.4, 0.8),
+		 rocs::interval(0.5, 1),
+		 rocs::interval(-3.2, -2.9)};
+    rocs::ivec aorb{rocs::interval(-1, 1),
+		    rocs::interval(-0.1, 2),
+		    rocs::interval(-3, 2)};
+    rocs::ivec bandd{rocs::interval(0.4, 0.5),
+		     rocs::interval(0.5, 1),
+		     rocs::interval(-3, -2.9)};
+    
+    BOOST_CHECK(intersect(a, b).isempty());
+    BOOST_CHECK(hull(a, b) == aorb);
+    BOOST_CHECK(intersect(b, d) == bandd);
 }
 
 /*
@@ -130,26 +133,22 @@ BOOST_AUTO_TEST_CASE(test_intersection)
 */
 BOOST_AUTO_TEST_CASE(test_bisections)
 {
-    rocs::ivec a(3);
-
-    a[0] = rocs::interval(-1, 1);
-    a[1] = rocs::interval(-0.1, 0.01);
-    a[2] = rocs::interval(0, 2);
+    rocs::ivec a{rocs::interval(-1, 1),
+		 rocs::interval(-0.1, 0.01),
+		 rocs::interval(0, 2)};
 
     rocs::ivec left = lowerhalf(a, 2);
     rocs::ivec right = upperhalf(a, 2);
 
-    rocs::ivec refr(3);
-    rocs::ivec refl(3);
-    refl[0] = rocs::interval(-1, 1);
-    refl[1] = rocs::interval(-0.1, 0.01);
-    refl[2] = rocs::interval(0, 1);
-    refr[0] = rocs::interval(-1, 1);
-    refr[1] = rocs::interval(-0.1, 0.01);
-    refr[2] = rocs::interval(1, 2);
-
-    BOOST_CHECK(left == refl);
-    BOOST_CHECK(right == refr);
+    rocs::ivec refl{rocs::interval(-1, 1),
+		    rocs::interval(-0.1, 0.01),
+		    rocs::interval(0, 1)};
+    rocs::ivec refr{rocs::interval(-1, 1),
+		    rocs::interval(-0.1, 0.01),
+		    rocs::interval(1, 2)};
+    
+    BOOST_CHECK_EQUAL(left, refl);
+    BOOST_CHECK_EQUAL(right, refr);
 }
 
 /*
@@ -157,86 +156,40 @@ BOOST_AUTO_TEST_CASE(test_bisections)
 */
 BOOST_AUTO_TEST_CASE(test_addsub_overloads)
 {
-    rocs::ivec a(3);
-    rocs::ivec b(3);
-    rocs::ivec c(2);
-    a[0] = rocs::interval(-1, 1);
-    a[1] = rocs::interval(-0.1, 0.01);
-    a[2] = rocs::interval(0, 2);
-
-    b[0] = rocs::interval(0.3, 0.5);
-    b[1] = rocs::interval(0.1, 2);
-    b[2] = rocs::interval(-3, -1);
-
-    c[0] = rocs::interval(4, 7);
-    c[1] = rocs::interval(3, 4);
+    rocs::ivec a{rocs::interval(-1, 1),
+		 rocs::interval(-0.1, 0.01),
+		 rocs::interval(0, 2)};
+    rocs::ivec b{rocs::interval(0.3, 0.5),
+		 rocs::interval(0.1, 2),
+		 rocs::interval(-3, -1)};
+    rocs::ivec c{rocs::interval(4, 7),
+		 rocs::interval(3, 4)};
+    rocs::ivec d = {rocs::interval(-1, 1),
+		    rocs::interval(-0.1, 0.01),
+		    rocs::interval(0, 2)};
 
     double val = 0.04;
-    rocs::ivec abadd(3);
-    rocs::ivec avadd(3);
-    rocs::ivec absub(3);
-    rocs::ivec avsub(3);
-    abadd[0] = rocs::interval(-0.7, 1.5);
-    abadd[1] = rocs::interval(0, 2.01);
-    abadd[2] = rocs::interval(-3, 1);
-    absub[0] = rocs::interval(-1.5, 0.7);
-    absub[1] = rocs::interval(-2.1, -0.09);
-    absub[2] = rocs::interval(1, 5);
-    avadd[0] = rocs::interval(-0.96, 1.04);
-    avadd[1] = rocs::interval(-0.06, 0.05);
-    avadd[2] = rocs::interval(0.04, 2.04);
-    avsub[0] = rocs::interval(0.26, 0.46);
-    avsub[1] = rocs::interval(0.06, 1.96);
-    avsub[2] = rocs::interval(-3.04, -1.04);
-
+    rocs::ivec abadd{rocs::interval(-0.7, 1.5),
+		     rocs::interval(0., 2.01),
+		     rocs::interval(-3., 1.)};
+    rocs::ivec absub{rocs::interval(-1.5, 0.7),
+		     rocs::interval(-2.1, -0.09),
+		     rocs::interval(1., 5.)};
+    rocs::ivec avadd{rocs::interval(-0.96, 1.04),
+		     rocs::interval(-0.06, 0.05),
+		     rocs::interval(0.04, 2.04)};
+    rocs::ivec avsub{rocs::interval(0.26, 0.46),
+		     rocs::interval(0.06, 1.96),
+		     rocs::interval(-3.04, -1.04)};
+    
     rocs::ivec r = a - c;
-    BOOST_CHECK(a+b == abadd);
-    BOOST_CHECK(a-b == absub);
-    BOOST_CHECK(a+val == avadd);
-    BOOST_CHECK(b-val == avsub);
+    BOOST_CHECK_EQUAL(a+b, abadd);
+    BOOST_CHECK_EQUAL(a-b, absub);
+    BOOST_CHECK_EQUAL(a+val, avadd);
+    BOOST_CHECK_EQUAL(b-val, avsub);
     BOOST_CHECK(r.isempty());
-}
-
-
-/*
- * test case 5: test set operations
- */
-BOOST_AUTO_TEST_CASE(test_set_operators)
-{
-    rocs::ivec a(3);
-    rocs::ivec b(3);
-    rocs::ivec c(2);
-    rocs::ivec d(3);
-    a[0] = rocs::interval(-1, 1);
-    a[1] = rocs::interval(-0.1, 0.01);
-    a[2] = rocs::interval(0, 2);
-
-    b[0] = rocs::interval(0.3, 0.5);
-    b[1] = rocs::interval(0.1, 2);
-    b[2] = rocs::interval(-3, -1);
-
-    c[0] = rocs::interval(4, 7);
-    c[1] = rocs::interval(3, 4);
-
-    d[0] = rocs::interval(0.4, 0.8);
-    d[1] = rocs::interval(0.5, 1);
-    d[2] = rocs::interval(-3.2, -2.9);
-
-    rocs::ivec aorb(3);
-    aorb[0] = rocs::interval(-1, 1);
-    aorb[1] = rocs::interval(-0.1, 2);
-    aorb[2] = rocs::interval(-3, 2);
-
-    rocs::ivec bandd(3);
-    bandd[0] = rocs::interval(0.4, 0.5);
-    bandd[1] = rocs::interval(0.5, 1);
-    bandd[2] = rocs::interval(-3, -2.9);
-    
-    // ivec r1 = intersect(a, b);
-    // ivec r3 = intersect(a, c);
-    
-    BOOST_CHECK(intersect(a, b).isempty());
-    BOOST_CHECK(hull(a, b) == aorb);
-    BOOST_CHECK(intersect(b, d) == bandd);
-    
+    a += b;
+    BOOST_CHECK_EQUAL(a, abadd);
+    d -= b;
+    BOOST_CHECK_EQUAL(d, absub);
 }

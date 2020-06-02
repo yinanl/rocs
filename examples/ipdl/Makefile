@@ -9,6 +9,7 @@ SDIR := ../../src
 ODIR := ../../build
 
 INCS += -I$(RDIR)
+CXXFLAGS += -DVERBOSE
 
 SRCS := $(wildcard $(SDIR)/*.cpp)
 DEPS := $(patsubst %.cpp, %.h, $(SRCS))
@@ -31,6 +32,9 @@ ipdl: ipdl.o $(OBJS)
 
 clean:
 	rm -rf *.o *.dSYM $(TARGETS)
+
+cleanall:
+	rm -rf *.o *.dSYM $(TARGETS) $(ODIR)/*.o
 
 
 $(OBJS): | $(ODIR)

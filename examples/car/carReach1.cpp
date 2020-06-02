@@ -48,7 +48,9 @@ int main()
     solver.init_goal_area();
     solver.init(rocs::AVOID, olb, oub);
     solver.init_avoid_area();
-    solver.reachability_control(&carReach, 0.2, rocs::ABSMAX);
+    double eta[] = {0.2, 0.2, 0.2};
+    // double emin[] = {0.1, 0.1, 0.1};
+    solver.reachability_control(&carReach, eta);
     solver.print_controller_info();
     
     /* save the problem data and the solution */

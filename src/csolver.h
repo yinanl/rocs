@@ -4,7 +4,6 @@
  *  An interval based control problem solver class.
  *
  *  Created by Yinan Li on Jan. 03, 2017.
- *  Revised by Yinan Li on April 30, 2018.
  *
  *  Hybrid Systems Group, University of Waterloo.
  */
@@ -37,9 +36,8 @@ namespace rocs {
      */
     enum BISECT
 	{
-	 RELMAXW,
-	 RELMAXG,
-	 ABSMAX
+	 RELMAX, /* i = argmax{width[i]/eps[i]} */
+	 ABSMAX /* i = argmax{width[i]} */
 	};
 
 
@@ -53,15 +51,11 @@ namespace rocs {
 	SPtree _ctlr;	     /**< A controller. */
 	int _xdim;  /**< The state dimension. */
 	size_t _nu;  /**< The number of control values. */
-
 	std::vector<ivec> _goal; /**< The goal areas (an array of intervals). */
 	std::vector<ivec> _obs;  /**< The avoiding areas (an array of intervals). */
-
 	BISECT _bstype;   /**< The bisection type. */
 	size_t _maxiter;  /**< The maximum number of iterations. */
-
-	std::vector<double> _goalsize;  /**< The dimensional width of the goal area. */
-	double _winsize;  /**< The interval covering the current winning set. */
+	double _winsize;  /**< The volume of the winning set. */
 	
 	size_t _fpiter[3];   /**< The number of iterations: max alter depth 3. */
 	double _timer;   /**< The time of solving. */
@@ -74,10 +68,10 @@ namespace rocs {
 	 * @param maxi the maximum number of iterations.
 	 */
 	template<typename system>
-	CSolver(system* ptrsys, BISECT bs, size_t maxi):
+	CSolver(system* ptrsys, BISECT bs, size_t maxi=UINT_MAX):
 	    _xdim(ptrsys->_xdim),_nu(ptrsys->_ugrid._nv),
 	    _bstype(bs),_maxiter(maxi), 
-	    _goalsize(ptrsys->_xdim,0),_winsize(0),
+	    _winsize(0),
 	    _fpiter{0,0,0}, _timer(0) {
 		
 	    SPnode root(ptrsys->_workspace, _nu);
@@ -93,7 +87,7 @@ namespace rocs {
 	CSolver(system* ptrsys, size_t maxi):
 	    _xdim(ptrsys->_xdim),_nu(ptrsys->_ugrid._nv),
 	    _bstype(ABSMAX), _maxiter(maxi),
-	    _goalsize(ptrsys->_xdim,0),_winsize(0),
+	    _winsize(0),
 	    _fpiter{0,0,0}, _timer(0) {
 
 		SPnode root(ptrsys->_workspace, _nu);
@@ -109,7 +103,7 @@ namespace rocs {
 	CSolver(system* ptrsys):
 	    _xdim(ptrsys->_xdim), _nu(ptrsys->_ugrid._nv),
 	    _bstype(ABSMAX), _maxiter(UINT_MAX),
-	    _goalsize(ptrsys->_xdim,0),_winsize(0),
+	    _winsize(0),
 	    _fpiter{0,0,0}, _timer(0) {
 
 		SPnode root(ptrsys->_workspace, _nu);
@@ -120,7 +114,7 @@ namespace rocs {
 	 * Determine the bisection axis.
 	 * @param box the interval vector to be bisected.
 	 */
-	int bisect_axis(ivec &box);
+	int bisect_axis(ivec &box, const double eps[]);
   
   
 	/* controller initialization */
@@ -162,9 +156,9 @@ namespace rocs {
 	 * @param f \f$f(x)\leq 0\f$.
 	 * @param eps paver precision.
 	 */
-	void init(SPEC ap, fcst f, const double eps = 0.01);
+	void init(SPEC ap, fcst f, const double eps[]);
 	void paver_init(SPtree &sp, fcst f, bool inner, short itag,
-			const double eps = 0.01);
+			const double eps[]);
 	/**
 	 * CSP w.r.t. a single interval
 	 * recursive function call (same as using stacks).
@@ -176,9 +170,9 @@ namespace rocs {
 	 * @param itag tag for insiders.
 	 */
 	void sivia(SPtree &sp, SPnode *ptrnode, ivec &cst, fcst f,
-		   bool inner, short itag, const double eps = 0.01);
+		   bool inner, short itag, const double eps[]);
 	void init_refine(SPtree &sp, fcst f, bool inner, short itag,
-			 const double eps = 0.01);
+			 const double eps[]);
 
 	/**
 	 * Initialize _goal by collecting leaves with tag 1.
@@ -193,11 +187,11 @@ namespace rocs {
 	void init_avoid_area();
 
 	/**
-	 * Compute the maximum width of the goal area (a vector of ivecs).
-	 * Used only after init_goal_area().
+	 * Compute the normalized length of current winning set:
+	 * this->_winsize = pow(vol, 1/xdim)
 	 */
-	void compute_goalsize();
-
+	void compute_winsize();
+	
 
 	/**
 	 * Test if a box is included in the paving.
@@ -223,13 +217,7 @@ namespace rocs {
 	void pre_cntl(system* ptrsys,
 		      std::stack<SPnode*> &, std::stack<SPnode*> &,
 		      std::stack<SPnode*> &, std::stack<SPnode*> &,
-		      double evaleps = 0.01);
-
-	/**
-	 * Compute the size of current winning set.
-	 * a measure of the intervals with tag = 1.
-	 */
-	void compute_winsize();
+		      const double evaleps[]);
 
 
 	/* fixed-point algorithms */
@@ -253,8 +241,7 @@ namespace rocs {
 			 std::stack<SPnode*> &l0,
 			 std::stack<SPnode*> &l1,
 			 std::stack<SPnode*> &l2,
-			 int d,
-			 const double eps, BISECT bs);
+			 int d, const double eps[]);
 
 	/**
 	 * Core subroutine for reachability control computation.
@@ -265,9 +252,8 @@ namespace rocs {
 			   std::stack<SPnode*> &l0,
 			   std::stack<SPnode*> &l1,
 			   std::stack<SPnode*> &l2,
-			   int d,
-			   const double eps, BISECT bs,
-			   const double ermin = 0.001, bool vareps = false);
+			   int d, const double eps[],
+			   bool vareps=false, const double emin[]=nullptr);
   
 	/**
 	 * Maximal controlled invariant sets: \f$\nu X.(\text{Pre}(X)\cap X)\f$.
@@ -275,7 +261,7 @@ namespace rocs {
 	 * @return 0(empty set), 1(non-empty).
 	 */
 	template<typename system>
-	bool invariance_control(system* ptrsys, double eps, BISECT bs);
+	bool invariance_control(system* ptrsys, const double eps[]);
   
 	/**
 	 * Backward reachable sets: iterating \f$\mu X.(\text{Pre}(X)\cup X)\f$.
@@ -286,10 +272,8 @@ namespace rocs {
 	 * @return 0(empty set), 1(non-empty).
 	 */
 	template<typename system>
-	bool reachability_control(system* ptrsys,
-				  const double eps, BISECT bs,
-				  const double epsmin = 0.001,
-				  bool vareps = false);
+	bool reachability_control(system* ptrsys, const double eps[],
+				  bool vareps=false, const double emin[]=nullptr);
 
 	/**
 	 * Backward reachable set to the maximal controlled invariant set.
@@ -304,9 +288,20 @@ namespace rocs {
 	 */
 	template<typename system>
 	bool reachstay_control(system* ptrsys,
-			       const double ei, BISECT bsi,
-			       const double er, BISECT bsr,
-			       const double ermin = 0.001, bool vareps = false);
+			       const double ei[], const double er[],
+			       bool vareps=false, const double ermin[]=nullptr);
+
+	/**
+	 * Standard coBuchi winning set: \f$\nu Y.\nu X.[\text{Pre}(Y)\cup(B\cap \text{Pre}(X))]\f$.
+	 *
+	 * Relative and adaptive precisions.
+	 * @see reach_stay().
+	 */
+	template<typename system>
+	bool cobuchi(system* ptrsys,
+		     const double ei[], const double er[],
+		     bool vareps=false, const double ermin[]=nullptr);
+
 
 	/**
 	 * Standard Buchi winning set: \f$\nu Y.\mu X.[(B\cap\text{Pre}(Y))\cup\text{Pre}(X)]\f$.
@@ -317,21 +312,9 @@ namespace rocs {
 	 * @return 0(empty set), 1(non-empty set).
 	 */
 	template<typename system>
-	bool buchi(system* ptrsys,
-		   BISECT bs, const double er,
-		   const double ermin = 0.01, bool vareps = false);
+	bool buchi(system* ptrsys, const double eps[],
+		   bool vareps=false, const double ermin[]=nullptr);
 
-	/**
-	 * Standard coBuchi winning set: \f$\nu Y.\nu X.[\text{Pre}(Y)\cup(B\cap \text{Pre}(X))]\f$.
-	 *
-	 * Relative and adaptive precisions.
-	 * @see reach_stay().
-	 */
-	template<typename system>
-	bool cobuchi(system* ptrsys,
-		     const double ei, BISECT bsi,
-		     const double er, BISECT bsr,
-		     const double ermin = 0.001, bool vareps = false);
   
 
 	/* display and save */
@@ -359,7 +342,7 @@ namespace rocs {
     void CSolver::pre_cntl(system* ptrsys,
 			   std::stack<SPnode*> &l, std::stack<SPnode*> &l0,
 			   std::stack<SPnode*> &l1, std::stack<SPnode*> &l2,
-			   double evaleps /* 0.01 */) {
+			   const double evaleps[]) {
 	SPnode *current;
 	std::vector<ivec> y(_nu, ivec(_xdim));
 	short t, ut;
@@ -370,39 +353,27 @@ namespace rocs {
 
 	    /* update control info */
 	    t = 0;	
-	    for (int u = 0; u < y.size(); ++ u ) {
-	    
+	    for (size_t u = 0; u < y.size(); ++ u ) {
 		ut = paver_test(_ctlr, y[u]); // interval inclusion test
-
 		if (ut == 1) {
-
 		    if (_ctlr._root->_box.isin(y[u])) {
-		    
 			if (t != 1)
 			    t = 1;
 			current->_cntl[u] = true;
-		    
 		    } else {  // same as ut=0
 			current->_cntl[u] = false;
 		    }
-
 		} else if (ut == 0) {
-
 		    current->_cntl[u] = false;
-
 		} else {
-
 		    if (t != 1)
 			t = 2;
-
 		    /* this line is necessary, e.g. for invariant fixed points,
 		       an interval can become not controlled invariant even if 
 		       it is controlled invariant for the previous iterations. */
 		    current->_cntl[u] = false;
 		}
-	    
 	    }  // end for (control update)
-	
 
 	    /* save new tag in b0 & b1 */
 	    if (t == 0) {
@@ -414,22 +385,41 @@ namespace rocs {
 		current->_b0 = false;
 		current->_b1 = true;
 		l1.push(current);
+		_winsize += current->_box.volume();
 	    }
 	    else {
 		current->_b0 = true;
 		current->_b1 = true;
-		if (current->_box.maxwidth() < evaleps) {
+		
+		/* compute the split axis */
+		int axis = bisect_axis(current->_box, evaleps);
+		if (current->_box[axis].width() < evaleps[axis]) {
 		    l2.push(current);
 		}
 		else {
-		    _ctlr.expand(current, bisect_axis(current->_box));
+		    _ctlr.expand(current, axis);
 		    l.push(current->_left);
 		    l.push(current->_right);
 		}
+		// double ri, r = 0;
+		// int axis = 0;
+		// for (int i = 0; i < _xdim; ++i) {
+		//     ri = current->_box[i].width()/evaleps[i];
+		//     if (r < ri) {
+		// 	axis = i;
+		// 	r = ri;
+		//     }
+		// }
+		// if (r < 1)
+		//     l2.push(current);
+		// else {
+		//     _ctlr.expand(current, axis);
+		//     l.push(current->_left);
+		//     l.push(current->_right);
+		// }
+		
 	    }  // end if (save new tag in b0 & b1)
-
 	}  // end while (loop all nodes in l)
-    
     }
 
 
@@ -438,28 +428,37 @@ namespace rocs {
 			      std::stack<SPnode*> &l0,
 			      std::stack<SPnode*> &l1,
 			      std::stack<SPnode*> &l2,
-			      int d,
-			      const double eps, BISECT bs) {
-	_bstype = bs;
-    
+			      int d, const double eps[]) {    
 	std::stack<SPnode*> l;
-	int lold;
+	size_t lold;
 	bool stop = false;
 
+#ifdef VERBOSE
+	std::cout << "inv_compute:: <#iter>:<# of intervals in the winset>,<precision>\n";
+#endif
+	
 	while (!stop) {      	
 	    ++_fpiter[d];
 	    lold = l0.size() + l2.size();
-      
 	    if (!l1.empty()) {
-
 		swap(l, l1);
 		pre_cntl(ptrsys, l, l0, l1, l2, eps);
 	    }
 
 	    stop = (l0.size() + l2.size()) <= lold;
-
 	    _ctlr.tagging(INNER);  //update the tags
-
+	    
+#ifdef VERBOSE
+	    std::cout << _fpiter[d] << ": " << l1.size() << ", [";
+	    for (int i = 0; i < _xdim; ++i) {
+		std::cout << eps[i];
+		if (i<_xdim-1)
+		    std::cout << ',';
+		else
+		    std::cout << "]\n";
+	    }
+#endif
+	    
 	} // end while
     
     }// end inv_compute
@@ -470,77 +469,75 @@ namespace rocs {
 				std::stack<SPnode*> &l0,
 				std::stack<SPnode*> &l1,
 				std::stack<SPnode*> &l2,
-				int d,
-				const double er, BISECT bs,
-				const double ermin, bool vareps) {
-	_bstype = bs;
-
-	double eps;
-	if (vareps)
-	    eps = er * _winsize;
-	else
-	    eps = er;
-   
-	std::stack<SPnode*> l;
-	int lold;
-	bool stop = false;
-	bool sf = false;
-	while (!stop && _fpiter[d] <= _maxiter) {
-
-	    ++_fpiter[d];
+				int d, const double er[],
+				bool vareps, const double ermin[]) {
+	double *eps = new double[_xdim];
+	for (int i = 0; i < _xdim; ++i)
+	    eps[i] = er[i];
 	
+	std::stack<SPnode*> l;
+	size_t lold;
+	bool stop = false;
+	double v = _winsize;
+#ifdef VERBOSE
+	std::cout << "reach_compute:: <#iter>:<# of intervals in the winset>,<precision>\n";
+#endif
+	while (!stop && _fpiter[d] <= _maxiter) {
+	    ++_fpiter[d];
 	    lold = l1.size();
-
 	    if (!l2.empty()) {
-
 		swap(l, l2);  // l=l2, l2=empty
 		pre_cntl(ptrsys, l, l0, l1, l2, eps);  //l=empty, l012 fill
 	    }
-
 	    if (!l0.empty()) {
-
 		swap(l, l0);  // l=l0, l0=empty
 		pre_cntl(ptrsys, l, l0, l1, l2, eps);  //l=empty, l012 fill
 	    }
-
 	    stop = l1.size() <= lold;
 	    _ctlr.tagging(INNER);
 
 	    if (vareps) {  // using adaptive precision
-
-		if (stop) {
-
-		    if (!sf)
-			sf = true;
-		
-		    if (eps > ermin) {
-			eps /= 2;
-			stop = false;
+	    	if (stop) {
+		    for (int i = 0; i != _xdim; ++i) {
+			if (eps[i] > ermin[i]) {
+			    eps[i] *= 0.5;
+			    stop = false;
+			}
 		    }
-	    
-		} else {
-	    
-		    if (!sf) {
-			compute_winsize();
-			eps = er * _winsize;
+	    	} else {
+		    if (_winsize > 2 * v) {
+			for (int i = 0; i != _xdim; ++i)
+			    eps[i] *= 2;
+			v = _winsize;
 		    }
-	    
-		} // endif
+	    	} // endif
 	    } // endif
+
+#ifdef VERBOSE
+	    std::cout << _fpiter[d] << ": " << l1.size() << ", [";
+	    for (int i = 0; i < _xdim; ++i) {
+		std::cout << eps[i];
+		if (i<_xdim-1)
+		    std::cout << ',';
+		else
+		    std::cout << "]\n";
+	    }
+#endif
 	} // endwhile
+
+	delete[] eps;
     }// end reach_compute
 
 
     template<typename system>
-    bool CSolver::invariance_control(system* ptrsys,
-				     const double eps, BISECT bs) {
+    bool CSolver::invariance_control(system* ptrsys, const double eps[]) {
 	std::stack<SPnode*> l0, l1, l2;
 	init_leafque(l0, l1, l2);
 
 	clock_t tb, te;
 	tb = clock();
     
-	inv_compute(ptrsys, l0, l1, l2, 0, eps, bs);
+	inv_compute(ptrsys, l0, l1, l2, 0, eps);
     
 	te = clock();
 	_timer = (float)(te - tb)/CLOCKS_PER_SEC;
@@ -553,16 +550,15 @@ namespace rocs {
 
 
     template<typename system>
-    bool CSolver::reachability_control(system* ptrsys,
-				       const double eps, BISECT bs,
-				       const double epsmin, bool vareps) {
+    bool CSolver::reachability_control(system* ptrsys, const double eps[],
+				       bool vareps, const double epsmin[]) {
 	std::stack<SPnode*> l0, l1, l2;
 	init_leafque(l0, l1, l2);
     
 	clock_t tb, te;
 	tb = clock();
     
-	reach_compute(ptrsys, l0, l1, l2, 0, eps, bs, epsmin, vareps);  // _fpiter[0]
+	reach_compute(ptrsys, l0, l1, l2, 0, eps, vareps, epsmin);  // _fpiter[0]
     
 	te = clock();
 	_timer = (float)(te - tb)/CLOCKS_PER_SEC;
@@ -576,17 +572,16 @@ namespace rocs {
 
     template<typename system>
     bool CSolver::reachstay_control(system* ptrsys,
-				    const double ei, BISECT bsi,
-				    const double er, BISECT bsr,
-				    const double ermin, bool vareps) {
+				    const double ei[], const double er[],
+				    bool vareps, const double ermin[]) {
 	double t;
 	std::cout << "Start invariance control..." << '\n';
-	if ( invariance_control(ptrsys, ei, bsi) ) {
+	if ( invariance_control(ptrsys, ei) ) {
 
 	    std::cout << "Start reachability control..." << '\n';
 	
 	    t = _timer;
-	    bool r = reachability_control(ptrsys, er, bsr, ermin, vareps);
+	    bool r = reachability_control(ptrsys, er, ermin, vareps);
 	    _timer += t;
 	    return r;
 	
@@ -595,20 +590,133 @@ namespace rocs {
 	}
     }
 
+    template<typename system>
+    bool CSolver::cobuchi(system* ptrsys,
+			  const double ei[], const double er[],
+			  bool vareps, const double ermin[]) {
+	/* do the iterations */
+	double *eps = new double[_xdim];
+	for (int i = 0; i < _xdim; ++i)
+	    eps[i] = er[i];
+	
+	double v = _winsize;
+	bool stop = false;
+	size_t Gold1;
+    
+	clock_t tb, te;
+	tb = clock();
+
+	std::stack<SPnode*> G10, G11, G12;
+	std::stack<SPnode*> G20, G21, G22;
+	std::stack<SPnode*> l, ll0, ll2;
+	init_leafque(G10, G21, G12);
+	
+#ifdef VERBOSE
+	std::cout << "cobuchi:: <outer iter>:<# of inner iters>,<current precision parameter>\n";
+#endif
+	/* outer mu loop */
+	while (!stop && _fpiter[1] <= _maxiter) {
+	    ++ _fpiter[1];
+	    // std::cout << _fpiter[1] << ": ";
+	    
+	    /* inner nu loop */
+	    if (!G21.empty()) {
+		if (!(G20.empty() && G22.empty()))
+		    _ctlr.tagging(INNER);  // mark (Z U G) to be 1
+		
+		inv_compute(ptrsys, G20, G21, G22, 0, ei);
+		
+		/* G2<- G20 U G22, G2 starts from empty */
+		std::stack<SPnode*> G2;
+		while (!G20.empty()) {
+		    // G20.top()->_tag = 1;
+		    G20.top()->_b0 = false;
+		    G20.top()->_b1 = true;
+		    G2.push(G20.top());
+		    G20.pop();
+		}
+		while (!G22.empty()) {
+		    // G22.top()->_tag = 1;
+		    G22.top()->_b0 = false;
+		    G22.top()->_b1 = true;
+		    G2.push(G22.top());
+		    G22.pop();
+		}
+
+		// std::cout << "(G2 size: " << G2.size() << ")\n";
+		swap(G2, G21);
+	    }
+	    
+	    // std::cout << _fpiter[0] << ", ";
+	    
+	    /* compute pre(Y) /\ G1 */
+	    Gold1 = G11.size();
+	    /* G1<- G10 U G12 */
+	    if (!G12.empty()) {
+		swap(l, G12);
+		// pre_cntl(ptrsys, l, G10, G11, G12, eps);
+		pre_cntl(ptrsys, l, ll0, G11, ll2, eps);
+	    }
+	    if (!G10.empty()) {
+		swap(l, G10);
+		// pre_cntl(ptrsys, l, G10, G11, G12, eps);
+		pre_cntl(ptrsys, l, ll0, G11, ll2, eps);
+	    }
+	    swap(ll0, G10); // G10 is empty as a result of swap(l, G10)
+	    swap(ll2, G12);
+	    
+#ifdef VERBOSE
+	    std::cout << _fpiter[1] << ": " << _fpiter[0] << ", [";
+	    for (int i = 0; i < _xdim; ++i) {
+		std::cout << eps[i];
+		if (i<_xdim-1)
+		    std::cout << ',';
+		else
+		    std::cout << "]\n";
+	    }
+#endif
+	    
+	    stop = G11.size() <= Gold1;
+	    _ctlr.tagging(INNER);	    
+
+	    if (vareps) {  // using adaptive precision
+	    	if (stop) {
+		    for (int i = 0; i != _xdim; ++i) {
+			if (eps[i] > ermin[i]) {
+			    eps[i] *= 0.5;
+			    stop = false;
+			}
+		    }
+	    	} else {
+		    if (_winsize > 2 * v) {
+			for (int i = 0; i != _xdim; ++i)
+			    eps[i] *= 2;
+			v = _winsize;
+		    }
+	    	} // endif
+	    } // endif
+	
+	} // endwhile
+
+	te = clock();
+	_timer = (float)(te - tb)/CLOCKS_PER_SEC;
+
+	return true;
+    }
+    
 
     template<typename system>
-    bool CSolver::buchi(system* ptrsys,
-			BISECT bs, const double er,
-			const double ermin, bool vareps) {
-	double eps;
-	if (vareps)
-	    eps = er * _winsize;
-	else
-	    eps = er;
+    bool CSolver::buchi(system* ptrsys, const double er[],
+			bool vareps, const double ermin[]) {
+	// double eps;
+	// if (vareps)
+	//     eps = er * _winsize;
+	// else
+	//     eps = er;
     
 	/* do the iterations */
 	bool stop = false;
-	int lold;
+	size_t lold;
 	clock_t tb, te;
 	tb = clock();
 	while (!stop) {
@@ -621,11 +729,11 @@ namespace rocs {
 	    swap(l1, x); // x <- B, l1 <- empty.
 	
 	    /* inner mu loop */
-	    reach_compute(ptrsys,l0, l1, l2, 0, er, bs, ermin, vareps); // l1 does not have B
+	    reach_compute(ptrsys,l0, l1, l2, 0, er, vareps, ermin); // l1 does not have B
 
 	    lold = l0.size() + l2.size();
 	    swap(l, x);
-	    pre_cntl(ptrsys, l, l0, x, l2, eps); // x might decrease.
+	    pre_cntl(ptrsys, l, l0, x, l2, er); // x might decrease.
 	
 	    stop = (l0.size() + l2.size()) <= lold;
 	    if (!stop) {
@@ -652,126 +760,6 @@ namespace rocs {
 	_timer = (float)(te - tb)/CLOCKS_PER_SEC;
 	return true;
     }
-
-
-    template<typename system>
-    bool CSolver::cobuchi(system* ptrsys,
-			  const double ei, BISECT bsi,
-			  const double er, BISECT bsr,
-			  const double ermin, bool vareps) {
-	/* do the iterations */
-	double eps;  // absolute epsilon for repeated reach computationdouble eps;
-	if (vareps)
-	    // std::cout << _winsize << '\n';
-	    eps = er * _winsize;
-	else
-	    eps = er;
-    
-	bool stop = false;
-	bool sf = false;
-	int Gold1;
-    
-	clock_t tb, te;
-	tb = clock();
-
-	std::stack<SPnode*> G10, G11, G12;
-	std::stack<SPnode*> G20, G21, G22;
-	// std::stack<SPnode*> l;
-	std::stack<SPnode*> l, ll0, ll2;
-	init_leafque(G10, G21, G12);
-
-	std::cout << "<outer iter>:<# of inner iters>,<current precision parameter>\n";
-    
-	while (!stop && _fpiter[1] <= _maxiter) {
-
-	    ++ _fpiter[1];
-
-	    std::cout << _fpiter[1] << ": ";
-	    /* inner nu loop */
-	    // _fpiter[0] = 0;
-	    if (!G21.empty()) {
-
-		if (!(G20.empty() && G22.empty()))
-		    _ctlr.tagging(INNER);  // mark (Z U G) to be 1
-
-		inv_compute(ptrsys, G20, G21, G22, 0, ei, bsi);
-		std::cout << _fpiter[0] << ", ";
-
-		/* G2<- G20 U G22, G2 starts from empty */
-		std::stack<SPnode*> G2;
-		while (!G20.empty()) {
-		    // G20.top()->_tag = 1;
-		    G20.top()->_b0 = false;
-		    G20.top()->_b1 = true;
-		    G2.push(G20.top());
-		    G20.pop();
-		}
-		while (!G22.empty()) {
-		    // G22.top()->_tag = 1;
-		    G22.top()->_b0 = false;
-		    G22.top()->_b1 = true;
-		    G2.push(G22.top());
-		    G22.pop();
-		}
-
-		// std::cout << "(G2 size: " << G2.size() << ")\n";
-		swap(G2, G21);
-	    } else {
-		std::cout << _fpiter[0] << ", ";
-	    }
-
-	    /* compute pre(Y) /\ G1 */
-	    _bstype = bsr;
-	    Gold1 = G11.size();
-	    /* G1<- G10 U G12 */
-	    if (!G12.empty()) {
-		swap(l, G12);
-		// pre_cntl(ptrsys, l, G10, G11, G12, eps);
-		pre_cntl(ptrsys, l, ll0, G11, ll2, eps);
-	    }
-	    if (!G10.empty()) {
-		swap(l, G10);
-		// pre_cntl(ptrsys, l, G10, G11, G12, eps);
-		pre_cntl(ptrsys, l, ll0, G11, ll2, eps);
-	    }
-	    swap(ll0, G10); // G10 is empty as a result of swap(l, G10)
-	    swap(ll2, G12);
-
-	    std::cout << eps << '\n';
-
-	    stop = G11.size() <= Gold1;
-	    _ctlr.tagging(INNER);
-
-	    if (vareps) {  // using adaptive precision
-
-		if (stop) {
-
-		    if (!sf)
-			sf = true;
-		
-		    if (eps > ermin) {
-			eps /= 2;
-			stop = false;
-		    }
-	    
-		} else {
-	    
-		    if (!sf) {
-			compute_winsize();
-			eps = er * _winsize;
-		    }
-	    
-		} // endif
-	    } // endif
-	
-	} // endwhile
-
-	te = clock();
-	_timer = (float)(te - tb)/CLOCKS_PER_SEC;
-
-	return true;
-    }
-
 
 } // namespace rocs
 

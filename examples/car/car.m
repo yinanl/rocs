@@ -20,3 +20,4 @@ dx = zeros(3, 1);
 dx(1) = u(1)*cos(alpha+x(3))/cos(alpha);
 dx(2) = u(1)*sin(alpha+x(3))/cos(alpha);
 dx(3) = u(1)*tan(u(2));
+end

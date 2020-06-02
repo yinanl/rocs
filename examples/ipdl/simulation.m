@@ -65,12 +65,10 @@ plot(tsim, xsim, 'LineWidth',LW)
 axis([0, Tsim, min(X(:,1)), max(X(:,2))])
 
 ylabel({'$\theta,\; \dot{\theta}$'}, 'interpreter','latex',...
-    'FontUnits','points', 'FontSize',FS,...
-    'FontName','Times', 'FontWeight','bold')
+    'FontSize',FS, 'FontName','Times', 'FontWeight','bold')
 
 hl= legend({'$\theta(t)$','$\dot{\theta}(t)$'}, 'Interpreter', 'latex',...
-    'FontUnits','points', 'FontSize',FS,...
-    'FontName','Times', 'FontWeight','bold');
+    'FontSize',FS, 'FontName','Times', 'FontWeight','bold');
 
 subplot(2,1,2)
 plot(tsim, usim,'LineWidth',LW)
@@ -78,12 +76,10 @@ plot(tsim, usim,'LineWidth',LW)
 axis([0, Tsim, U(1), U(end)])
 
 xlabel({'$t(s)$'}, 'interpreter','latex',...
-    'FontUnits','points', 'FontSize',FS,...
-    'FontName','Times', 'FontWeight','bold')
+    'FontSize',FS, 'FontName','Times', 'FontWeight','bold')
 
 ylabel({'$u$'}, 'interpreter','latex',...
-    'FontUnits','points', 'FontSize',FS,...
-    'FontName','Times', 'FontWeight','bold')
+    'FontSize',FS, 'FontName','Times', 'FontWeight','bold')
 
 % print figure
 % print -depsc ipdlsim.eps

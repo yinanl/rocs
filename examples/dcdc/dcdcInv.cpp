@@ -19,8 +19,6 @@
 int main()
 {
     /* set the state space */
-    // double xlb[] = {-2, -1.5};
-    // double xub[] = {2, 3};
     double xlb[] = {-2, 0.70};
     double xub[] = {2, 1.50};
 
@@ -33,11 +31,12 @@ int main()
     double gub[] = {1.55, 1.17};
 
     /* solve the problem */
-    rocs::CSolver solver(&dcdcInv);
+    rocs::CSolver solver(&dcdcInv, rocs::RELMAX, UINT_MAX);
     solver.init(rocs::GOAL, glb, gub);
     solver.init_goal_area();
     
-    solver.invariance_control(&dcdcInv, 0.001, rocs::RELMAXG);
+    double e[]{0.001,0.0002};
+    solver.invariance_control(&dcdcInv, e);
     solver.print_controller_info();
 
 

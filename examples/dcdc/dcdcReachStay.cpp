@@ -31,21 +31,22 @@ int main()
     double gub[] = {1.6, 1.18};
 
     /* solve the problem */
-    rocs::CSolver solver(&dcdcRS);
+    rocs::CSolver solver(&dcdcRS, rocs::RELMAX);
     solver.init(rocs::GOAL, glb, gub);
     solver.init_goal_area();
 
-    // solver.cobuchi(&dcdcRS, 0.001, rocs::RELMAXG, 0.04, rocs::RELMAXW, 0.005, true);
-    solver.cobuchi(&dcdcRS, 0.001, rocs::RELMAXG, 0.001, rocs::RELMAXW);
-    // solver.reachstay_control(&dcdcRS, 0.001, rocs::RELMAXG, 0.04, rocs::RELMAXW, 0.005, true);
-    // solver.reachability_control(&dcdcRS, 0.003, rocs::ABSMAX);
+    double ei[]{0.001, 0.0002};
+    double er[]{0.04, 0.008};
+    double emin[]{0.005, 0.001};
+    // solver.cobuchi(&dcdcRS, ei, er, true, emin);
+    solver.cobuchi(&dcdcRS, ei, ei);
+    // solver.reachstay_control(&dcdcRS, ei, er, true, emin);
     solver.print_controller_info();
 
 
     /* save the problem data and the solution */
     rocs::matWriter wtr("data_dcdcCoBuchi.mat");
-    // rocs::matWriter wtr("data_dcdcReachStay.mat");
-    // rocs::matWriter wtr("data_dcdcReach.mat");
+    // rocs::matWriter wtr("data_ReachStay.mat");
     wtr.open();
     wtr.write_problem_setting(dcdcRS, solver);
     wtr.write_sptree_controller(solver);

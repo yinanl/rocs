@@ -9,6 +9,7 @@ SDIR := $(RDIR)src
 ODIR := $(RDIR)build
 
 INCS += -I$(RDIR)
+CXXFLAGS += -DVERBOSE
 
 SRCS := $(wildcard $(SDIR)/*.cpp)
 DEPS := $(patsubst %.cpp, %.h, $(SRCS))
@@ -27,6 +28,9 @@ TARGETS := $(basename $(ESRCS))
 
 # rules
 all: $(TARGETS)
+
+carTraj: carReachTraj.o $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
 
 carAbst: carAbst.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
@@ -53,6 +57,9 @@ showtargets:
 	@echo $(TARGETS)
 
 clean:
+	rm -rf *.o *.dSYM $(TARGETS)
+
+cleanall:
 	rm -rf *.o *.dSYM $(TARGETS) $(ODIR)/*.o
 
 

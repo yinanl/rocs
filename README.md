@@ -15,7 +15,7 @@ This is an improved version of **ROCS** the robust symbolic control synthesis to
 
 ## Installation
 ### Prerequisite packages and softwares
- - [Boost c++ libraries](http://www.boost.org): libraries for graph searching, ode solvers;
+ - [Boost c++ libraries](http://www.boost.org) >= 1.69.0: libraries for graph searching, ode solvers;
  - [Armadillo](http://arma.sourceforge.net): a c++ linear algebra library;
  - matlab: control simulation and graphics.
  

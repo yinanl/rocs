@@ -9,7 +9,8 @@ SDIR := ../../src
 ODIR := ../../build
 
 INCS += -I$(RDIR)
-# CXXFLAGS += -DVERBOSE
+
+CXXFLAGS += -DVERBOSE
 
 SRCS := $(wildcard $(SDIR)/*.cpp)
 DEPS := $(patsubst %.cpp, %.h, $(SRCS))
@@ -27,20 +28,17 @@ TARGETS := $(basename $(ESRCS))
 # rules
 all: $(TARGETS)
 
-dcdcInv: dcdcInv.o $(OBJS)
+testR: test_dynlong.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
 
-dcdcReachStay: dcdcReachStay.o $(OBJS)
+safelanding: safelanding.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
 
 display:
 	@echo $(OBJS)\
-	@echo $(EDIR)
+	@echo $(TARGETS)
 
 clean:
-	rm -rf *.o *.dSYM $(TARGETS)
-
-cleanall:
 	rm -rf *.o *.dSYM $(TARGETS) $(ODIR)/*.o
 
 

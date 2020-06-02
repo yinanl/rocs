@@ -218,13 +218,14 @@ namespace rocs {
 
     
     std::ostream& operator<<(std::ostream &out, const ivec &x) {
+	if (x.isempty())
+	    out << "The interval vector is empty.\n";
+	else {
+	    for (int i = 0; i < x._dim - 1; ++i) 
+		out << x._itvls[i] << "x";
 
-	for (int i = 0; i < x._dim - 1; ++i) {
-
-	    out << x._itvls[i] << "x";
+	    out << x._itvls[x._dim - 1];
 	}
-
-	out << x._itvls[x._dim - 1];
 
 	return out;
     }

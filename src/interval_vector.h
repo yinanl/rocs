@@ -8,14 +8,11 @@
  *  Hybrid Systems Group, University of Waterloo.
  */
 
-
-
-
 #ifndef _interval_vector_h_
 #define _interval_vector_h_
 
 #include <vector>
-
+#include <initializer_list>
 #include <armadillo>
 #include "interval.h"
 
@@ -44,8 +41,21 @@ namespace rocs {
 	    }
 	    else {
 		_itvls = new interval[_dim];
-		for (int i = 0; i < _dim; i++)
+		for (int i = 0; i < _dim; ++i)
 		    _itvls[i] = x._itvls[i];
+	    }
+	}
+	/**
+	 * \brief Constructor by initializer_list.
+	 */
+	ivec(std::initializer_list<interval> l) {
+	    _dim = l.size();
+	    _itvls = new interval[_dim];
+	    std::initializer_list<interval>::iterator iter;
+	    int i = 0;
+	    for (iter = l.begin(); iter != l.end(); ++iter){
+		_itvls[i] = *iter;
+		++i;
 	    }
 	}
 	/**
@@ -108,10 +118,16 @@ namespace rocs {
 	 * \brief Get the dimension of an interval vector.
 	 */
 	int getdim() const { return _dim;}
+	
 	/**
-	 * \brief Set the value to a specified dimension of the interval vector.
+	 * \brief Set the interval in the axis (the first argument) dimension.
 	 */
 	void setval(int axis, const interval &x) { _itvls[axis] = x;}
+
+	/**
+	 * \brief Get the interval in the axis (the first argument) dimension.
+	 */
+	interval getval(int axis) { return _itvls[axis];}
 	
 	/**
 	 * \brief Get the width of each dimension.
@@ -147,6 +163,12 @@ namespace rocs {
 	int maxdim() const;
 
 	/**
+	 * \brief Compute the volume of the interval vector.
+	 *
+	 */
+	double volume() const;
+
+	/**
 	 * \brief A test to see if an interval vector is outside the other.
 	 *
 	 * x.isout(y), 1 if x, y are disjoint
@@ -161,14 +183,41 @@ namespace rocs {
 	 */
 	bool isin(const ivec &y) const;
 	bool isin(const std::vector<double> &y) const;
+
+	/**
+	 * \brief Add an interval vector to (*this)
+	 */
+	ivec& operator += (const ivec &x);
+	/**
+	 * \brief Add a real vector to (*this)
+	 */
+	ivec& operator += (const std::vector<double> &x);
+	/**
+	 * \brief Add a real number a (broadcasted to the dim of (*this)) to (*this).
+	 */
+	ivec& operator += (const double a);
+
+	/**
+	 * \brief Subtract an interval vector from (*this)
+	 */
+	ivec& operator -= (const ivec &x);
+	/**
+	 * \brief Subtract a real vector from (*this)
+	 */
+	ivec& operator -= (const std::vector<double> &x);
+	/**
+	 * \brief Subtract a real number (broadcasted to the dim of (*this)) a from (*this).
+	 */
+	ivec& operator -= (const double a);
+	
   
 	/**
-	 * Intersection of two interval vectors.
+	 * \brief Intersection of two interval vectors.
 	 */
 	friend ivec intersect(const ivec&, const ivec&);
 	
 	/**
-	 * Interval hull of two interval vectors.
+	 * \brief Interval hull of two interval vectors.
 	 */
 	friend ivec hull(const ivec&, const ivec&);
 
@@ -179,7 +228,7 @@ namespace rocs {
 	friend ivec upperhalf(const ivec&, const int);
 
 	/**
-	 * Operation overloads between interval vectors.
+	 * \brief Operation overloads between interval vectors.
 	 */
 	friend bool operator==(const ivec&, const ivec&);
 	friend bool operator!=(const ivec&, const ivec&);
@@ -308,6 +357,14 @@ namespace rocs {
 	return false;
     }
 
+    inline double ivec::volume() const {
+	double v = 1;
+	for (int i = 0; i < _dim; ++i)
+	    v *= _itvls[i].width();
+
+	return v;
+    }
+
     inline bool ivec::isout(const std::vector<double> &y) const {
 	for (int i = 0; i < _dim; ++i) {
 	    if (_itvls[i].isout(y[i]))
@@ -334,6 +391,58 @@ namespace rocs {
 
 	return true;
     }
+
+    inline ivec& ivec::operator += (const ivec &x) {
+	if (!this->isempty()) {
+	    assert(this->_dim == x.getdim());
+	    for (int i = 0; i != this->_dim; ++i)
+		_itvls[i] += x[i];
+	}
+	return *this;
+    }
+
+    inline ivec& ivec::operator += (const std::vector<double> &a) {
+	if (!this->isempty()) {
+	    assert(this->_dim == a.size());
+	    for (int i = 0; i != this->_dim; ++i)
+		_itvls[i] += a[i];
+	}
+	return *this;
+    }
+
+    inline ivec& ivec::operator += (const double a) {
+	if (!this->isempty()) {
+	    for (int i = 0; i != this->_dim; ++i)
+		_itvls[i] += a;
+	}
+	return *this;
+    }
+
+    inline ivec& ivec::operator -= (const ivec &x) {
+	if (!this->isempty()) {
+	    assert(this->_dim == x.getdim());
+	    for (int i = 0; i != this->_dim; ++i)
+		_itvls[i] -= x[i];
+	}
+	return *this;
+    }
+
+    inline ivec& ivec::operator -= (const std::vector<double> &a) {
+	if (!this->isempty()) {
+	    assert(this->_dim == a.size());
+	    for (int i = 0; i != this->_dim; ++i)
+		_itvls[i] -= a[i];
+	}
+	return *this;
+    }
+
+    inline ivec& ivec::operator -= (const double a) {
+	if (!this->isempty()) {
+	    for (int i = 0; i != this->_dim; ++i)
+		_itvls[i] -= a;
+	}
+	return *this;
+    }
     
     inline ivec intersect(const ivec &x, const ivec &y) {
     	assert(x._dim == y._dim);
@@ -352,163 +461,6 @@ namespace rocs {
     	}
     	return r;
     }
-    
-
-    // inline bool operator==(const ivec &lhs, const ivec &rhs) {
-    // 	if (lhs.getdim() == rhs.getdim()) {
-    // 	    for (int i = 0; i < lhs.getdim(); ++i) {
-    // 		if (lhs[i] != rhs[i])
-    // 		    return false;
-    // 	    }
-    // 	    return true;
-    // 	} else {
-    // 	    return false;
-    // 	}
-    // }
-
-    // inline bool operator!=(const ivec &lhs, const ivec &rhs) {
-    // 	return !(lhs == rhs);
-    // }
-
-    // inline ivec operator-(const ivec &lhs, const ivec &rhs) {
-    // 	int dim = rhs.getdim();
-    // 	if (lhs.getdim() == dim) {
-    // 	    ivec r(dim);
-    // 	    for (int i = 0; i < dim; ++i)
-    // 		r[i] = lhs[i] - rhs[i];
-    // 	    return r;
-    // 	} else {
-    // 	    ivec r;
-    // 	    return r;
-    // 	}
-    // }
-
-    // inline ivec operator-(const double val, const ivec &rhs) {
-    // 	ivec r(rhs.getdim());
-    // 	for (int i = 0; i < rhs.getdim(); ++i)
-    // 	    r[i] = val - rhs[i];
-    // 	return r;
-    // }
-
-    // inline ivec operator-(const ivec &lhs, const double val) {
-    // 	ivec r(lhs.getdim());
-    // 	for (int i = 0; i < lhs.getdim(); ++i)
-    // 	    r[i] = lhs[i] - val;
-    // 	return r;
-    // }
-    
-    // inline ivec operator-(const std::vector<double> &val, const ivec &rhs) {
-    // 	assert(val.size() == rhs.getdim());
-    // 	ivec r(val.size());
-    // 	for (int i = 0; i < val.size(); ++i)
-    // 	    r[i] = val[i] - rhs[i];
-    // 	return r;
-    // }
-    
-    // inline ivec operator-(const ivec &lhs, const std::vector<double> &val) {
-    // 	assert(val.size() == lhs.getdim());
-    // 	ivec r(val.size());
-    // 	for (int i = 0; i < val.size(); ++i)
-    // 	    r[i] = lhs[i] - val[i];
-    // 	return r;
-    // }
-
-    // inline ivec operator+(const ivec &lhs, const ivec &rhs) {
-    // 	int dim = rhs.getdim();
-    // 	if (lhs.getdim() == dim) {
-    // 	    ivec r(dim);
-    // 	    for (int i = 0; i < dim; ++i)
-    // 		r[i] = lhs[i] + rhs[i];
-	
-    // 	    return r;
-	
-    // 	} else {
-    // 	    ivec r;
-    // 	    return r;
-    // 	}
-    // }
-
-    // inline ivec operator+(const double val, const ivec &rhs) {
-    // 	ivec r(rhs.getdim());
-    // 	for (int i = 0; i < rhs.getdim(); ++i)
-    // 	    r[i] = val + rhs[i];
-	
-    // 	return r;
-    // }
-
-    // inline ivec operator+(const ivec &lhs, const double val) {
-    // 	ivec r(lhs.getdim());
-    // 	for (int i = 0; i < lhs.getdim(); ++i)
-    // 	    r[i] = lhs[i] + val;
-	
-    // 	return r;
-    // }
-    
-    // inline ivec operator+(const std::vector<double> &val, const ivec &rhs) {
-    // 	assert(val.size() == rhs.getdim());
-    // 	ivec r(val.size());
-    // 	for (int i = 0; i < val.size(); ++i)
-    // 	    r[i] = val[i] + rhs[i];
-	
-    // 	return r;
-    // }
-    
-    // inline ivec operator+(const ivec &lhs, const std::vector<double> &val) {
-    // 	return val + lhs;
-    // }
-
-    // inline ivec operator*(const double val, const ivec &rhs) {
-    // 	ivec r(rhs.getdim());
-    // 	for (int i = 0; i < rhs.getdim(); ++i)
-    // 	    r[i] = val * rhs[i];
-	
-    // 	return r;
-    // }
-
-    // inline ivec operator*(const ivec &lhs, const double val) {
-    // 	ivec r(lhs.getdim());
-    // 	for (int i = 0; i < lhs.getdim(); ++i)
-    // 	    r[i] = lhs[i] * val;
-	
-    // 	return r;
-    // }
-    
-    
-    // inline ivec lowerhalf(const ivec &self, const int axis) {
-    // 	if (self.isempty()) {
-    // 	    return self;
-    // 	}
-    // 	else {
-    // 	    ivec left = self;
-    // 	    left.setval(axis, lowerhalf(self[axis]));
-    // 	    return left;
-    // 	} 
-    // }
-
-    // inline ivec upperhalf(const ivec &self, const int axis) {
-    // 	if (self.isempty()) {
-    // 	    return self;
-    // 	}
-    // 	else {
-    // 	    ivec right = self;
-    // 	    right.setval(axis, upperhalf(self[axis]));
-    // 	    return right;
-    // 	}
-    // }
-
-    // inline ivec linmap(const arma::mat &A, const arma::vec &b, const ivec &x) {
-    // 	ivec y(x.getdim());
-    // 	arma::vec xc(x.mid());
-    // 	arma::vec xr(x.radius());
-
-    // 	arma::vec yl = A * xc - arma::abs(A) * arma::abs(xr) + b;
-    // 	arma::vec yu = A * xc + arma::abs(A) * arma::abs(xr) + b;
-
-    // 	for (int i = 0; i < x.getdim(); ++ i) 
-    // 	    y[i] = interval(yl[i], yu[i]);
-    
-    // 	return y;
-    // }
 
 } // namespace rocs
 

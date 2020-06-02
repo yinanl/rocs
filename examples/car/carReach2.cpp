@@ -70,8 +70,8 @@ int main()
 	solver.init(rocs::AVOID, OBS[2*i], OBS[2*i+1]);
     }
     solver.init_avoid_area();
-    
-    solver.reachability_control(&carReach, 0.2, rocs::ABSMAX);
+    double eta[] = {0.2, 0.2, 0.2};
+    solver.reachability_control(&carReach, eta);
     solver.print_controller_info();
     
     /* save the problem data and the solution */

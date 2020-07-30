@@ -102,9 +102,10 @@ namespace rocs {
 	DTCntlSys(const char *name, const double t, const int xd, const int ud):
 	    System(name, t, xd, ud) {}
 	
-	void get_reach_set(std::vector<ivec> &xt, const ivec &x0) {
+	bool get_reach_set(std::vector<ivec> &xt, const ivec &x0) {
 	    for (size_t i = 0; i < _ugrid._nv; ++i)
 		F(xt[i], x0, _ugrid._data[i]);
+	    return true;
 	}
     
     };
@@ -118,9 +119,10 @@ namespace rocs {
 	DTSwSys(const char *name, const double t, const int xd, const int m):
 	    System(name, t, xd) {_ugrid._nv = m; _ugrid._dim = 1;}
 	
-	void get_reach_set(std::vector<ivec> &xt, const ivec &x0) {
+	bool get_reach_set(std::vector<ivec> &xt, const ivec &x0) {
 	    for (size_t i = 0; i < _ugrid._nv; ++i)
 		F(xt[i], x0, i+1);
+	    return true;
 	}
     
     };
@@ -134,8 +136,9 @@ namespace rocs {
 	DTSys(const char *name, const double t, const int xd):
 	    System(name, t, xd) {_ugrid._nv = 1; _ugrid._dim = 1;}
 	
-	void get_reach_set(std::vector<ivec> &xt, const ivec &x0) {      
+	bool get_reach_set(std::vector<ivec> &xt, const ivec &x0) {      
 	    F(xt[0], x0);
+	    return true;
 	}
     
     };
@@ -189,17 +192,20 @@ namespace rocs {
 	    }
 	}
     
-	void get_reach_set(std::vector<ivec> &xt, const ivec &x0) {
+	bool get_reach_set(std::vector<ivec> &xt, const ivec &x0) {
 	    for (size_t i = 0; i < _ugrid._nv; ++i) {
 		// _flows[i]->reachset_robust(xt[i], x0, _ptrparams->eps);
 		if (!_flows[i]->reachset_robust(xt[i], x0, _ptrparams->eps)) {
-		    std::cout << "Not valid reachable set for x = " << x0 << '\n'
-			      << "Current control input u = ";
-		    for (size_t j = 0; j < _ugrid._dim; ++j)
-			std::cout << _ugrid._data[i][j] << '\n';
-		    exit(EXIT_FAILURE);
+		    // std::cout << "Not valid reachable set for x = " << x0 << '\n'
+		    // 	      << "Current control input u = ";
+		    // for (size_t j = 0; j < _ugrid._dim; ++j)
+		    // 	std::cout << _ugrid._data[i][j] << ' ';
+		    // std::cout << '\n';
+		    // exit(EXIT_FAILURE);
+		    return false;
 		}
 	    }
+	    return true;
 	}
     
     };
@@ -233,16 +239,19 @@ namespace rocs {
 	    }
 	}
     
-	void get_reach_set(std::vector<ivec> &xt, const ivec &x0) {
+	bool get_reach_set(std::vector<ivec> &xt, const ivec &x0) {
 	    for (size_t i = 0; i < _ugrid._nv; ++i) {
 		if(!_flows[i]->reachset_robust(xt[i], x0, _ptrparams->eps)) {
-		    std::cout << "Not valid reachable set for x = " << x0 << '\n'
-			      << "Current control input u = ";
-		    for (size_t j = 0; j < _ugrid._dim; ++j)
-			std::cout << _ugrid._data[i][j] << '\n';
-		    exit(EXIT_FAILURE);
+		    // std::cout << "Not valid reachable set for x = " << x0 << '\n'
+		    // 	      << "Current control input u = ";
+		    // for (size_t j = 0; j < _ugrid._dim; ++j)
+		    // 	std::cout << _ugrid._data[i][j] << ' ';
+		    // std::cout << '\n';
+		    // exit(EXIT_FAILURE);
+		    return false;
 		}
 	    }
+	    return true;
 	}
     
     };
@@ -273,11 +282,13 @@ namespace rocs {
 	    }
 	}
     
-	void get_reach_set(std::vector<ivec> &xt, const ivec &x0) {
+	bool get_reach_set(std::vector<ivec> &xt, const ivec &x0) {
 	    if(!_flows[0]->reachset_robust(xt[0], x0, _ptrparams->eps)) {
-		std::cout << "Not valid reachable set for x = " << x0 << '\n';
-		exit(EXIT_FAILURE);
+		// std::cout << "Not valid reachable set for x = " << x0 << '\n';
+		// exit(EXIT_FAILURE);
+		return false;
 	    }
+	    return true;
 	}
     
     };

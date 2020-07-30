@@ -2,7 +2,7 @@
  *  carAbst.cpp
  *
  *  The vehicle example from scots using abstraction-based control synthesis.
- *  
+ *
  *  Created by Yinan Li on Feb. 18, 2020.
  *
  *  Hybrid Systems Group, University of Waterloo.
@@ -25,7 +25,7 @@
 int main(int argc, char *argv[])
 {
     clock_t tb, te;
-    
+
     /* set the state space */
     const double theta = 3.4;
     double xlb[] = {0, 0, -theta};
@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
     /* Robustness margins */
     double e1[] = {0,0};
     double e2[] = {0.001, 0.001};
-    
+
     /* define the control system */
     rocs::DTCntlSys<carde> car("reach goal", h, carde::n, carde::m);
     car.init_workspace(xlb, xub);
@@ -68,19 +68,19 @@ int main(int argc, char *argv[])
     			 { 8.4, 9.3, 3.5,  3.7},
     			 { 9.3, 10 , 2.3,  2.5}
     };
-    auto avoid = [&obs,abst,eta](size_t& i) {
+    auto avoid = [&obs,abst,eta](size_t& id) {
     		     std::vector<double> x(abst._x._dim);
-    		     abst._x.id_to_val(x, i);
+    		     abst._x.id_to_val(x, id);
     		     double c1= eta[0]/2.0+1e-10;
     		     double c2= eta[1]/2.0+1e-10;
     		     for(size_t i=0; i<15; i++) {
-    			 if ((obs[i][0]-c1) <= x[0] && x[0] <= (obs[i][1]+c1) && 
+    			 if ((obs[i][0]-c1) <= x[0] && x[0] <= (obs[i][1]+c1) &&
     			     (obs[i][2]-c2) <= x[1] && x[1] <= (obs[i][3]+c2))
     			     return true;
     		     }
     		     return false;
     		 };
-    
+
     abst.assign_labels(avoid, -1);
     std::vector<size_t> obstacles;
     for (size_t i = 0; i < abst._x._nv; ++i) {
@@ -105,15 +105,15 @@ int main(int argc, char *argv[])
     // 	twtr.close();
     // 	std::cout << "Done.\n";
     // }
-    
+
     // std::cout << "Write pre transitions to trans_pre.txt \n";
     // if (twtr.open("trans_pre.txt", std::ios::out)) {
     // 	twtr.write_pre_transitions(abst._ts, abst._x, lb, ub);
     // 	twtr.close();
     // 	std::cout << "Done.\n";
     // }
-    
-    
+
+
     /**
      * Reachability control
      */
@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
     te = clock();
     std::cout << "Time of solving reachability control: "
     	      << (float)(te - tb)/CLOCKS_PER_SEC << '\n';
-    
+
 
     /**
      * Display and save memoryless controllers.
@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
     // wtr.write_transitions(abst._ts, "trans_post", "post", "postptr", "trans_pre", "pre", "preptr");
     wtr.write_discrete_controller(solver, "leastctlr", "optctlr");
     wtr.close();
-    
-    
+
+
     return 0;
 }

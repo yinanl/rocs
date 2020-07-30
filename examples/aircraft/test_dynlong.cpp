@@ -8,16 +8,18 @@
  */
 
 #include <iostream>
+#include <boost/numeric/odeint.hpp>
 
 #include "src/system.hpp"
 #include "src/csolver.h"
 #include "src/matlabio.h"
 
 
+typedef std::array<double, 3> state_type;
+
 /* Parameters of the model */
 double mg = 60000.0*9.81;
 double mi = 1.0/60000; /* weight inverse: 1/m */
-
 
 
 /* ODE of the longitudinal equation of motions for DC9-30 */

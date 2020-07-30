@@ -39,6 +39,9 @@ display:
 	@echo $(TARGETS)
 
 clean:
+	rm -rf *.o *.dSYM $(TARGETS)
+
+cleanall:
 	rm -rf *.o *.dSYM $(TARGETS) $(ODIR)/*.o
 
 

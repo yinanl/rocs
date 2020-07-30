@@ -93,6 +93,7 @@ int main() {
     wtr.open();
     wtr.write_problem_setting(ipdl, solver);
     wtr.write_sptree_controller(solver);
+    wtr.close();
     
     ipdl.release_flows();
     

@@ -9,6 +9,7 @@ SDIR := ../../src
 ODIR := ../../build
 
 INCS += -I$(RDIR)
+CXXFLAGS += -DVERBOSE #-DLOGGING
 
 SRCS := $(wildcard $(SDIR)/*.cpp)
 DEPS := $(patsubst %.cpp, %.h, $(SRCS))
@@ -24,10 +25,13 @@ TARGETS := $(basename $(ESRCS))
 
 
 # rules
-
 all: $(TARGETS)
 
-temp: temp.o $(OBJS)
+engine: engine.o $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+engine2: engine2.o $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+testReachset: testReachset.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
 
 clean:
@@ -43,5 +47,5 @@ $(ODIR):
 $(ODIR)/%.o: $(SDIR)/%.cpp $(SDIR)/%.h
 	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
 
-temp.o: temp.cpp $(SDIR)/system.hpp
+%.o: %.cpp $(SDIR)/system.hpp
 	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@

@@ -1,14 +1,9 @@
 /**
  *  car.hpp
  *
- *  Dynamics of 2d car
- *  - dynamics
- *  - constraints
- *  - datasets
+ *  Kinematics of a car-like mobile robot
  *
  *  Created by Yinan Li on Feb. 21, 2017.
- *  Revised by Yinan Li on May 12, 2018.
- *
  *  Hybrid Systems Group, University of Waterloo.
  */
 

@@ -35,6 +35,9 @@ real: real.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
 
 clean:
+	rm -rf *.o *.dSYM $(TARGETS)
+
+cleanall:
 	rm -rf *.o *.dSYM $(TARGETS) $(ODIR)/*.o
 
 display:

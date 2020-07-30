@@ -70,13 +70,13 @@ namespace rocs {
 	    F(fterms, yterms, u);
 	    construct_helper();
 	    
-#ifdef LOGGING
-	    std::cout << "LOGGING: Taylor model.\n"
-		      << "K=" << _K
-		      << ", log((1-alpha)*delta/K)=" << _logdel1
-		      << ", log(tau)=" << _logdel2
-		      << '\n';
-#endif
+// #ifdef LOGGING
+// 	    std::cout << "LOGGING: Taylor model.\n"
+// 		      << "K=" << _K
+// 		      << ", log((1-alpha)*delta/K)=" << _logdel1
+// 		      << ", log(tau)=" << _logdel2
+// 		      << '\n';
+// #endif
 	}
 	flowTaylor(params *pdata,
 		   const double T=0.01, const double delta=0,
@@ -87,13 +87,13 @@ namespace rocs {
 	    F(frems, yrems);
 	    F(fterms, yterms);
 	    construct_helper();
-#ifdef LOGGING
-	    std::cout << "LOGGING: Taylor model.\n"
-		      << "K=" << _K
-		      << ", log((1-alpha)*delta/K)=" << _logdel1
-		      << ", log(tau)=" << _logdel2
-		      << '\n';
-#endif
+// #ifdef LOGGING
+// 	    std::cout << "LOGGING: Taylor model.\n"
+// 		      << "K=" << _K
+// 		      << ", log((1-alpha)*delta/K)=" << _logdel1
+// 		      << ", log(tau)=" << _logdel2
+// 		      << '\n';
+// #endif
 	}
 	/**
 	 * Pre-computation of some coefficients:
@@ -254,9 +254,9 @@ namespace rocs {
 		ratio = 0;
 		for (int j = 0; j < F::n; ++j) {
 		    fterms[j].eval(k-1);
-#ifdef LOGGING
-		    std::cout << fterms[j][k-1] << ',';
-#endif
+// #ifdef LOGGING
+// 		    std::cout << fterms[j][k-1] << ',';
+// #endif
 		    yterms[j][k] = _tau * fterms[j][k-1]/double(k);
 
 		    y[j] += yterms[j][k];  // tight enclosure: f^[i]([x])t^i
@@ -276,6 +276,14 @@ namespace rocs {
 		    else
 			std::cout << '\n';
 		}
+		std::cout << "\np[" << k << "] = ";
+		for (int j = 0; j < F::n; ++j) {
+		    std::cout << _p[j];
+		    if (j < F::n-1)
+			std::cout << 'x';
+		    else
+			std::cout << '\n';
+		}
 #endif
 		++k;
 	    } /* end while */
@@ -286,19 +294,47 @@ namespace rocs {
 #endif
 
 	    /*** verify k ***/
+#ifdef LOGGING
+	    ivec enc(_xenc);
+#endif
 	    do {/* the current k is the actual k+1 because of ++k */
 		eval_taylor_apriori(_p, k);
 		for (int j = 0; j < F::n; ++j) { // compute u: f^[k](p)t^k[0,1]
 		    _u[j] = yrems[j][k] * I;
 		    _xenc[j] = _u[j].mid() + _p[j];
-		    _xenc[j] = _xenc[j] + _parameters->beta*(_u[j].width()/2)*II;
+		    _xenc[j] += _parameters->beta*(_u[j].width()/2)*II;
+#ifdef LOGGING
+		    enc[j] = _u[j].mid() + _p[j];
+		    enc[j] = enc[j] +  _parameters->beta*(_u[j].width()/2)*II;
+#endif
 		}
-		
+#ifdef LOGGING
+		std::cout << "\nxenc[" << k << "] = ";
+		for (int j = 0; j < F::n; ++j) {
+		    std::cout << _xenc[j];
+		    if (j < F::n-1)
+			std::cout << 'x';
+		    else
+			std::cout << '\n';
+		}
+		std::cout << "\nenc[" << k << "] = ";
+		for (int j = 0; j < F::n; ++j) {
+		    std::cout << enc[j];
+		    if (j < F::n-1)
+			std::cout << 'x';
+		    else
+			std::cout << '\n';
+		}
+#endif
 		eval_taylor_apriori(_xenc, k);
 		for (int j = 0; j < F::n; ++j) { // update u using xenc
 		    _u[j] = yrems[j][k] * I;
 		}
 		/* verify if k is valid */
+#ifdef LOGGING
+		std::cout << "enclosure= " << _xenc << '\n';
+		std::cout << "reachset= " << _p + _u << '\n';
+#endif
 		if (_xenc.isin(_p+_u)) {
 		    _wbar = _xenc.maxwidth();
 		    _kbar = k - 1;
@@ -421,8 +457,6 @@ namespace rocs {
     }
 
 } // namespace rocs
-
-
 
 
 #endif

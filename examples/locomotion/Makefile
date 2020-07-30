@@ -52,6 +52,9 @@ integrated_mcm_pipm: int_mcm2pipm.o $(OBJS)
 clean:
 	rm -rf *.o *.dSYM $(TARGETS)
 
+cleanall:
+	rm -rf *.o *.dSYM $(TARGETS) $(ODIR)/*.o
+
 
 $(OBJS): | $(ODIR)
 $(ODIR):

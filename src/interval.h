@@ -73,7 +73,7 @@ namespace rocs {
 	/**
 	 * \brief Return the center point of (*this).
 	 */
-	double mid() const { return roundup(m_inf + (m_sup - m_inf)/2.0); }
+	double mid() const { return roundup((m_inf + m_sup)/2.0); }
 
 	/**
 	 * \brief [x].isout([a]) is true if [x],[a] are disjoint.

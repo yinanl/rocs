@@ -51,13 +51,19 @@ namespace rocs {
     }
     void CSolver::init(SPEC ap, ivec &area) {
 	assert(!_ctlr.isempty());
-	short itag = (ap == GOAL) ? 1 : -1;
-	if (_ctlr.isleaf(_ctlr._root)) { // first time
-	
-	    paver_init(_ctlr._root, area, itag);
+	short itag;
+	switch(ap) {
+	case GOAL:
+	    itag = 1; break;
+	case AVOID:
+	    itag = -1; break;
+	default:
+	    itag = 0; break;
 	}
-	else {  // has been initialized, so refine _ctlr
-	
+	// short itag = (ap == GOAL) ? 1 : -1;
+	if (_ctlr.isleaf(_ctlr._root)) { // first time
+	    paver_init(_ctlr._root, area, itag);
+	} else {  // has been initialized, so refine _ctlr
 	    init_refine(_ctlr._root, area, itag);
 	}
 	_ctlr.tagging(EXACT);
@@ -173,11 +179,20 @@ namespace rocs {
 
 
     void CSolver::init(SPEC ap, fcst f, const double eps[]) {
-
 	assert(!_ctlr.isempty());
 
-	bool inner = (ap == GOAL) ? true : false;
-	short itag = (ap == GOAL) ? 1 : -1;
+	// bool inner = (ap == GOAL) ? true : false;
+	// short itag = (ap == GOAL) ? 1 : -1;
+	bool inner;
+	short itag;
+	switch(ap) {
+	case GOAL:
+	    itag = 1; inner = true; break;
+	case AVOID:
+	    itag = -1; inner = false; break;
+	default:
+	    itag = 0; inner = false; break;
+	}
 
 	if (_ctlr.isleaf(_ctlr._root)) {
 	
@@ -241,8 +256,8 @@ namespace rocs {
 
     void CSolver::sivia(SPtree &sp, SPnode *ptrnode, ivec &cst, fcst fcn,
 			bool inner, short itag, const double eps[]) {
-
-	if (sp.isempty() || ptrnode == NULL)
+	/* the node (*ptrnode) is not processed if it is empty/null or an avoid region */
+	if (sp.isempty() || ptrnode == NULL || ptrnode->_tag == -1)
 	    return;
     
 	bool b1 = (itag == 1) ? true : false;
@@ -252,11 +267,9 @@ namespace rocs {
 	ivec fbox = fcn(box);
     
 	if (cst.isin(fbox)) { // inside change _tag
-	    if (ptrnode->_tag != -1) {
-		ptrnode->_tag = itag;
-		ptrnode->_b0 = false;
-		ptrnode->_b1 = b1;
-	    }
+	    ptrnode->_tag = itag;
+	    ptrnode->_b0 = false;
+	    ptrnode->_b1 = b1;
 	    return;
 	}
 
@@ -266,7 +279,7 @@ namespace rocs {
 	/* compute the split axis */
 	int axis = bisect_axis(box, eps);
 	if (box[axis].width() < eps[axis]) {
-	    if (!inner && ptrnode->_tag != -1) { // outer approximation
+	    if (!inner) { // outer approximation
 		ptrnode->_tag = itag;
 		ptrnode->_b0 = false;
 		ptrnode->_b1 = b1;
@@ -274,18 +287,6 @@ namespace rocs {
 	    return;
 	}
 	sp.expand(ptrnode, axis);
-	
-	// if (box.maxwidth() < eps) { // undetermined
-	//     if (!inner && ptrnode->_tag != -1) { // outer approximation
-	// 	ptrnode->_tag = itag;
-	// 	ptrnode->_b0 = false;
-	// 	ptrnode->_b1 = b1;
-	//     } // _tag unchanged if inner
-	//     return;
-	// }
-	// /* precision not satisfied: expansion */
-	// sp.expand(ptrnode, bisect_axis(box));  // bisect relatively maximum axis
-
 	sivia(sp, ptrnode->_left, cst, fcn, inner, itag, eps);
 	sivia(sp, ptrnode->_right, cst, fcn, inner, itag, eps);
     
@@ -487,6 +488,7 @@ namespace rocs {
 	assert( !_ctlr.isempty() );
     
 	_ctlr.print_leaves(_ctlr._root);
+	std::cout << '\n';
     
     }
 
@@ -516,7 +518,7 @@ namespace rocs {
     void CSolver::log_iterations(const char* filename, int iter) {
 
 	std::fstream logfile;
-	logfile.open("log.txt", std::ios::ate | std::ios::app); // append data
+	logfile.open(filename, std::ios::ate | std::ios::app); // append data
 
 	logfile << iter << ":\n";
     

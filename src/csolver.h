@@ -28,7 +28,8 @@ namespace rocs {
     enum SPEC
 	{
 	 GOAL,  // tag = 1
-	 AVOID   // tag = -1
+	 AVOID,   // tag = -1
+	 FREE  // tag = 0
 	};
 
     /**
@@ -218,8 +219,7 @@ namespace rocs {
 		      std::stack<SPnode*> &, std::stack<SPnode*> &,
 		      std::stack<SPnode*> &, std::stack<SPnode*> &,
 		      const double evaleps[]);
-
-
+	
 	/* fixed-point algorithms */
 	/**
 	 * Initialize queues of leaves for computation
@@ -266,7 +266,6 @@ namespace rocs {
 	/**
 	 * Backward reachable sets: iterating \f$\mu X.(\text{Pre}(X)\cup X)\f$.
 	 * @param eps absolute or relative paver precision.
-	 * @param bs bisection type.
 	 * @param epsmin minimum absolute paver size (default=0.001).
 	 * @param vareps using variate precision (true-yes, false-no).
 	 * @return 0(empty set), 1(non-empty).
@@ -280,7 +279,6 @@ namespace rocs {
 	 *
 	 * A subset of co-Buchi set. 
 	 * @param ei relative precision for invariance.
-	 * @param bsi bisection type for invariance.
 	 * @param er absolute or relative precision for reachability.
 	 * @param ermin minimum absolute paver size (default=0.001).
 	 * @param vareps using variate precision (true-yes, false-no).
@@ -295,7 +293,7 @@ namespace rocs {
 	 * Standard coBuchi winning set: \f$\nu Y.\nu X.[\text{Pre}(Y)\cup(B\cap \text{Pre}(X))]\f$.
 	 *
 	 * Relative and adaptive precisions.
-	 * @see reach_stay().
+	 * @see reachstay_control().
 	 */
 	template<typename system>
 	bool cobuchi(system* ptrsys,
@@ -305,7 +303,6 @@ namespace rocs {
 
 	/**
 	 * Standard Buchi winning set: \f$\nu Y.\mu X.[(B\cap\text{Pre}(Y))\cup\text{Pre}(X)]\f$.
-	 * @param bs bisection type.
 	 * @param er absolute or relative precision for reachability.
 	 * @param ermin minimum absolute paver size (default=0.001).
 	 * @param vareps using variate precision (true-yes, false-no).
@@ -349,76 +346,93 @@ namespace rocs {
 	while (!l.empty()) {
 	    current = l.top();
 	    l.pop();
-	    ptrsys->get_reach_set(y, current->_box);
-
-	    /* update control info */
-	    t = 0;	
-	    for (size_t u = 0; u < y.size(); ++ u ) {
-		ut = paver_test(_ctlr, y[u]); // interval inclusion test
-		if (ut == 1) {
-		    if (_ctlr._root->_box.isin(y[u])) {
-			if (t != 1)
-			    t = 1;
-			current->_cntl[u] = true;
-		    } else {  // same as ut=0
-			current->_cntl[u] = false;
-		    }
-		} else if (ut == 0) {
-		    current->_cntl[u] = false;
-		} else {
-		    if (t != 1)
-			t = 2;
-		    /* this line is necessary, e.g. for invariant fixed points,
-		       an interval can become not controlled invariant even if 
-		       it is controlled invariant for the previous iterations. */
-		    current->_cntl[u] = false;
-		}
-	    }  // end for (control update)
-
-	    /* save new tag in b0 & b1 */
-	    if (t == 0) {
-		current->_b0 = true;
-		current->_b1 = false;
-		l0.push(current);
-	    }
-	    else if (t == 1) {
-		current->_b0 = false;
-		current->_b1 = true;
-		l1.push(current);
-		_winsize += current->_box.volume();
-	    }
-	    else {
-		current->_b0 = true;
-		current->_b1 = true;
-		
-		/* compute the split axis */
+	    // ptrsys->get_reach_set(y, current->_box);
+	    if (!ptrsys->get_reach_set(y, current->_box)) {
+		/* If the box is less than the min width, then fail. */
 		int axis = bisect_axis(current->_box, evaleps);
 		if (current->_box[axis].width() < evaleps[axis]) {
-		    l2.push(current);
+		    std::cout << "CSolver: Fail in computing reachable set for x = "
+			      << current->_box << '\n';
+		    exit(EXIT_FAILURE);
+		} else { /* put the current box into l0 */
+		    for (size_t u = 0; u < y.size(); ++ u ) {
+			current->_cntl[u] = false;
+		    }
+		    current->_b0 = true;
+		    current->_b1 = false;
+		    l0.push(current);
+		}
+	    } else {
+		/* update control info */
+		t = 0;	
+		for (size_t u = 0; u < y.size(); ++ u ) {
+		    ut = paver_test(_ctlr, y[u]); // interval inclusion test
+		    if (ut == 1) {
+			if (_ctlr._root->_box.isin(y[u])) {
+			    if (t != 1)
+				t = 1;
+			    current->_cntl[u] = true;
+			} else {  // same as ut=0
+			    current->_cntl[u] = false;
+			}
+		    } else if (ut == 0) {
+			current->_cntl[u] = false;
+		    } else {
+			if (t != 1)
+			    t = 2;
+			/* this line is necessary, e.g. for invariant fixed points,
+			   an interval can become not controlled invariant even if 
+			   it is controlled invariant for the previous iterations. */
+			current->_cntl[u] = false;
+		    }
+		}  // end for (control update)
+
+		/* save new tag in b0 & b1 */
+		if (t == 0) {
+		    current->_b0 = true;
+		    current->_b1 = false;
+		    l0.push(current);
+		}
+		else if (t == 1) {
+		    current->_b0 = false;
+		    current->_b1 = true;
+		    l1.push(current);
+		    _winsize += current->_box.volume();
 		}
 		else {
-		    _ctlr.expand(current, axis);
-		    l.push(current->_left);
-		    l.push(current->_right);
-		}
-		// double ri, r = 0;
-		// int axis = 0;
-		// for (int i = 0; i < _xdim; ++i) {
-		//     ri = current->_box[i].width()/evaleps[i];
-		//     if (r < ri) {
-		// 	axis = i;
-		// 	r = ri;
-		//     }
-		// }
-		// if (r < 1)
-		//     l2.push(current);
-		// else {
-		//     _ctlr.expand(current, axis);
-		//     l.push(current->_left);
-		//     l.push(current->_right);
-		// }
+		    current->_b0 = true;
+		    current->_b1 = true;
 		
-	    }  // end if (save new tag in b0 & b1)
+		    /* compute the split axis */
+		    int axis = bisect_axis(current->_box, evaleps);
+		    if (current->_box[axis].width() < evaleps[axis]) {
+			l2.push(current);
+		    }
+		    else {
+			_ctlr.expand(current, axis);
+			l.push(current->_left);
+			l.push(current->_right);
+		    }
+		    // double ri, r = 0;
+		    // int axis = 0;
+		    // for (int i = 0; i < _xdim; ++i) {
+		    //     ri = current->_box[i].width()/evaleps[i];
+		    //     if (r < ri) {
+		    // 	axis = i;
+		    // 	r = ri;
+		    //     }
+		    // }
+		    // if (r < 1)
+		    //     l2.push(current);
+		    // else {
+		    //     _ctlr.expand(current, axis);
+		    //     l.push(current->_left);
+		    //     l.push(current->_right);
+		    // }
+		
+		}  // end if (save new tag in b0 & b1)
+	    }  // end if (get_reach_set is successful)
+	    
 	}  // end while (loop all nodes in l)
     }
 
@@ -482,7 +496,7 @@ namespace rocs {
 #ifdef VERBOSE
 	std::cout << "reach_compute:: <#iter>:<# of intervals in the winset>,<precision>\n";
 #endif
-	while (!stop && _fpiter[d] <= _maxiter) {
+	while (!stop && _fpiter[d] < _maxiter) {
 	    ++_fpiter[d];
 	    lold = l1.size();
 	    if (!l2.empty()) {
@@ -495,7 +509,17 @@ namespace rocs {
 	    }
 	    stop = l1.size() <= lold;
 	    _ctlr.tagging(INNER);
-
+	    
+#ifdef VERBOSE
+	    std::cout << _fpiter[d] << ": " << l1.size() << ", [";
+	    for (int i = 0; i < _xdim; ++i) {
+		std::cout << eps[i];
+		if (i<_xdim-1)
+		    std::cout << ',';
+		else
+		    std::cout << "]\n";
+	    }
+#endif
 	    if (vareps) {  // using adaptive precision
 	    	if (stop) {
 		    for (int i = 0; i != _xdim; ++i) {
@@ -512,17 +536,6 @@ namespace rocs {
 		    }
 	    	} // endif
 	    } // endif
-
-#ifdef VERBOSE
-	    std::cout << _fpiter[d] << ": " << l1.size() << ", [";
-	    for (int i = 0; i < _xdim; ++i) {
-		std::cout << eps[i];
-		if (i<_xdim-1)
-		    std::cout << ',';
-		else
-		    std::cout << "]\n";
-	    }
-#endif
 	} // endwhile
 
 	delete[] eps;
@@ -581,7 +594,7 @@ namespace rocs {
 	    std::cout << "Start reachability control..." << '\n';
 	
 	    t = _timer;
-	    bool r = reachability_control(ptrsys, er, ermin, vareps);
+	    bool r = reachability_control(ptrsys, er, vareps, ermin);
 	    _timer += t;
 	    return r;
 	
@@ -615,7 +628,7 @@ namespace rocs {
 	std::cout << "cobuchi:: <outer iter>:<# of inner iters>,<current precision parameter>\n";
 #endif
 	/* outer mu loop */
-	while (!stop && _fpiter[1] <= _maxiter) {
+	while (!stop && _fpiter[1] < _maxiter) {
 	    ++ _fpiter[1];
 	    // std::cout << _fpiter[1] << ": ";
 	    

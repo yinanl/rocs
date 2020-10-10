@@ -22,7 +22,7 @@
 int main()
 {
     /* set the state space */
-    const double theta = 3.4;
+    const double theta = 3.5;
     double xlb[] = {0, 0, -theta};
     double xub[] = {10, 10, theta};
 

@@ -128,14 +128,14 @@ namespace rocs {
 
 	/**
 	 * Assign labels to the state grid:
-	 * @param fcn a function f(x)<0 that determines the grid points to be labeled.
-	 * @param l the label to be assigned.
+	 * @param fcn a function that returns the label of a grid id.
 	 */
 	template<typename F>
-	void assign_labels(F fcn, int l) {
+	void assign_labels(F labeling) {
 	    for (size_t i = 0; i < _x._nv; ++i) {
-		if (fcn(i))
-		    _labels[i] = l;
+		_labels[i] = labeling(i);
+		// if (fcn(i))
+		//     _labels[i] = l;
 	    }
 	}
 	
@@ -185,7 +185,7 @@ namespace rocs {
 		/* compute reachable set */
 		for (int k = 0; k < n; ++k) {
 		    y0.setval(k, interval(_x._data[row][k]-_x._gw[k]/2.0,
-					  _x._data[row][k]+_x._gw[k]/2.0));
+		    			  _x._data[row][k]+_x._gw[k]/2.0));
 		    // y0.setval(k, interval(_x._data[row][k]-_x._gw[k]/2.0-e1[k],
 		    // 			  _x._data[row][k]+_x._gw[k]/2.0+e1[k]));
 		}		
@@ -272,7 +272,7 @@ namespace rocs {
 	    size_t idtspre;
 	    for (size_t row = 0; row < nx; ++row) {
 		for (size_t col = 0; col < nu; ++col) {
-		    for (int ip = 0; ip < _ts._npost[row*nu + col]; ++ip) {
+		    for (size_t ip = 0; ip < _ts._npost[row*nu + col]; ++ip) {
 			if (_ts._idpost[_ts._ptrpost[row*nu+col] + ip] > nx) {
 			    std::cout << "row=" << row <<", col=" << col << '\n';
 			}

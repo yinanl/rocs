@@ -22,25 +22,25 @@ namespace rocs {
 	if (node.isempty())
 	    return out << "()";
     
-	out << "(" << node._box << ", " << node._tag << ", " << node._split;
+	out << "(" << node._box << ", "  << node._label << ", " << node._tag << ", " << node._split;
 
 	out << ", {";
 
-	bool first = true;
-	for (int i = 0; i < node._cntl.size(); ++i) {
+	// bool first = true;
+	// for (size_t i = 0; i < node._cntl.size(); ++i) {
 
-	    if (node._cntl[i]) {
+	//     if (node._cntl[i]) {
 
-		if (first) {
+	// 	if (first) {
 
-		    out << i;
-		    first = false;
-		} else {
+	// 	    out << i;
+	// 	    first = false;
+	// 	} else {
 		    
-		    out << ", " << i;
-		}
-	    }
-	}
+	// 	    out << ", " << i;
+	// 	}
+	//     }
+	// }
 	out << "})";
 
 	return out;
@@ -120,9 +120,9 @@ namespace rocs {
 
 	/* left right childern inherit _tag and _cntl */
 	leaf->_left = new SPnode(lowerhalf(leaf->_box, axis), leaf->_cntl,
-				 leaf->_tag, leaf->_b0, leaf->_b1);
+				 leaf->_tag, leaf->_b0, leaf->_b1, leaf->_label);
 	leaf->_right = new SPnode(upperhalf(leaf->_box, axis), leaf->_cntl,
-				  leaf->_tag, leaf->_b0, leaf->_b1);
+				  leaf->_tag, leaf->_b0, leaf->_b1, leaf->_label);
 	leaf->_split = axis;
     }
 
@@ -218,7 +218,8 @@ namespace rocs {
 	
 	    /* retract nodes only if the childern are leaves */
 	    if (current->_left->_tag == current->_right->_tag &&
-		isleaf(current->_left) && isleaf(current->_right)) {
+		isleaf(current->_left) && isleaf(current->_right) &&
+		current->_left->_label == current->_right->_label) {
 
 		current->_tag = current->_left->_tag;
 		release(current->_left);
@@ -313,6 +314,26 @@ namespace rocs {
 	    tagging(EXACT);
 	}
     
+    }
+
+
+    void SPtree::reset_tags() {
+	std::stack<SPnode*> stk;
+	stk.push(_root);
+	SPnode *current;
+	while(!stk.empty()) {
+	    current = stk.top();
+	    stk.pop();
+	    if(current->_tag != -1) {
+		current->_b0 = false;
+		current->_b1 = false;
+		current->_tag = 0;
+	    }
+	    if(current->_right)
+		stk.push(current->_right);
+	    if(current->_left)
+		stk.push(current->_left);
+	}
     }
 
     /* Count numbers */
@@ -466,10 +487,10 @@ namespace rocs {
 	} else {
 	
 	    if (node->_left != NULL) //recursions
-		print_leaves(node->_left, 1);
+		print_leaves(node->_left, tag);
     
 	    if (node->_right != NULL)
-		print_leaves(node->_right, 1);
+		print_leaves(node->_right, tag);
 
 	}
     

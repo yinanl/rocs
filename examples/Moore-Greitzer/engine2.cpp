@@ -13,19 +13,19 @@
 
 #include "src/system.hpp"
 #include "src/csolver.h"
-
 #include "src/matlabio.h"
 
-double a = 1./3.5;
-double B = 2.0;
-double H = 0.18;
-double W = 0.25;
-double lc = 8.0;
-double cx = 1.0/lc;
-double cy = 1.0/(4*lc*B*B);
-double aH = a+H;
-double H2 = H/(2.0*W*W*W);
-double W2 = 3*W*W;
+
+const double a = 1./3.5;
+const double B = 2.0;
+const double H = 0.18;
+const double W = 0.25;
+const double lc = 8.0;
+const double cx = 1.0/lc;
+const double cy = 1.0/(4*lc*B*B);
+const double aH = a+H;
+const double H2 = H/(2.0*W*W*W);
+const double W2 = 3*W*W;
 
 /* user defined dynamics */
 struct mgode2 {
@@ -48,15 +48,15 @@ struct mgode2 {
 int main(int argc, char *argv[]) {
 
     /* set the state space */
-    double xlb[3]{0.44, 0.6};
-    double xub[3]{0.54, 0.7};
+    double xlb[]{0.44, 0.6};
+    double xub[]{0.54, 0.7};
     
     /* set the control values */
     double Lmu = 0.01;
     double Lu = 0.05;
-    double ulb[2]{-Lu, 0.5};
-    double uub[2]{Lu, 0.8};
-    double mu[2]{Lu/5, 0.01};
+    double ulb[]{-Lu, 0.5};
+    double uub[]{Lu, 0.8};
+    double mu[]{Lu/5, 0.01};
 
     /* set the sampling time and disturbance */
     double delta = 0.01;
@@ -95,11 +95,11 @@ int main(int argc, char *argv[]) {
     double oub[]{0.503, 0.656};
 
     /* solve the problem */
-    rocs::CSolver solver(&engine, rocs::RELMAX, 100);
-    solver.init(rocs::GOAL, glb, gub);
-    solver.init_goal_area();
+    rocs::CSolver solver(&engine, 0, rocs::RELMAX, 70);
     solver.init(rocs::AVOID, olb, oub);
     solver.init_avoid_area();
+    solver.init(rocs::GOAL, glb, gub);
+    solver.init_goal_area();
     solver.print_controller_info();
     solver.print_controller();
     
@@ -107,13 +107,15 @@ int main(int argc, char *argv[]) {
     double er[]{0.005, 0.005};
     double ermin[]{0.0002, 0.0002};
     // solver.cobuchi(&engine, ei, er);
+    // solver.reachstay_control(&engine, ei, ei);
     solver.reachstay_control(&engine, ei, er, true, ermin);
-    // solver.reachability_control(&engine, er, true, ermin);
+    // solver.reachability_control(&engine, ermin);
     solver.print_controller_info();
 
     /* save the problem data and the solution */
     // rocs::matWriter wtr("data_caseII_Cobuchi2.mat");
     rocs::matWriter wtr("data_caseIIReachstay2.mat");
+    // rocs::matWriter wtr("data_caseIIReach2.mat");
     wtr.open();
     wtr.write_problem_setting(engine, solver);
     wtr.write_sptree_controller(solver);

@@ -12,6 +12,7 @@
 #ifndef _csolver_h
 #define _csolver_h
 
+#include <iostream>
 
 #include <climits>
 #include <vector>
@@ -52,6 +53,8 @@ namespace rocs {
 	SPtree _ctlr;	     /**< A controller. */
 	int _xdim;  /**< The state dimension. */
 	size_t _nu;  /**< The number of control values. */
+	std::vector<UintSmall> _M; /**< The transitions from the current S-domain to others,
+				      * which is given in a transition matrix of a DBA */
 	std::vector<ivec> _goal; /**< The goal areas (an array of intervals). */
 	std::vector<ivec> _obs;  /**< The avoiding areas (an array of intervals). */
 	BISECT _bstype;   /**< The bisection type. */
@@ -65,57 +68,92 @@ namespace rocs {
 	/**
 	 * A constructor.
 	 * @param ptrsys the pointer to the system dynamics.
+	 * @param nProps the number of propositions.
 	 * @param bs the bisection type.
 	 * @param maxi the maximum number of iterations.
 	 */
 	template<typename system>
-	CSolver(system* ptrsys, BISECT bs, size_t maxi=UINT_MAX):
-	    _xdim(ptrsys->_xdim),_nu(ptrsys->_ugrid._nv),
-	    _bstype(bs),_maxiter(maxi), 
-	    _winsize(0),
+	CSolver(system* ptrsys, size_t nProps=0, BISECT bs=ABSMAX, size_t maxi=UINT_MAX):
+	    _xdim(ptrsys->_xdim), _nu(ptrsys->_ugrid._nv), _M(nProps),
+	    _bstype(bs), _maxiter(maxi), _winsize(0),
 	    _fpiter{0,0,0}, _timer(0) {
 		
 	    SPnode root(ptrsys->_workspace, _nu);
 	    _ctlr = SPtree(&root);	/* SPtree copy assignment */
 	}
   
+	// /**
+	//  * Construct with relative subdivision.
+	//  * @param ptrsys the pointer to the system dynamics.
+	//  * @param maxi the maximum number of iterations.
+	//  */
+	// template<typename system>
+	// CSolver(system* ptrsys, int n, size_t maxi):
+	//     _xdim(ptrsys->_xdim),_nu(ptrsys->_ugrid._nv),
+	//     _bstype(RELMAX), _maxiter(maxi),
+	//     _winsize(0),
+	//     _fpiter{0,0,0}, _timer(0) {
+
+	// 	SPnode root(ptrsys->_workspace, _nu);
+	// 	_ctlr = SPtree(&root);
+	//     }
+
+	// /**
+	//  * Construct with absolute subdivision and default maximum number of iterations.
+	//  * @param ptrsys the pointer to the system dynamics.
+	//  * @param maxi the maximum number of iterations.
+	//  */
+	// template<typename system>
+	// CSolver(system* ptrsys):
+	//     _xdim(ptrsys->_xdim), _nu(ptrsys->_ugrid._nv),
+	//     _bstype(RELMAX), _maxiter(UINT_MAX), _M(0),
+	//     _winsize(0),
+	//     _fpiter{0,0,0}, _timer(0) {
+
+	// 	SPnode root(ptrsys->_workspace, _nu);
+	// 	_ctlr = SPtree(&root);
+	//     }
+
+
 	/**
-	 * Construct with absolute subdivision.
-	 * @param ptrsys the pointer to the system dynamics.
-	 * @param maxi the maximum number of iterations.
+	 * Set the vector _M.
+	 * @param outedge[] the pointer to the input array.
 	 */
-	template<typename system>
-	CSolver(system* ptrsys, size_t maxi):
-	    _xdim(ptrsys->_xdim),_nu(ptrsys->_ugrid._nv),
-	    _bstype(ABSMAX), _maxiter(maxi),
-	    _winsize(0),
-	    _fpiter{0,0,0}, _timer(0) {
-
-		SPnode root(ptrsys->_workspace, _nu);
-		_ctlr = SPtree(&root);
-	    }
-
-	/**
-	 * Construct with absolute subdivision and default maximum number of iterations.
-	 * @param ptrsys the pointer to the system dynamics.
-	 * @param maxi the maximum number of iterations.
-	 */
-	template<typename system>
-	CSolver(system* ptrsys):
-	    _xdim(ptrsys->_xdim), _nu(ptrsys->_ugrid._nv),
-	    _bstype(ABSMAX), _maxiter(UINT_MAX),
-	    _winsize(0),
-	    _fpiter{0,0,0}, _timer(0) {
-
-		SPnode root(ptrsys->_workspace, _nu);
-		_ctlr = SPtree(&root);
-	    }
+	void set_M(const std::vector<UintSmall> &outedge);
+	
 
 	/**
 	 * Determine the bisection axis.
 	 * @param box the interval vector to be bisected.
 	 */
 	int bisect_axis(ivec &box, const double eps[]);
+
+
+	/* Labeling */
+	/**
+	 * Assign labels to different area in the state space X by the labeling function.
+	 * @param prop an integer (<=255) representing the proposition.
+	 * @param lb lower bound of the interval.
+	 * @param ub upper bound.
+	 */
+	void labeling(const double lb[], const double ub[], UintSmall prop);
+	void labeling(ivec &area, UintSmall prop);
+	void init_label(SPnode *node, ivec &box, UintSmall prop);
+	void refine_label(SPnode *node, ivec &box, UintSmall prop);
+
+
+	/* Initilize the winning set */
+	/**
+	 * Assume that the _ctlr(an SPtree) is already partitioned by the labeling function
+	 */
+	void init_winset();
+	void init_winset(ivec &area);
+
+	/** 
+	 * Check if the related S-domains contain targeted areas 
+	 * @param sdoms a vector of the pointers to S-domains of all DBA nodes.
+	 */
+	bool targetset_in_sdoms(std::vector<SPtree*> &sdoms);
   
   
 	/* controller initialization */
@@ -219,6 +257,20 @@ namespace rocs {
 		      std::stack<SPnode*> &, std::stack<SPnode*> &,
 		      std::stack<SPnode*> &, std::stack<SPnode*> &,
 		      const double evaleps[]);
+
+	/**
+	 * The union of one-step backward reachable set (tag updates):
+	 * W_i = U_j a_ij\cap Pre(W_j)
+	 *  
+	 * The result (union of predecessors) is represented by the tags in _ctlr.
+	 * @param sdoms a vector of the pointers to S-domains of all DBA nodes.
+	 */
+	template<typename system>
+	void union_of_pres(system* ptrsys, std::vector<SPtree*> &sdoms,
+			   std::stack<SPnode*> &l, std::stack<SPnode*> &l0,
+			   std::stack<SPnode*> &l1, std::stack<SPnode*> &l2,
+			   const double evaleps[]);
+	
 	
 	/* fixed-point algorithms */
 	/**
@@ -342,7 +394,7 @@ namespace rocs {
 			   const double evaleps[]) {
 	SPnode *current;
 	std::vector<ivec> y(_nu, ivec(_xdim));
-	short t, ut;
+	short t;
 	while (!l.empty()) {
 	    current = l.top();
 	    l.pop();
@@ -351,7 +403,7 @@ namespace rocs {
 		/* If the box is less than the min width, then fail. */
 		int axis = bisect_axis(current->_box, evaleps);
 		if (current->_box[axis].width() < evaleps[axis]) {
-		    std::cout << "CSolver: Fail in computing reachable set for x = "
+		    std::cout << "CSolver::pre_cntl: Fail in computing reachable set for x = "
 			      << current->_box << '\n';
 		    exit(EXIT_FAILURE);
 		} else { /* put the current box into l0 */
@@ -366,49 +418,55 @@ namespace rocs {
 		/* update control info */
 		t = 0;	
 		for (size_t u = 0; u < y.size(); ++ u ) {
-		    ut = paver_test(_ctlr, y[u]); // interval inclusion test
-		    if (ut == 1) {
-			if (_ctlr._root->_box.isin(y[u])) {
-			    if (t != 1)
-				t = 1;
-			    current->_cntl[u] = true;
-			} else {  // same as ut=0
-			    current->_cntl[u] = false;
-			}
-		    } else if (ut == 0) {
-			current->_cntl[u] = false;
-		    } else {
+		    switch (paver_test(_ctlr, y[u])) { // interval inclusion test
+		    case 0:
+			current->_cntl[u] = false; break;
+		    case 1:
+			// if (_ctlr._root->_box.isin(y[u])) {
+			//     if (t != 1)
+			// 	t = 1;
+			//     current->_cntl[u] = true;
+			// } else {  // same as ut=0
+			//     current->_cntl[u] = false;
+			// }
+			// break;
+			if (t != 1)
+			    t = 1;
+			current->_cntl[u] = true; break;
+		    case 2:
 			if (t != 1)
 			    t = 2;
 			/* this line is necessary, e.g. for invariant fixed points,
 			   an interval can become not controlled invariant even if 
 			   it is controlled invariant for the previous iterations. */
-			current->_cntl[u] = false;
+			current->_cntl[u] = false; break;
+		    default:
+			std::cout << "CSolver::pre_cntl: paver_test returns a wrong tag.\n";
+			exit(EXIT_FAILURE); break;
 		    }
 		}  // end for (control update)
 
 		/* save new tag in b0 & b1 */
-		if (t == 0) {
+		switch (t) {
+		case 0:
 		    current->_b0 = true;
 		    current->_b1 = false;
 		    l0.push(current);
-		}
-		else if (t == 1) {
+		    break;
+		case 1:
 		    current->_b0 = false;
 		    current->_b1 = true;
 		    l1.push(current);
 		    _winsize += current->_box.volume();
-		}
-		else {
+		    break;
+		case 2:
 		    current->_b0 = true;
 		    current->_b1 = true;
-		
 		    /* compute the split axis */
 		    int axis = bisect_axis(current->_box, evaleps);
 		    if (current->_box[axis].width() < evaleps[axis]) {
 			l2.push(current);
-		    }
-		    else {
+		    } else {
 			_ctlr.expand(current, axis);
 			l.push(current->_left);
 			l.push(current->_right);
@@ -429,13 +487,110 @@ namespace rocs {
 		    //     l.push(current->_left);
 		    //     l.push(current->_right);
 		    // }
-		
-		}  // end if (save new tag in b0 & b1)
+		    break;
+		}  // end of switch
 	    }  // end if (get_reach_set is successful)
 	    
 	}  // end while (loop all nodes in l)
-    }
+    }// CSolver::pre_cntl
 
+    template<typename system>
+    void CSolver::union_of_pres(system* ptrsys, std::vector<SPtree*> &sdoms,
+			   std::stack<SPnode*> &l, std::stack<SPnode*> &l0,
+			   std::stack<SPnode*> &l1, std::stack<SPnode*> &l2,
+			   const double evaleps[]) {
+	// /***** LOGGING  *****/
+	// std::ofstream logger("log_dbacontrol.txt", std::ios_base::out | std::ios_base::app);
+	// /***** LOGGING  *****/
+	
+	SPnode *current;
+	std::vector<ivec> y(_nu, ivec(_xdim));
+	short t;
+	while (!l.empty()) {
+	    current = l.top();
+	    l.pop();
+	    // ptrsys->get_reach_set(y, current->_box);
+	    if (!ptrsys->get_reach_set(y, current->_box)) {
+		/* If the box is less than the min width, then fail. */
+		int axis = bisect_axis(current->_box, evaleps);
+		if (current->_box[axis].width() < evaleps[axis]) {
+		    std::cout << "CSolver::union_of_pres: Fail in computing reachable set for x = "
+			      << current->_box << '\n';
+		    exit(EXIT_FAILURE);
+		} else { /* put the current box into l0 */
+		    for (size_t u = 0; u < y.size(); ++ u ) {
+			current->_cntl[u] = false;
+		    }
+		    current->_b0 = true;
+		    current->_b1 = false;
+		    l0.push(current);
+		}
+	    } else {
+		/* update control info */
+		t = 0;
+		for (size_t u = 0; u < y.size(); ++ u ) {
+		    switch ( paver_test(*sdoms[_M[current->_label]], y[u]) ) {
+		    case 0:
+			current->_cntl[u] = false; break;
+		    case 1:
+			if (t != 1)
+			    t = 1;
+			current->_cntl[u] = true; break;
+		    case 2:
+			if (t != 1)
+			    t = 2;
+			/* this line is necessary, e.g. for invariant fixed points,
+			   an interval can become not controlled invariant even if 
+			   it is controlled invariant for the previous iterations. */
+			current->_cntl[u] = false;
+			break;
+		    default:
+			std::cout << "CSolver::union_of_pres: paver_test returns a wrong tag.\n";
+			exit(EXIT_FAILURE); break;
+		    
+		    }
+		}  // end for (control update)
+
+		// /***** LOGGING  *****/
+		// if (current->_label == 1)
+		//     logger << current->_box << ": test on w" << _M[current->_label] << ", t = " << t << '\n';
+		// /***** LOGGING  *****/
+		
+		/* save new tag in b0 & b1 */
+		switch (t) {
+		case 0:
+		    current->_b0 = true;
+		    current->_b1 = false;
+		    l0.push(current);
+		    break;
+		case 1:
+		    current->_b0 = false;
+		    current->_b1 = true;
+		    l1.push(current);
+		    _winsize += current->_box.volume();
+		    break;
+		case 2:
+		    current->_b0 = true;
+		    current->_b1 = true;
+		    /* compute the split axis */
+		    int axis = bisect_axis(current->_box, evaleps);
+		    if (current->_box[axis].width() < evaleps[axis]) {
+			l2.push(current);
+		    } else {
+			_ctlr.expand(current, axis);
+			l.push(current->_left);
+			l.push(current->_right);
+		    }
+		    break;
+		} // end of switch
+	    }  // end if (get_reach_set is successful)
+	    
+	}  // end while (loop all nodes in l)
+	// /***** LOGGING  *****/
+	// logger.close();
+	// /***** LOGGING  *****/
+    }// CSolver::union_of_pres
+    
 
     template<typename system>
     void CSolver::inv_compute(system* ptrsys,
@@ -774,7 +929,236 @@ namespace rocs {
 	return true;
     }
 
-} // namespace rocs
 
+    /* non-member functions */
+    /**
+     * Control synthesis for DBA objectives.
+     * 
+     * @param[inout] w a vector of S-domains (CSolvers) (assumption: already initialized).
+     * @param ptrsys the pointer to the system.
+     * @param acc a vector of accepting nodes.
+     * @param nNodes the number of DBA nodes.
+     * @param e a partition precision. 
+     */
+    template<typename system>
+    void dba_control(std::vector<CSolver*> &w, system* ptrsys,
+		     std::vector<SPtree*> &sdoms,
+		     UintSmall nNodes, boost::dynamic_bitset<> &isacc,
+		     // std::vector<UintSmall> &acc,
+		     const double e[]) {
+	// /***** LOGGING  *****/
+	// std::ofstream logger;
+	// /***** LOGGING  *****/
+
+	/* Set maximum iteration for the inner loop (i.e. the reachability loop) */
+	size_t maxNoInner = 0;
+	for (rocs::UintSmall i = 0; i < nNodes; ++i) {
+	    if (w[i]->_maxiter > maxNoInner)
+		maxNoInner = w[i]->_maxiter;
+	}
+	
+	/* Initialize the S-domain of the accepting nodes to the whole state space */
+	// boost::dynamic_bitset<> isacc(nNodes, false);
+	// for (rocs::UintSmall i = 0; i < acc.size(); ++i) {
+	//     isacc[acc[i]] = true;
+	//     w[acc[i]]->init_winset();
+	// }
+	for (size_t i = 0; i < isacc.size(); ++i) {
+	    if (isacc[i]) {
+		w[i]->init_winset();
+		// /***** LOGGING  *****/
+		// std::cout << "Initial winning set of w" << i <<":\n";
+		// w[i]->print_controller();
+		// /***** LOGGING  *****/
+	    }
+	}
+	
+	// std::vector<SPtree*> sdoms(nNodes);
+	// for (rocs::UintSmall i = 0; i < nNodes; ++ i) {
+	//     sdoms[i] = &(w[i]->_ctlr);
+	// }
+    
+	std::stack<rocs::SPnode*> l;
+	std::vector< std::stack<rocs::SPnode*> > l0(nNodes);
+	std::vector< std::stack<rocs::SPnode*> > l1(nNodes);
+	std::vector< std::stack<rocs::SPnode*> > l2(nNodes);
+	for (rocs::UintSmall i = 0; i < nNodes; ++i) {
+	    w[i]->init_leafque(l0[i], l1[i], l2[i]);
+	}
+
+	boost::dynamic_bitset<> stop(nNodes, false);
+	boost::dynamic_bitset<> start(nNodes, false);
+	std::vector<size_t> lold(nNodes, 0);
+	size_t iter[2] = {0,0};
+	std::vector<double> t(nNodes, 0);
+
+	/* Solve */
+	// const double e = 0.1;
+	clock_t tb, te, cb, ce;
+	tb = clock();
+	bool outerfp(false), innerfp(false);
+	size_t nInner;
+	while (!outerfp) {
+	    ++iter[1];
+	    std::cout << '\n' << "Outer loop " << iter[1] << ":\n";
+	    // /***** LOGGING  *****/
+	    // logger.open("log_dbacontrol.txt", std::ios_base::out | std::ios_base::app);
+	    // logger << "Outer loop " << iter[1] << ":\n";
+	    // logger.close();
+	    // /***** LOGGING  *****/
+	    
+	    /* Re-initialize S-domains of non-accepting nodes:
+	     * if it is not the first time to call the inner loop,
+	     * empty l0, l2, and l0<-l1.
+	     */
+	    for (rocs::UintSmall i = 0; i < nNodes; ++i) {
+		if (!l1[i].empty() && !isacc[i] ) {
+		    l0[i] = std::stack<rocs::SPnode*>();
+		    l2[i] = std::stack<rocs::SPnode*>();
+		    swap(l1[i], l0[i]);
+		    w[i]->_ctlr.reset_tags();
+		    // std::cout << "The size of l1[" << i << "]=" << l1[i].size()
+		    // 	      << ". The size of l0[" << i << "]=" << l0[i].size() << '\n';
+		}
+	    }
+
+#ifdef VERBOSE
+	    std::cout << "Inner loop:\n";
+	    std::cout << "<#S-domain>, <#iter>: <#Intervals in the S-domain> <precision>\n";
+#endif
+	    /* Compute w1, w2, w3 based on current w0 */
+	    nInner = 0;
+	    while (!innerfp && nInner < maxNoInner) { // loop until non-accepting s-domains terminate
+		++iter[0];
+		innerfp = true;
+		++nInner;
+		// /***** LOGGING  *****/
+		// logger.open("log_dbacontrol.txt", std::ios_base::out | std::ios_base::app);
+		// logger << "Inner loop " << iter[0] << ":\n";
+		// logger.close();
+		// /***** LOGGING  *****/
+		
+		/* Check and compute the predecessors */
+		for (rocs::UintSmall i = 0; i < nNodes; ++i) {
+		    if (!isacc[i] ) {
+			lold[i] = l1[i].size();
+			if (!start[i]) {
+			    if (w[i]->targetset_in_sdoms(sdoms)) {
+				std::cout << iter[1] << ": start to compute w" << i << "...\n";
+				start[i] = true;
+			    }
+			}
+			if (start[i]) {
+			    // /***** LOGGING  *****/
+			    // logger.open("log_dbacontrol.txt", std::ios_base::out | std::ios_base::app);
+			    // logger << "w" << i << ":\n";
+			    // logger.close();
+			    // /***** LOGGING  *****/
+
+			    ++w[i]->_fpiter[0];
+			    cb = clock();
+		
+			    if (!l2[i].empty()) {
+				swap(l, l2[i]);  // l=l2, l2=empty
+				w[i]->union_of_pres(ptrsys, sdoms, l, l0[i], l1[i], l2[i], e);  //l=empty, l012 fill
+				// std::cout << "dba_control: computing l2 is complete.\n";
+			    }
+			    if (!l0[i].empty()) {
+				swap(l, l0[i]);  // l=l0, l0=empty
+				w[i]->union_of_pres(ptrsys, sdoms, l, l0[i], l1[i], l2[i], e);  //l=empty, l012 fill
+				// std::cout << "dba_control: computing l0 is complete.\n";
+			    }
+			    w[i]->_ctlr.tagging(rocs::INNER);
+
+			    ce = clock();
+			    t[i] += (double)(ce - cb)/CLOCKS_PER_SEC;
+			    // /***** LOGGING  *****/
+			    // std::cout << "Winning set of w" << i <<":\n";
+			    // w[i]->_ctlr.print_leaves(w[i]->_ctlr._root, 1);
+			    // std::cout << '\n';
+			    // std::cout << "Partition of w" << i <<":\n";
+			    // w[i]->print_controller();
+			    // /***** LOGGING  *****/
+#ifdef VERBOSE
+			    std::cout << 'w' << i << ", iter " << iter[0] << ": " << l1[i].size() << ", ["; // w[i]->_fpiter[0] <<
+			    for (int k = 0; k < ptrsys->_xdim; ++k) {
+				std::cout << e[k];
+				if (k < ptrsys->_xdim-1)
+				    std::cout << ',';
+				else
+				    std::cout << "]\n";
+			    }
+#endif
+			}
+			stop[i] = l1[i].size() <= lold[i];
+			innerfp &= stop[i];
+		    }// end if !acc[i]
+		}// end for loop all non-accepting states
+		
+	    }// end inner while
+	    std::cout << "Outer itration " << iter[1] << ": " << iter[0] << " inner iterations.\n";
+	    /* Reset innerloop counter and fixed-point marker */
+	    iter[0] = 0;
+	    innerfp = false; // forgot to reset in the first version
+
+	    /* Modify w of accepting nodes by w of non-accepting nodes */
+	    outerfp = true;
+	    for (rocs::UintSmall i = 0; i < nNodes; ++i) {
+		if (isacc[i]) {
+		    lold[i] = l0[i].size() + l2[i].size();
+		    if (!start[i]) {
+			if (w[i]->targetset_in_sdoms(sdoms)) {
+			    std::cout << ": start to compute w" << i << "...\n";
+			    start[i] = true;
+			}
+		    }
+		    if (start[i]) {
+			// /***** LOGGING  *****/
+			// logger.open("log_dbacontrol.txt", std::ios_base::out | std::ios_base::app);
+			// logger << "w" << i << ":\n";
+			// logger.close();
+			// /***** LOGGING  *****/
+			++w[i]->_fpiter[0];
+			cb = clock();
+	    
+			if (!l1[i].empty()) {
+			    swap(l, l1[i]);  // l=l2, l2=empty
+			    w[i]->union_of_pres(ptrsys, sdoms, l, l0[i], l1[i], l2[i], e);  //l=empty, l012 fill
+			}
+			w[i]->_ctlr.tagging(rocs::INNER);
+
+			ce = clock();
+			t[i] += (double)(ce - cb)/CLOCKS_PER_SEC;
+		    }
+		    stop[i] = (l0[i].size() + l2[i].size()) <= lold[i];
+		    outerfp &= stop[i];
+#ifdef VERBOSE
+		    std::cout << 'w' << i << ", iter " << w[i]->_fpiter[0] << ": " << l1[i].size() << ", [";
+		    for (int k = 0; k < ptrsys->_xdim; ++k) {
+			std::cout << e[k];
+			if (k < ptrsys->_xdim-1)
+			    std::cout << ',';
+			else
+			    std::cout << "]\n";
+		    }
+#endif
+		}// end if acc[i]
+	    }// end for loop all accepting states
+	} //end outer while
+    
+	te = clock();
+	std::cout << "Control synthesis stops." << std::endl;
+
+	for (rocs::UintSmall i = 0; i < nNodes; ++i) {
+	    w[i]->_timer = t[i];
+	}
+	std::cout << "Total Number of outer iterations: " << iter[1] << std::endl;
+	std::cout << "Total time for control synthesis: " << (double)(te - tb)/CLOCKS_PER_SEC << std::endl;
+    
+    } //dba_control
+
+    
+
+} // namespace rocs
 
 #endif

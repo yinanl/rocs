@@ -35,6 +35,24 @@ carTraj: carReachTraj.o $(OBJS)
 carAbst: carAbst.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
 
+carAbst4: carAbst_dba4.o $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+
+carAbst_ref: carAbst_ref.o $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+
+carDBA: carDBA.o $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+
+carDBA4: carDBA_dba4.o $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+
+carDBA0: carDBA_0.o $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+
+carDBAp4: carDBA_p4.o $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+
 carReach1: carReach1.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
 

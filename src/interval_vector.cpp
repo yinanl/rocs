@@ -75,19 +75,19 @@ namespace rocs {
     	return r;
     }
     ivec operator-(const std::vector<double> &val, const ivec &rhs) {
-    	assert(val.size() == rhs.getdim());
+    	assert(val.size() == (size_t)rhs.getdim());
 	
     	ivec r(val.size());
-    	for (int i = 0; i < val.size(); ++i)
+    	for (size_t i = 0; i < val.size(); ++i)
     	    r[i] = val[i] - rhs[i];
 	
     	return r;
     }
     ivec operator-(const ivec &lhs, const std::vector<double> &val) {
-    	assert(val.size() == lhs.getdim());
+    	assert(val.size() == (size_t)lhs.getdim());
 	
     	ivec r(val.size());
-    	for (int i = 0; i < val.size(); ++i)
+    	for (size_t i = 0; i < val.size(); ++i)
     	    r[i] = lhs[i] - val[i];
 	
     	return r;
@@ -131,10 +131,10 @@ namespace rocs {
     	return r;
     }
     ivec operator+(const std::vector<double> &val, const ivec &rhs) {
-    	assert(val.size() == rhs.getdim());
+    	assert(val.size() == (size_t)rhs.getdim());
 	
     	ivec r(val.size());
-    	for (int i = 0; i < val.size(); ++i)
+    	for (size_t i = 0; i < val.size(); ++i)
     	    r[i] = val[i] + rhs[i];
 	
     	return r;

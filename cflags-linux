@@ -17,7 +17,10 @@ INCS = -I$(INCDIR)/boost \
 	-I$(INCDIR)/armadillo_bits \
 	-I$(MATDIR)/extern/include \
 
-LIBS = -lblas -llapack -lmat -leng -lmx -Wl, -rpath,$(MATDIR)/bin/glnxa64
+LIBS = -lblas -llapack \
+	-lmat -leng -lmx \
+	-lz -lm -lsz -lhdf5_hl -lhdf5 -lhdf5_cpp -lhdf5_hl_cpp \
+	-Wl, -rpath,$(MATDIR)/bin/glnxa64
 LIBTEST = -lboost_unit_test_framework
 
 CXXFLAGS = -Wall -Wextra -g \

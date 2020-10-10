@@ -1,0 +1,190 @@
+/**
+ *  engineAbst.cpp
+ *
+ *  Abstraction-based reach-stay-avoid control of an engine ode.
+ *  
+ *  Created by Yinan Li on July 3, 2020.
+ *  Hybrid Systems Group, University of Waterloo.
+ */
+
+
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <cstdlib>
+
+#include <string>
+#include <cmath>
+#include <boost/numeric/odeint.hpp>
+
+#include "src/DBAparser.h"
+#include "src/abstraction.hpp"
+#include "src/bsolver.h"
+#include "src/txtfileio.h"
+
+
+const double a = 1.67;
+const double B = 2.0;
+const double H = 0.18;
+const double W = 0.25;
+const double lc = 8.0;
+const double cx = 1.0/lc;
+const double cy = 1.0/(4*lc*B*B);
+const double aH = a+H;
+const double H2 = H/(2.0*W*W*W);
+const double W2 = 3*W*W;
+
+/* user defined dynamics */
+struct mgode2 {
+
+    static const int n = 2;  // system dimension
+    static const int nu = 2;  // control dimension
+    
+    /* template constructor
+     * @param[out] dx
+     * @param[in] x
+     * @param u
+     */
+    template<typename S>
+    mgode2(S *dx, const S *x, rocs::Rn u) {
+	dx[0] = cx * (aH+H2*(x[0]-W)*(W2-(x[0]-W)*(x[0]-W)) - x[1]) + u[0];
+	dx[1] = cy * (x[0] - u[1]*sqrt(x[1]));
+    }
+};
+
+
+int main(int argc, char *argv[])
+{
+    /**
+     * Input arguments: 
+     * carAbst dbafile 
+     */
+    if (argc != 2) {
+	std::cout << "Improper number of arguments.\n";
+	std::exit(1);
+    }
+
+    
+    clock_t tb, te;
+    /* set the state space */
+    double xlb[]{0.44, 0.6};
+    double xub[]{0.54, 0.7};
+    
+    /* set the control values */
+    // double Lmu = 0.01;
+    double Lu = 0.05;
+    double ulb[]{-Lu, 0.5};
+    double uub[]{Lu, 0.8};
+    double mu[]{Lu/5, 0.01};
+
+    /* set the sampling time and disturbance */
+    double delta = 0.01;
+    /* parameters for computing the flow */
+    int kmax = 10;
+    double tol = 0.01;
+    double alpha = 0.5;
+    double beta = 2;
+    rocs::params controlparams(kmax, tol, alpha, beta);
+    
+    /* define the control system */
+    double t= 0.1;
+    rocs::CTCntlSys<mgode2> engine("Moore-Greitzer", t, mgode2::n, mgode2::nu,
+				  delta, &controlparams);
+    engine.init_workspace(xlb, xub);
+    engine.init_inputset(mu, ulb, uub);
+    engine.allocate_flows();
+
+
+    /**
+     * Abstraction 
+     */
+    rocs::abstraction< rocs::CTCntlSys<mgode2> > abst(&engine);
+    const double eta[]{0.00018, 0.00018};
+    abst.init_state(eta, xlb, xub);
+    std::cout << "The number of abstraction states: " << abst._x._nv << '\n';
+    double obs[][2]{{0.497, 0.503}, {0.650, 0.656}};
+    auto avoid = [&obs, abst, eta](size_t& id) {
+		     std::vector<double> x(abst._x._dim);
+    		     abst._x.id_to_val(x, id);
+    		     double c1 = eta[0]/2.0; //+1e-10;
+    		     double c2 = eta[1]/2.0; //+1e-10;
+		     if ((obs[0][0]-c1) <= x[0] && x[0] <= (obs[0][1]+c1) &&
+			 (obs[1][0]-c2) <= x[1] && x[1] <= (obs[1][1]+c2))
+			 return -1;
+		     return 0;
+		 };
+    abst.assign_labels(avoid);
+    std::vector<size_t> obstacles;
+    for (size_t i = 0; i < abst._x._nv; ++i) {
+    	if (abst._labels[i] < 0)
+    	    obstacles.push_back(i);
+    }
+    /* Robustness margins */
+    double e1[] = {0,0};
+    double e2[] = {0.0, 0.0};
+    tb = clock();
+    abst.assign_transitions(e1, e2);
+    te = clock();
+    float tabst = (float)(te - tb)/CLOCKS_PER_SEC;
+    std::cout << "Time of computing abstraction: " << tabst << '\n';
+    std::cout << "# of transitions: " << abst._ts._ntrans << '\n';
+
+
+    /**
+     * Read DBA from spec*.txt file
+     */
+    std::cout << "Reading the specification...\n";
+    rocs::UintSmall nAP = 0, nNodes = 0, q0 = 0;
+    std::vector<rocs::UintSmall> acc;
+    std::vector<std::vector<rocs::UintSmall>> arrayM;
+    std::string specfile = std::string(argv[1]);
+    if (!rocs::read_spec(specfile, nNodes, nAP, q0, arrayM, acc)) 
+	std::exit(1);
+    
+
+    /* 
+     * Assign labels to states: has to be consistent with the dba file.
+     */
+    double e = 0.003;
+    double goal[][2]{{0.4519-e, 0.4519+e}, {0.6513-e, 0.6513+e}};
+    
+    auto label_target = [&goal, &abst, &eta](size_t i) {
+			    std::vector<double> x(abst._x._dim);
+			    abst._x.id_to_val(x, i);
+			    double c1= eta[0]/2.0; //+1e-10;
+			    double c2= eta[1]/2.0; //+1e-10;
+			    
+			    return (goal[0][0] <= (x[0]-c1) && (x[0]+c1) <= goal[0][1] && 
+				    goal[1][0] <= (x[1]-c2) && (x[1]+c2) <= goal[1][1]) ? 1: 0;
+			};
+    abst.assign_labels(label_target);
+    std::cout << "Specification assignment is done.\n";
+
+
+    /**
+     * Solve a Buchi game on the product of NTS and DBA.
+     */
+    std::cout << "Start solving a Buchi game on the product of the abstraction and DBA...\n";
+    rocs::HEAD psolver; // memories will be allocated for psolver
+    rocs::initialization(&psolver);
+    rocs::construct_dba(&psolver, (int)nAP, (int)nNodes, (int)q0, acc, arrayM);
+    tb = clock();
+    rocs::solve_buchigame_on_product(&psolver, abst);
+    te = clock();
+    float tsyn = (float)(te - tb)/CLOCKS_PER_SEC;
+    std::cout << "Time of synthesizing controller: " << tsyn << '\n';
+
+    /**
+     * Display and save memoryless controllers.
+     */
+    std::cout << "Writing the controller...\n";
+    rocs::write_controller_to_txt(&psolver, "controller_abstII.txt");
+    rocs::free_memory(&psolver, 1); // release all memory
+    std::cout << "Controller writing is done.\n";
+
+    std::cout << "Total time of used (abstraction+synthesis): " << tabst+tsyn << '\n';
+    
+
+    engine.release_flows();
+    return 0;
+}

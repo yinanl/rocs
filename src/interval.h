@@ -91,13 +91,13 @@ namespace rocs {
 	 * \brief [x].isin([a]) is true if [a] is inside [x].
 	 */
 	bool isin(const interval &a) const { // if a is contained in it
-	    return ~isempty() && m_inf <= a.m_inf && m_sup >= a.m_sup;
+	    return !isempty() && m_inf <= a.m_inf && m_sup >= a.m_sup;
 	}
 	/**
 	 * \brief [x].isin([a]) is true if a real value val is inside [x].
 	 */
 	bool isin(const double val) const {
-	    return ~isempty() && m_inf <= val && m_sup >= val;
+	    return !isempty() && m_inf <= val && m_sup >= val;
 	}
 
 	/**

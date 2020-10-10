@@ -370,7 +370,7 @@ namespace rocs {
 	 * @param[inout] y the reachable set in terms of interval.
 	 * @param x a given interval.
 	 */
-	void compute_reachset_robust(ivec &y, const ivec &x) {
+	void compute_reachset_robust(ivec &y) {
 	    int kfac = 1;
 	    for (int i = _kbar+1; i > 0; --i)
 		kfac *= i;
@@ -407,7 +407,7 @@ namespace rocs {
 	    bool accept = compute_reachset_valid(y, x);
 	    
 	    if (accept && x.maxwidth() < eps) 
-		compute_reachset_robust(y, x);
+		compute_reachset_robust(y);
 
 	    return accept;
 	}

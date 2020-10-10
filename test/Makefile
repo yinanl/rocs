@@ -48,6 +48,9 @@ testPrecision: precision.o $(OBJS)
 testDSolver: dsolver.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) $(LIBTEST) -o $@ $^
 
+testHDF5: testHDF5.o $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) $(LIBTEST) -o $@ $^
+
 
 display:
 	@echo $(ODIR)
@@ -63,23 +66,26 @@ $(ODIR):
 $(ODIR)/%.o: $(SDIR)/%.cpp $(SDIR)/%.h
 	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
 
-ad.o: testAD.cpp $(SDIR)/flow_taylor.hpp
+%.o: %.cpp $(SDIR)/flow_taylor.hpp
 	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
 
-grids.o: testGrid.cpp
-	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
+# ad.o: testAD.cpp $(SDIR)/flow_taylor.hpp
+# 	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
 
-ival.o: testIval.cpp
-	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
+# grids.o: testGrid.cpp
+# 	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
 
-ivec.o: testIvec.cpp
-	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
+# ival.o: testIval.cpp
+# 	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
 
-paver.o: testPaver.cpp
-	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
+# ivec.o: testIvec.cpp
+# 	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
 
-precision.o: testPrecision.cpp
-	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
+# paver.o: testPaver.cpp
+# 	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
 
-dsolver.o: testDSolver.cpp
-	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
+# precision.o: testPrecision.cpp
+# 	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
+
+# dsolver.o: testDSolver.cpp
+# 	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@

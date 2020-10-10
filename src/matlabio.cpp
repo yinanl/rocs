@@ -48,11 +48,11 @@ namespace rocs {
 	    mxArray *u = mxCreateDoubleMatrix(ugrid._nv, ugrid._dim, mxREAL);
 	    double *ptru = mxGetPr(u);
 	    if (!ugrid._data.empty()) {
-		for (int r = 0; r < ugrid._nv; ++r) 
+		for (size_t r = 0; r < ugrid._nv; ++r) 
 		    for (int c = 0; c < ugrid._dim; ++c)
 			ptru[r + c*ugrid._nv] = ugrid._data[r][c];
 	    } else {
-		for (int r = 0; r < ugrid._nv; ++r)
+		for (size_t r = 0; r < ugrid._nv; ++r)
 		    ptru[r] = double(r+1);
 	    }
       
@@ -71,8 +71,8 @@ namespace rocs {
 	    mxArray *us = mxCreateNumericArray(3, dims, mxDOUBLE_CLASS, mxREAL);
 	    double *ptrus = mxGetPr(us);
 	    
-	    for (int r = 0; r < dims[0]; ++r) {
-		for (int p = 0; p < dims[2]; ++p) {
+	    for (mwSize r = 0; r < dims[0]; ++r) {
+		for (mwSize p = 0; p < dims[2]; ++p) {
 		    ivec obstacle = arr[p];
 		    ptrus[r + p*dims[0]*dims[1]] = obstacle[r].getinf();
 		    ptrus[r + dims[0] + p*dims[0]*dims[1]] = obstacle[r].getsup();
@@ -167,7 +167,7 @@ namespace rocs {
 	} else {
 	    std::vector<bool> win(xg._nv);
 	    SPnode *q;
-	    for (int i = 0; i < xg._nv; ++i) {
+	    for (size_t i = 0; i < xg._nv; ++i) {
 		q = sol._ctlr._root;
 		while (q->_tag == 2 && !sol._ctlr.isleaf(q)) {
 		    if (q->_left->_box.isin(xg._data[i]))
@@ -191,10 +191,10 @@ namespace rocs {
 
 	std::vector<size_t> nbs;
 	std::vector<size_t> boundary;
-	for (int i = 0; i < g._nv; ++i) {
+	for (size_t i = 0; i < g._nv; ++i) {
 	    if (win[i] == true) {
 		nbs = g.neighbours(i);
-		for (int j = 0; j < nbs.size(); ++j) {
+		for (size_t j = 0; j < nbs.size(); ++j) {
 		    if (win[nbs[j]] == false) {
 			boundary.push_back(nbs[j]);
 			break;
@@ -203,11 +203,11 @@ namespace rocs {
 	    }
 	}
 	/* write to a mat file */
-	int bdsize = boundary.size();
+	size_t bdsize = boundary.size();
 	mxArray *matbd = mxCreateDoubleMatrix(bdsize, g._dim, mxREAL);
 	double *ptrbd = mxGetPr(matbd);
 	for (size_t i = 0; i < bdsize; ++ i) {
-	    for (size_t j = 0; j < g._dim; ++ j) {
+	    for (int j = 0; j < g._dim; ++ j) {
 		ptrbd[i + bdsize * j] = g._data[boundary[i]][j];
 	    }
 	}
@@ -269,7 +269,7 @@ namespace rocs {
 
 	    if (sol._ctlr.isleaf(current)) {
 	    
-		for (int k = 0; k < sol._nu; ++k) { // control array
+		for (size_t k = 0; k < sol._nu; ++k) { // control array
 
 		    ptru[lc + k*L] = current->_cntl[k];
 		}
@@ -336,7 +336,7 @@ namespace rocs {
 	for (size_t row = 0; row < trans._nx; ++row) {
 	    for (size_t col = 0; col < trans._nu; ++col) {
 
-		for (int ip = 0; ip < trans._npost[row*trans._nu + col]; ++ip) {
+		for (size_t ip = 0; ip < trans._npost[row*trans._nu + col]; ++ip) {
 		    ptranspost[i] = row;
 		    ptranspost[i + trans._ntrans * 1] = trans._idpost[trans._ptrpost[row*trans._nu+col] + ip];
 		    ptranspost[i + trans._ntrans * 2] = col;
@@ -346,7 +346,7 @@ namespace rocs {
 		    i ++;
 		}
 
-		for (int jp = 0; jp < trans._npre[row*trans._nu + col]; ++jp) {
+		for (size_t jp = 0; jp < trans._npre[row*trans._nu + col]; ++jp) {
 		    ptranspre[j] = row;
 		    ptranspre[j + trans._ntrans * 1] = trans._idpre[trans._ptrpre[row*trans._nu+col] + jp];
 		    ptranspre[j + trans._ntrans * 2] = col;	    

@@ -15,6 +15,14 @@
 
 namespace rocs {
 
+    void CSolver::set_M(const std::vector<UintSmall> &outedge) {
+	UintSmall NofProps = outedge.size();
+	if (_M.size() != NofProps)
+	    _M.resize(NofProps);
+	for (UintSmall i = 0; i < NofProps; ++i)
+	    _M[i] = outedge[i];
+    }
+
     int CSolver::bisect_axis(ivec &box, const double eps[]) {
 
 	int axis = 0;
@@ -40,6 +48,145 @@ namespace rocs {
 	return axis;
     }
 
+    void CSolver::labeling(const double lb[], const double ub[], UintSmall prop) {
+	ivec area(_xdim);
+	for (int i = 0; i < _xdim; ++i)
+	    area[i] = interval(lb[i], ub[i]);
+	
+	labeling(area, prop);
+    }
+    void CSolver::labeling(ivec &area, UintSmall prop) {
+	assert(!_ctlr.isempty());
+	if (_ctlr.isleaf(_ctlr._root)) {
+	    init_label(_ctlr._root, area, prop);
+	} else {
+	    refine_label(_ctlr._root, area, prop);
+	}
+    }
+    void CSolver::init_label(SPnode *current, ivec &cbox, UintSmall prop) {
+	if (cbox.isempty() || current->_tag == -1)
+	    return;
+
+	ivec rbox, lbox;
+	for (int i = 0; i < cbox.getdim(); ++ i) {
+	    rbox = current->_box;
+	    lbox = current->_box;
+
+	    if (cbox[i].getsup() < rbox[i].getsup()) {
+		rbox[i].setinf(cbox[i].getsup());
+		lbox[i].setsup(cbox[i].getsup());
+		/* keep parent's tag, and no childern */
+		current->_right = new SPnode(rbox, current->_cntl, current->_tag,
+					     current->_b0, current->_b1, current->_label); 
+
+		current->_left = new SPnode(lbox, current->_cntl, current->_tag,
+					    current->_b0, current->_b1, current->_label);
+		current->_split = i;
+		current = current->_left; // expand the left child
+		rbox = current->_box;
+		lbox = current->_box;
+	    } /* otherwise, no right node */
+
+	    if (cbox[i].getinf() > lbox[i].getinf()) {
+		rbox[i].setinf(cbox[i].getinf());
+		lbox[i].setsup(cbox[i].getinf());
+		if (i < cbox.getdim() - 1) {
+		    current->_right = new SPnode(rbox, current->_cntl, current->_tag,
+						 current->_b0, current->_b1, current->_label);
+		} else {
+		    /* assign the label if i is the last dimension */
+		    current->_right = new SPnode(rbox, current->_cntl, current->_tag,
+						 current->_b0, current->_b1, prop);
+		    // std::cout << "logging init_label:\n" << current->_right->_label << std::endl;
+		}
+		current->_left = new SPnode(lbox, current->_cntl, current->_tag,
+					    current->_b0, current->_b1, current->_label);
+		current->_split = i;
+		current = current->_right; /* expand the right child */
+	    } else {
+		/* no need to split */
+		if (i >= cbox.getdim() - 1) {
+		    /* if i is the last dimension, the whole node is a leaf and assign the label. */
+		    current->_label= prop;
+		    // std::cout << "logging init_label:\n" << current->_label << std::endl;
+		} //end if
+	    }//end if
+	
+	}  //end for
+    }
+    void CSolver::refine_label(SPnode *node, ivec &box, UintSmall prop) {
+	assert(node->_box.isin(box));  // assume that box inside node
+
+	if (_ctlr.isleaf(node)) {
+	    // std::cout << "refine_label 0:" << node->_box << std::endl;
+	    init_label(node, box, prop);
+	} else {
+	    if (node->_left->_box.isin(box)) {
+		// std::cout << "refine_label 1:" << node->_left->_box << std::endl;
+		refine_label(node->_left, box, prop);
+	    } else if (node->_right->_box.isin(box)) {
+		// std::cout << "refine_label 2:" << node->_right->_box << std::endl;
+		refine_label(node->_right, box, prop);
+	    } else {  
+		/* split box along the _split */
+		ivec lbox(box), rbox(box);
+		lbox[node->_split].setsup(node->_left->_box[node->_split].getsup());
+		rbox[node->_split].setinf(node->_right->_box[node->_split].getinf());
+		// std::cout << "refine_label 3:" << lbox << std::endl;
+		// std::cout << "refine_label 3:" << rbox << std::endl;
+		refine_label(node->_left, lbox, prop);
+		refine_label(node->_right, rbox, prop);
+	    }// end if
+	}// end if
+    }
+
+    void CSolver::init_winset() {
+	/* The winning set is initialized to the whole state space:
+	 * set _tag of every leaf to be 1 if it is not an avoid node 
+	 */
+	std::stack<SPnode*> stk;
+	stk.push(_ctlr._root);
+	SPnode *current;
+	while (!stk.empty()) {
+	    current = stk.top();
+	    stk.pop();
+	    if (_ctlr.isleaf(current)) {
+		if (current->_tag >= 0) {
+		    current->_b0 = false;
+		    current->_b1 = true;
+		    current->_tag = 1;
+		}
+	    } else {
+		if (current->_right)
+		    stk.push(current->_right);
+		if (current->_left)
+		    stk.push(current->_left);
+	    }
+	}
+	_ctlr.tagging(EXACT);
+    }
+    void CSolver::init_winset(ivec &area) {
+	assert(!_ctlr.isempty());
+	if (area == _ctlr._root->_box) {
+	    init_winset();
+	} else {
+	    init(GOAL, area);
+	}
+    }
+
+    bool CSolver::targetset_in_sdoms(std::vector<SPtree*> &sdoms) {
+	assert(!_M.empty());
+	for (size_t i = 0; i < _M.size(); ++i) {
+	    if (_M[i] < sdoms.size()) {
+		/* Assume that root tag of the controller _ctlr has been updated.
+		 * _tag = 1 or 2 if there are some leaves with tag = 1.
+		 */
+		if (sdoms[_M[i]]->_root->_tag > 0)
+		    return true;
+	    }
+	}
+	return false;
+    }
 
     void CSolver::init(SPEC ap, const double lb[], const double ub[]) {
 	assert(!_ctlr.isempty());
@@ -93,10 +240,10 @@ namespace rocs {
 
 		/* keep parent's tag, and no childern */
 		current->_right = new SPnode(rbox, current->_cntl, current->_tag,
-					     current->_b0, current->_b1); 
+					     current->_b0, current->_b1, current->_label); 
 
 		current->_left = new SPnode(lbox, current->_cntl, current->_tag,
-					    current->_b0, current->_b1);
+					    current->_b0, current->_b1, current->_label);
 		current->_split = i;
 
 		current = current->_left; // expand the left child
@@ -112,15 +259,15 @@ namespace rocs {
 		if (i < cbox.getdim() - 1) {
 
 		    current->_right = new SPnode(rbox, current->_cntl, current->_tag,
-						 current->_b0, current->_b1);
+						 current->_b0, current->_b1, current->_label);
 		}
 		else {
 
-		    current->_right = new SPnode(rbox, current->_cntl, itag, false, b1);
+		    current->_right = new SPnode(rbox, current->_cntl, itag, false, b1, current->_label);
 		}
 
 		current->_left = new SPnode(lbox, current->_cntl, current->_tag,
-					    current->_b0, current->_b1);
+					    current->_b0, current->_b1, current->_label);
 		current->_split = i;
 	    
 		current = current->_right; //expand the right child
@@ -364,12 +511,16 @@ namespace rocs {
     		}
     		vol += v;
     	    } else {
-    		if (!_ctlr.isleaf(current)) {
-    		    if (current->_right)
-    			stk.push(current->_right);
-    		    if (current->_left)
-    			stk.push(current->_left);
-    		}
+    		// if (!_ctlr.isleaf(current)) {
+    		//     if (current->_right)
+    		// 	stk.push(current->_right);
+    		//     if (current->_left)
+    		// 	stk.push(current->_left);
+    		// }
+		if (current->_right)
+		    stk.push(current->_right);
+		if (current->_left)
+		    stk.push(current->_left);
     	    }  // end if
     	}  // end while
     	// _winsize = std::pow(vol, 1.0/_xdim);
@@ -377,14 +528,16 @@ namespace rocs {
     }
 
     short CSolver::paver_test(SPtree &sp, ivec &box) {
-
-	short t = 1;
-
+	
 	std::queue<SPnode*> q;
 	q.push(sp._root);
 
-	bool t0 = false;
-	bool t1 = false;
+	bool t0(false), t1(false);
+	
+	/* test if y is out of domain */
+	if (_ctlr._root->_box.isout(box))
+	    return 0;
+	
 	SPnode *current;
 	while (!q.empty()) {
 
@@ -392,7 +545,6 @@ namespace rocs {
 	    q.pop();
 
 	    switch (current->_tag) {
-
 	    case 1 :
 		if (current->_box.isin(box))
 		    return 1;
@@ -403,15 +555,12 @@ namespace rocs {
 	    case 2 :
 		// only follow the branch that has intersection
 		if (!current->_box.isout(box)) {
-
-		    if (sp.isleaf(current))  // if leaves can only be 1 or 0,
+		    if (current->_left == NULL && current->_right == NULL)  // if leaves can only be 1 or 0,
 			// then this line is not necessary
 			return 2;
 		    else {
-
 			if (current->_right)
 			    q.push(current->_right);
-
 			if (current->_left)
 			    q.push(current->_left);
 		    }
@@ -427,18 +576,16 @@ namespace rocs {
 	    }
 
 	    if (t0 && t1)
-		break;  // no need to continue the loop
+		return 2;  // no need to continue the loop
 	}
 
 	if (!t1)
-	    t = 0;  // t0 & t1 all false: box is out of domain => out
+	    return 0;  // t0 & t1 all false: box is out of domain => out
 	else if (!t0)
-	    t = 1;
+	    return 1;
 	else  // t1=1, t0=1
-	    t = 2;
-
-    
-	return t;
+	    return 2;
+	
     }
 
 
@@ -496,14 +643,14 @@ namespace rocs {
     void CSolver::print_controller_info() const {
 
 	if (_ctlr.isempty()) {
-
 	    std::cout << "No controller generated.\n";
-	}
-	else {
-
+	} else {
 	    std::cout << "Number of partitions: "
 		      << _ctlr.leafcount(_ctlr._root) << '\n';
-	
+	    std::cout << "Controller tree height: "
+		      << _ctlr.height(_ctlr._root) << '\n';
+	    std::cout << "Total number of nodes in Interval Paver: "
+		      << _ctlr.nodecount(_ctlr._root) << '\n';
 	    std::cout << "Number of iterations:"
 		      << _fpiter[0] << ','
 		      << _fpiter[1] << ','

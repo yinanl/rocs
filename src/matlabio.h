@@ -13,6 +13,8 @@
 #define _matlabio_h
 
 #include <iostream>
+#include <string>
+#include <boost/algorithm/string.hpp>
 
 #include <mat.h>
 #include <matrix.h>
@@ -208,6 +210,30 @@ namespace rocs {
 	}
 	mxDestroyArray(mx);
     }//matWriter::write_real_array
+
+
+    /**
+     * Write control problem setup and synthesized controller into a .mat file.
+     * @param specfile the specification file name.
+     */
+    template<typename S>
+    void write_results_to_mat(const S &sys, std::string specfile, std::vector<rocs::CSolver*> &w) {
+	matWriter wtr;
+	std::string datafile;
+	std::vector<std::string> tokens;
+	boost::split(tokens, specfile, boost::is_any_of("."));
+	for (UintSmall i = 0; i < w.size(); ++i) {
+	    // w[i]->_timer = t[i];
+	    // std::cout << std::endl << "S-domain for q" << std::to_string(i) << '\n';
+	    // w[i]->print_controller_info();
+	
+	    datafile = "data_" + tokens[0] + "_w" + std::to_string(i) + ".mat";
+	    wtr.openfile(datafile.c_str());
+	    wtr.write_problem_setting(sys, *(w[i]));
+	    wtr.write_sptree_controller(*(w[i]));
+	    wtr.close();
+	}
+    }
 
 
     /**

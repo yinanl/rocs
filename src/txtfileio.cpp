@@ -55,7 +55,7 @@ namespace rocs {
 
 		_txtfile << " " << current->_tag << ' ';
 
-		for (int u = 0; u < node->_cntl.size(); ++ u)
+		for (size_t u = 0; u < node->_cntl.size(); ++ u)
 		    _txtfile << ' ' << current->_cntl[u];
 
 		_txtfile << '\n';

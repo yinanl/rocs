@@ -110,7 +110,7 @@ namespace rocs {
     // 	return id;
     // }
     size_t grid::val_to_id(std::vector<double> val) {
-    	assert(val.size() == _dim);
+    	assert(val.size() == (size_t)_dim);
 	if (_bds.isout(val)) {
 	    throw std::runtime_error("rocs::grid:val_to_id: the input value is not in the state space.\n");
 	}

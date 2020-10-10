@@ -1,10 +1,10 @@
 /**
- *  carAbst.cpp
+ *  carAbst_dba4.cpp
  *
- *  The vehicle example from scots using abstraction-based control synthesis.
+ *  Abstraction-based control for vehicle motion planning.
+ *  A different workspace setting from carAbst.cpp.
  *  
- *  Created by Yinan Li on Feb. 18, 2020.
- *
+ *  Created by Yinan Li on Aug 10, 2020.
  *  Hybrid Systems Group, University of Waterloo.
  */
 
@@ -17,8 +17,6 @@
 #include <boost/algorithm/string.hpp>
 
 #include "src/abstraction.hpp"
-// #include "src/dsolver.h"
-// #include "src/matlabio.h"
 #include "src/txtfileio.h"
 #include "src/DBAparser.h"
 #include "src/bsolver.h"
@@ -48,7 +46,6 @@ int main(int argc, char *argv[])
 	std::exit(1);
     }
     if (argc >= 5) {
-	
 	for(int i = 2; i < 5; ++i)
 	    eta[i-2] = std::atof(argv[i]);
 	
@@ -88,12 +85,11 @@ int main(int argc, char *argv[])
     abst.init_state(eta, xlb, xub);
     std::cout << "The number of abstraction states: " << abst._x._nv << '\n';
     /* Assign the label of avoid area to -1 */
-    rocs::UintSmall nAvoid = 4;
-    double obs[4][4] = {
-	{1.6, 5.7, 4.0, 5.0},
-	{3.0, 5.0, 5.0, 8.0},
-	{4.3, 5.7, 1.8, 4.0},
-	{5.7, 8.5, 1.8, 2.5}
+    rocs::UintSmall nAvoid = 3;
+    double obs[3][4] = {
+	{0.0, 3.2, 4.0, 5.0},
+	{5.4, 6.0, 5.0, 10.0},
+	{4.5, 5.2, 0.0, 2.5}
     };
     auto label_avoid = [&obs, &nAvoid, &abst, &eta](size_t i) {
     		     std::vector<double> x(abst._x._dim);
@@ -147,10 +143,13 @@ int main(int argc, char *argv[])
     /* 
      * Assign labels to states: has to be consistent with the dba file.
      */
-    double goal[3][4] = {{1.0, 2.0, 0.5, 2.0},
+    double goal[6][4] = {{1.0, 2.0, 0.5, 2.0},
+			 {7.1, 9.1, 1.9, 2.9},
+			 {0.0, 4.0, 6.0, 10.0},
+			 {6.0, 10.0, 0.0, 4.0},
 			 {0.5, 2.5, 7.5, 8.5},
-			 {7.1, 9.1, 4.6, 6.4}};
-    rocs::UintSmall nGoal = 3;
+			 {3.8, 4.6, 3.1, 4.5}};
+    rocs::UintSmall nGoal = 6;
     auto label_target = [&goal, &nGoal, &abst, &eta](size_t i) {
 		      std::vector<double> x(abst._x._dim);
 		      abst._x.id_to_val(x, i);
@@ -158,11 +157,11 @@ int main(int argc, char *argv[])
 		      double c2= eta[1]/2.0; //+1e-10;
 		      boost::dynamic_bitset<> label(nGoal, false); // n is the number of goals
 		      for(rocs::UintSmall i = 0; i < nGoal; ++i) {
-			  label[2-i] = (goal[i][0] <= (x[0]-c1) && (x[0]+c1) <= goal[i][1] && 
+			  label[nGoal-1-i] = (goal[i][0] <= (x[0]-c1) && (x[0]+c1) <= goal[i][1] && 
 				      goal[i][2] <= (x[1]-c2) && (x[1]+c2) <= goal[i][3])
 			      ? true: false;
 		      }
-		      return label.to_ulong();
+		      return label.to_ulong(); // label[0] is the least significant digit
 		  };
     abst.assign_labels(label_target);
     std::cout << "Specification assignment is done.\n";

@@ -403,7 +403,7 @@ namespace rocs {
 
     inline ivec& ivec::operator += (const std::vector<double> &a) {
 	if (!this->isempty()) {
-	    assert(this->_dim == a.size());
+	    assert(this->_dim == int(a.size()));
 	    for (int i = 0; i != this->_dim; ++i)
 		_itvls[i] += a[i];
 	}
@@ -429,7 +429,7 @@ namespace rocs {
 
     inline ivec& ivec::operator -= (const std::vector<double> &a) {
 	if (!this->isempty()) {
-	    assert(this->_dim == a.size());
+	    assert(this->_dim == int(a.size()));
 	    for (int i = 0; i != this->_dim; ++i)
 		_itvls[i] -= a[i];
 	}

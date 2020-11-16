@@ -12,103 +12,20 @@
 
 namespace rocs {
 
-    int h5FileHandler::write_real_number(const double x, const std::string varname) {
-	hsize_t dim[1] = {1};
-	H5::DataSpace dataspace(1, dim);
-	H5::FloatType datatype(H5::PredType::NATIVE_DOUBLE);
-	H5::DataSet dataset = _h5file.createDataSet(varname, datatype, dataspace);
-	dataset.write(&x, datatype);
-	return 0;
-    }
-
-
-    int h5FileHandler::write_real_array(const std::vector<double> &x,
-					const std::string varname) {
-	hsize_t dim[1]= {x.size()};
-	H5::DataSpace dataspace(1, dim);
-	H5::FloatType datatype(H5::PredType::NATIVE_DOUBLE);
-	
-	/* Setup chunk size and compression filter */
-	hsize_t chunkSize = dim[0] / 10;
-	hsize_t chunkdim[1] = {chunkSize};
-	H5::DSetCreatPropList plist;
-	plist.setChunk(1, chunkdim);
-	plist.setDeflate(6);
-	
-	H5::DataSet dataset = _h5file.createDataSet(varname, datatype, dataspace, plist);
-	dataset.write(&(x[0]), datatype);
-	// try {
-	//     H5::hsize_t dim[]{x.size()};
-	//     H5::DataSpace dataspace(1, dim);
-	//     H5::FloatType datatype(H5::PredType::NATIVE_DOUBLE);
-	//     H5::DataSet dataset = _h5file.createDataSet(varname, datatype, dataspace);
-	//     dataset.write(&(x[0]), datatype);
-	// }
-	// // catch failure caused by the H5File operations
-	// catch( H5::FileIException error ) {
-	//     error.printError();
-	//     return -1;
-	// }
-
-	return 0;
-    }
-
-
-    int h5FileHandler::write_2d_real_array(const std::vector< std::vector<double> > &x,
-					   const std::string varname) {
-	hsize_t dim[2];
-	dim[0]= x.size();
-	dim[1] = x[0].size();
-	H5::DataSpace dataspace(2, dim);
-	/* create the buffer data for writing */
-	double *data = new double[dim[0]*dim[1]];
-	for(hsize_t i = 0; i < dim[0]; ++i) {
-	    for(hsize_t j = 0; j < dim[1]; ++j)
-		*(data+dim[1]*i+j) = x[i][j];
-	}
-	
-	/* write to h5 dataset */
-	hsize_t chunkSize = dim[0] / 10;
-	hsize_t chunkdim[2] = {chunkSize, dim[1]};
-	H5::DSetCreatPropList plist;
-	plist.setChunk(2, chunkdim);
-	plist.setDeflate(6);
-	
-	H5::FloatType datatype(H5::PredType::NATIVE_DOUBLE);
-	H5::DataSet dataset = _h5file.createDataSet(varname, datatype, dataspace, plist);
-	dataset.write(data, datatype);
-	delete[] data;
-	return 0;
-    }
-
-
-    int h5FileHandler::write_uint_number(const size_t d, const std::string varname) {
-	hsize_t dim[1] = {1};
-	H5::DataSpace dataspace(1, dim);
-	H5::IntType datatype(H5::PredType::NATIVE_UINT64);
-	H5::DataSet dataset = _h5file.createDataSet(varname, datatype, dataspace);
-	dataset.write(&d, datatype);
-	return 0;
-    }
-
-
-    int h5FileHandler::write_uint_array(const std::vector<size_t> &arr,
-					const std::string varname) {
-	hsize_t dim[1]= {arr.size()};
-	H5::DataSpace dataspace(1, dim);
-
-	hsize_t chunkSize = dim[0] / 10;
-	hsize_t chunkdim[1] = {chunkSize};
-	H5::DSetCreatPropList plist;
-	plist.setChunk(1, chunkdim);
-	plist.setDeflate(6);
-	
-	H5::IntType datatype(H5::PredType::NATIVE_UINT64);
-	H5::DataSet dataset = _h5file.createDataSet(varname, datatype, dataspace, plist);
-	dataset.write(&(arr[0]), datatype);
-	return 0;
-    }
-
+    /* Some template specialization */
+    template<>
+    H5::PredType get_datatype<int>() {return H5::PredType::NATIVE_INT;}
+    template<>
+    H5::PredType get_datatype<long long>() {return H5::PredType::NATIVE_LLONG;}
+    template<>
+    H5::PredType get_datatype<size_t>() {return H5::PredType::NATIVE_UINT64;}
+    template<>
+    H5::PredType get_datatype<float>() {return H5::PredType::NATIVE_FLOAT;}
+    template<>
+    H5::PredType get_datatype<double>() {return H5::PredType::NATIVE_DOUBLE;}
+    template<>
+    H5::PredType get_datatype<unsigned char>() {return H5::PredType::NATIVE_UCHAR;}
+    
 
     int h5FileHandler::write_state_space(const ivec &ws, const std::string varname) {
         int n = ws.getdim();
@@ -184,6 +101,68 @@ namespace rocs {
     }
 
 
+    int h5FileHandler::write_discrete_controller(const DSolver &dsol) {
+	if(dsol._nw == 0) {
+	    std::cout << "Winning set is empty. Writing control result is abandoned.\n";
+	    return 1;
+	}
+	write_number<size_t>(dsol._nw, "nWin");
+	std::vector<size_t> winset(dsol._nw);
+	int iw = 0;
+    	for(size_t i = 0; i < dsol._ts->_nx; ++i) {
+    	    if(dsol._win[i]) {
+    		winset[iw] = i;
+    		++iw;
+    	    }
+    	}
+	write_array<size_t>(winset, "WinSet");
+	write_array<size_t>(dsol._optctlr, "OptCtlr");
+	write_array<double>(dsol._value, "Value");
+	size_t dim[2] = {dsol._ts->_nx, dsol._ts->_nu};
+	unsigned char *data = new unsigned char[dim[0]*dim[1]];
+	for(size_t i = 0; i < dim[0]*dim[1]; ++i) {
+		data[i] = dsol._leastctlr[i];
+	}
+	write_2d_array<unsigned char>(data, dim, "LeastCtlr");
+	delete[] data;
+	return 0;
+    }
+
+
+    int h5FileHandler::write_transitions(const fts &trans) {
+	H5::Group group(_h5file.createGroup("/Transitions"));
+	write_number<size_t>(trans._nx, "/Transitions/Nx");
+	write_number<size_t>(trans._nu, "/Transitions/Nu");
+	write_number<size_t>(trans._ntrans, "/Transitions/Ntrans");
+	write_array<size_t>(trans._idpost, "/Transitions/postID");
+	write_array<int>(trans._npost, "/Transitions/postNum");
+	write_array<size_t>(trans._ptrpost, "/Transitions/postAddr");
+	write_array<size_t>(trans._idpre, "/Transitions/preID");
+	write_array<int>(trans._npre, "/Transitions/preNum");
+	write_array<size_t>(trans._ptrpre, "/Transitions/preAddr");
+	write_array<double>(trans._cost, "/Transitions/cost");
+	return 0;
+    } //write_transitions
+
+
+    int h5FileHandler::write_winning_graph(const Patcher &patcher) {
+	H5::Group group(_h5file.createGroup("/WinGraph"));
+	write_number<size_t>(patcher._nwin, "/WinGraph/Nx");
+	write_number<size_t>(patcher._na, "/WinGraph/Nu");
+	write_array<size_t>(patcher._winfts._idpost, "/WinGraph/postID");
+	write_array<int>(patcher._winfts._npost, "/WinGraph/postNum");
+	write_array<size_t>(patcher._winfts._ptrpost, "/WinGraph/postAddr");
+	write_array<size_t>(patcher._winfts._idpre, "/WinGraph/preID");
+	write_array<int>(patcher._winfts._npre, "/WinGraph/preNum");
+	write_array<size_t>(patcher._winfts._ptrpre, "/WinGraph/preAddr");
+	write_array<long long>(patcher._reachstep, "/reachSteps");
+	write_array<long long>(patcher._idmap, "/idMap");
+	write_array<long long>(patcher._encode, "/encode");
+	write_array<long long>(patcher._decode, "/decode");
+	return 0;
+    } //end write_winning_graph
+    
+
     int h5FileHandler::write_sptree_leaves(const SPtree &ctlr, SPnode *ptrn) {
 	if (ptrn == NULL) {
 	    std::cout << "h5FileHandler::write_sptree_leaves: Input sptree root is empty." << std::endl;
@@ -221,122 +200,88 @@ namespace rocs {
 	}
 
 	/* write leaf nodes of a SPtree to "pavings" */
-	hsize_t dim1[2];
-	dim1[0] = nLeaf;
-	dim1[1] = 2*dimState;
-	H5::DataSpace dataspace1(2, dim1);
-	H5::FloatType datatype(H5::PredType::NATIVE_DOUBLE);
-	H5::DataSet dsetPavings = _h5file.createDataSet(std::string("pavings"), datatype, dataspace1);
-	dsetPavings.write(pavings, datatype);
+	size_t dim1[2] = {(size_t)nLeaf, 2*(size_t)dimState};
+	write_2d_array<double>(pavings, dim1, "pavings");
+	// hsize_t dim1[2];
+	// dim1[0] = nLeaf;
+	// dim1[1] = 2*dimState;
+	// H5::DataSpace dataspace1(2, dim1);
+	// H5::FloatType datatype(H5::PredType::NATIVE_DOUBLE);
+	// H5::DataSet dsetPavings = _h5file.createDataSet(std::string("pavings"), datatype, dataspace1);
+	// dsetPavings.write(pavings, datatype);
 	delete[] pavings;
 
 	/* write _ctlr to "ctlr" */
-	hsize_t dim2[2];
-	dim2[0] = nLeaf;
-	dim2[1] = nInput;
-	H5::DataSpace dataspace2(2, dim2);
-	H5::DataSet dsetCtlr = _h5file.createDataSet(std::string("ctlr"),
-						     H5::PredType::NATIVE_UCHAR, dataspace2);
-	dsetCtlr.write(validu, H5::PredType::NATIVE_UCHAR);
+	size_t dim2[2] = {(size_t)nLeaf, (size_t)nInput};
+	write_2d_array<unsigned char>(validu, dim2, "ctlr");
+	// hsize_t dim2[2];
+	// dim2[0] = nLeaf;
+	// dim2[1] = nInput;
+	// H5::DataSpace dataspace2(2, dim2);
+	// H5::DataSet dsetCtlr = _h5file.createDataSet(std::string("ctlr"),
+	// 					     H5::PredType::NATIVE_UCHAR, dataspace2);
+	// dsetCtlr.write(validu, H5::PredType::NATIVE_UCHAR);
 	delete[] validu;
 
 	/* write _tag to "tag" */
-	hsize_t dim3[1];
-	dim3[0] = nLeaf;
-	H5::DataSpace dataspace3(1, dim3);
-	H5::DataSet dsetTag = _h5file.createDataSet(std::string("tag"),
-						    H5::PredType::NATIVE_INT, dataspace3);
-	dsetTag.write(tag, H5::PredType::NATIVE_INT);
+	write_array<int>(tag, nLeaf, "tag");
+	// hsize_t dim3[1];
+	// dim3[0] = nLeaf;
+	// H5::DataSpace dataspace3(1, dim3);
+	// H5::DataSet dsetTag = _h5file.createDataSet(std::string("tag"),
+	// 					    H5::PredType::NATIVE_INT, dataspace3);
+	// dsetTag.write(tag, H5::PredType::NATIVE_INT);
 	delete[] tag;
 
 	return 0;
     }
 
 
-    int h5FileHandler::write_transitions(const fts &trans) {
-	H5::Group group(_h5file.createGroup("/Transitions"));
-	write_uint_number(trans._nx, "/Transitions/Nx");
-	write_uint_number(trans._nu, "/Transitions/Nu");
-	write_uint_number(trans._ntrans, "/Transitions/Ntrans");
-	write_uint_array(trans._idpost, "/Transitions/postID");
-	write_uint_array(trans._npost, "/Transitions/postNum");
-	write_uint_array(trans._ptrpost, "/Transitions/postAddr");
-	write_uint_array(trans._idpre, "/Transitions/preID");
-	write_uint_array(trans._npre, "/Transitions/preNum");
-	write_uint_array(trans._ptrpre, "/Transitions/preAddr");
-	write_real_array(trans._cost, "/Transitions/cost");
-	return 0;
-    } //write_transitions
-
-
-    int h5FileHandler::read_uint_number(size_t *ptrd, const std::string varname) {
-	size_t data[1];
-	H5::DataSet dataset = _h5file.openDataSet(varname);
-	H5::DataSpace dataspace = dataset.getSpace();
-	// int rank_dnx = dnxspace.getSimpleExtentNdims();
-	hsize_t dim[1] = {1};
-	H5::DataSpace memspace(1, dim);
-	dataset.read(data, H5::PredType::NATIVE_UINT64, memspace, dataspace);
-	*ptrd = data[0];
-	return 0;
-    }
-
-
-    int h5FileHandler::read_uint_array(std::vector<size_t> &arr,
-				       const std::string varname) {
-	H5::DataSet dataset = _h5file.openDataSet(varname);
-	H5::DataSpace dataspace = dataset.getSpace();
-	int rank = dataspace.getSimpleExtentNdims();
-	hsize_t dim[1];
-	rank = dataspace.getSimpleExtentDims(dim);
-	H5::DataSpace memspace(1, dim);
-
-	// /* Get the create property list of the dataset */
-	// H5::DSetCreatPropList plist(dataset.getCreatePlist());
-	// int numfilt = plist.getNfilters();
-	
-	// std::cout << "dim[0]=" << dim[0] << '\n';
-	size_t *data = new size_t[dim[0]];
-	dataset.read(data, H5::PredType::NATIVE_UINT64, memspace, dataspace);
-	arr.resize(dim[0]);
-	for(hsize_t i = 0; i < dim[0]; ++i)
-	    arr[i] = data[i];
-	delete[] data;
-	return 0;
-    }
-
-
-    int h5FileHandler::read_real_array(std::vector<double> &arr,
-				       const std::string varname) {
-	H5::DataSet dataset = _h5file.openDataSet(varname);
-	H5::DataSpace dataspace = dataset.getSpace();
-	int rank = dataspace.getSimpleExtentNdims();
-	hsize_t dim[1];
-	rank = dataspace.getSimpleExtentDims(dim);
-	H5::DataSpace memspace(1, dim);
-	double *data = new double[dim[0]];
-	dataset.read(data, H5::PredType::NATIVE_DOUBLE, memspace, dataspace);
-	arr.resize(dim[0]);
-	for(hsize_t i = 0; i < dim[0]; ++i)
-	    arr[i] = data[i];
-	delete[] data;
-	return 0;
-    }
-
-
     int h5FileHandler::read_transitions(fts &trans) {
-	read_uint_number(&trans._nx, "/Transitions/Nx");
-	read_uint_number(&trans._nu, "/Transitions/Nu");
-	read_uint_number(&trans._ntrans, "/Transitions/Ntrans");
-	read_uint_array(trans._idpost, "/Transitions/postID");
-	read_uint_array(trans._npost, "/Transitions/postNum");
-	read_uint_array(trans._ptrpost, "/Transitions/postAddr");
-	read_uint_array(trans._idpre, "/Transitions/preID");
-	read_uint_array(trans._npre, "/Transitions/preNum");
-	read_uint_array(trans._ptrpre, "/Transitions/preAddr");
-	read_real_array(trans._cost, "/Transitions/cost");
+	read_number<size_t>(&trans._nx, "/Transitions/Nx");
+	read_number<size_t>(&trans._nu, "/Transitions/Nu");
+	read_number<size_t>(&trans._ntrans, "/Transitions/Ntrans");
+	read_array<size_t>(trans._idpost, "/Transitions/postID");
+	read_array<int>(trans._npost, "/Transitions/postNum");
+	read_array<size_t>(trans._ptrpost, "/Transitions/postAddr");
+	read_array<size_t>(trans._idpre, "/Transitions/preID");
+	read_array<int>(trans._npre, "/Transitions/preNum");
+	read_array<size_t>(trans._ptrpre, "/Transitions/preAddr");
+	read_array<double>(trans._cost, "/Transitions/cost");
 	return 0;
     }//read_transitions
+    
+    
+    int h5FileHandler::read_winning_graph(Patcher &patcher) {
+	read_number<size_t>(&patcher._nwin, "/WinGraph/Nx");
+	read_number<size_t>(&patcher._na, "/WinGraph/Nu");
+	read_array<size_t>(patcher._winfts._idpost, "/WinGraph/postID");
+	read_array<int>(patcher._winfts._npost, "/WinGraph/postNum");
+	read_array<size_t>(patcher._winfts._ptrpost, "/WinGraph/postAddr");
+	read_array<size_t>(patcher._winfts._idpre, "/WinGraph/preID");
+	read_array<int>(patcher._winfts._npre, "/WinGraph/preNum");
+	read_array<size_t>(patcher._winfts._ptrpre, "/WinGraph/preAddr");
+	read_array<long long>(patcher._reachstep, "/reachSteps");
+	read_array<long long>(patcher._idmap, "idMap");
+	read_array<long long>(patcher._encode, "/encode");
+	read_array<long long>(patcher._decode, "/decode");
+	return 0;
+    } //end save_winning_graph_to_h5
 
+
+    int h5FileHandler::read_sptree_controller(std::vector<double> &pavings, size_t *pdims,
+					      std::vector<int> &tag,
+					      boost::dynamic_bitset<> &cntl, size_t *cdims) {
+	read_2d_array<double>(pavings, pdims, "pavings");
+	read_array<int>(tag, "tag");
+	std::vector<unsigned char> c;
+	read_2d_array<unsigned char>(c, cdims, "ctlr");
+	cntl.resize(c.size(), false);
+	for(size_t i = 0; i < c.size(); ++i) {
+	    if(c[i]>0)
+		cntl[i] = true;
+	}
+	return 0;
+    }
 
 }//namespace rocs

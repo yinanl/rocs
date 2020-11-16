@@ -27,28 +27,31 @@ TARGETS := $(basename $(ESRCS))
 # rules
 all: $(TARGETS)
 
-testAD: ad.o $(OBJS)
+testAD: testAD.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) $(LIBTEST) -o $@ $^
 
-testGrid: grids.o $(OBJS)
+testGrid: testGrid.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) $(LIBTEST) -o $@ $^
 
-testIval: ival.o $(OBJS)
+testIval: testIval.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) $(LIBTEST) -o $@ $^
 
-testIvec: ivec.o $(OBJS)
+testIvec: testIvec.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) $(LIBTEST) -o $@ $^
 
-testPaver: paver.o $(OBJS)
+testPaver: testPaver.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) $(LIBTEST) -o $@ $^
 
-testPrecision: precision.o $(OBJS)
+testPrecision: testPrecision.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) $(LIBTEST) -o $@ $^
 
-testDSolver: dsolver.o $(OBJS)
+testDSolver: testDsolver.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) $(LIBTEST) -o $@ $^
 
 testHDF5: testHDF5.o $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) $(LIBTEST) -o $@ $^
+
+testAbst: testAbst.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) $(LIBTEST) -o $@ $^
 
 
@@ -68,24 +71,3 @@ $(ODIR)/%.o: $(SDIR)/%.cpp $(SDIR)/%.h
 
 %.o: %.cpp $(SDIR)/flow_taylor.hpp
 	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
-
-# ad.o: testAD.cpp $(SDIR)/flow_taylor.hpp
-# 	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
-
-# grids.o: testGrid.cpp
-# 	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
-
-# ival.o: testIval.cpp
-# 	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
-
-# ivec.o: testIvec.cpp
-# 	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
-
-# paver.o: testPaver.cpp
-# 	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
-
-# precision.o: testPrecision.cpp
-# 	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
-
-# dsolver.o: testDSolver.cpp
-# 	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@

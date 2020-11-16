@@ -9,7 +9,7 @@ SDIR := $(RDIR)src
 ODIR := $(RDIR)build
 
 INCS += -I$(RDIR)
-CXXFLAGS += -DVERBOSE
+CXXFLAGS += -DVERBOSE -DNDEBUG
 
 SRCS := $(wildcard $(SDIR)/*.cpp)
 DEPS := $(patsubst %.cpp, %.h, $(SRCS))
@@ -32,10 +32,10 @@ all: $(TARGETS)
 carTraj: carReachTraj.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
 
-carAbst: carAbst.o $(OBJS)
+carAbst: carAbst.o $(OBJS) $(ODIR)/buchi.o
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
 
-carAbst4: carAbst_dba4.o $(OBJS)
+carAbst4: carAbst_dba4.o $(OBJS) $(ODIR)/buchi.o
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
 
 carAbst_ref: carAbst_ref.o $(OBJS)
@@ -69,6 +69,9 @@ carFullmap: carFullmap.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
 
 testConstraints: testConstraints.cpp $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+
+sim_carAbst: sim_carAbst.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
 
 showtargets:

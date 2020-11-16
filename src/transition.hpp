@@ -24,12 +24,12 @@ class fts {
     size_t _ntrans;  /**< number of transitions */
   
     std::vector<size_t> _idpre;  /**< [_ntrans] a list of pre's */
-    std::vector<size_t> _npre;  /**< [Nx x Nu] a list of the number of the pre's 
+    std::vector<int> _npre;  /**< [Nx x Nu] a list of the number of the pre's 
 				   for each state and input */
     std::vector<size_t> _ptrpre;  /**< [Nx x Nu] the index in _npre of the first pre 
 				     for state i under input j: _ptrpre[i*Nu+j] */
     std::vector<size_t> _idpost;  /**< [_ntrans] a list of post's */
-    std::vector<size_t> _npost;  /**< [Nx x Nu] a list of the number of the post's 
+    std::vector<int> _npost;  /**< [Nx x Nu] a list of the number of the post's 
 				    for each state and input [n x m] */
     std::vector<size_t> _ptrpost;  /**< [Nx x Nu] the index in _npost of the first post 
 				      for state i under input j: _ptrpost[i*Nu+j] */

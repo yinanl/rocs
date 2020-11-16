@@ -19,7 +19,7 @@
 #include "src/abstraction.hpp"
 #include "src/txtfileio.h"
 #include "src/DBAparser.h"
-#include "src/bsolver.h"
+#include "src/bsolver.hpp"
 
 #include "car.hpp"
 
@@ -170,12 +170,22 @@ int main(int argc, char *argv[])
     /**
      * Solve a Buchi game on the product of NTS and DBA.
      */
+    // std::cout << "Start solving a Buchi game on the product of the abstraction and DBA...\n";
+    // rocs::HEAD psolver; // memories will be allocated for psolver
+    // rocs::initialization(&psolver);
+    // rocs::construct_dba(&psolver, (int)nAP, (int)nNodes, (int)q0, acc, arrayM);
+    // tb = clock();
+    // rocs::solve_buchigame_on_product(&psolver, abst);
+    // te = clock();
+    // float tsyn = (float)(te - tb)/CLOCKS_PER_SEC;
+    // std::cout << "Time of synthesizing controller: " << tsyn << '\n';
     std::cout << "Start solving a Buchi game on the product of the abstraction and DBA...\n";
-    rocs::HEAD psolver; // memories will be allocated for psolver
-    rocs::initialization(&psolver);
-    rocs::construct_dba(&psolver, (int)nAP, (int)nNodes, (int)q0, acc, arrayM);
+    rocs::BSolver solver;
+    solver.construct_dba((int)nAP, (int)nNodes, (int)q0, acc, arrayM);
     tb = clock();
-    rocs::solve_buchigame_on_product(&psolver, abst);
+    solver.load_abstraction(abst);
+    solver.generate_product(abst);
+    solver.solve_buchigame_on_product();
     te = clock();
     float tsyn = (float)(te - tb)/CLOCKS_PER_SEC;
     std::cout << "Time of synthesizing controller: " << tsyn << '\n';
@@ -198,7 +208,8 @@ int main(int argc, char *argv[])
     datafile += ".txt";
     
     std::cout << "Writing the controller...\n";
-    rocs::write_controller_to_txt(&psolver, datafile.c_str());
+    // rocs::write_controller_to_txt(&psolver, datafile.c_str());
+    solver.write_controller_to_txt(const_cast<char*>(datafile.c_str()));
     std::cout << "Controller writing is done.\n";
 
     std::cout << "Total time of used (abstraction+synthesis): " << tabst+tsyn << '\n';

@@ -238,7 +238,7 @@ namespace rocs {
 		    /* assign post grid point IDs to _idpost */
 		    if (_ts._npost[row*nu+col] == 0)
 			continue;
-		    for (size_t l = 0; l < _ts._npost[row*nu+col]; ++l) {
+		    for (int l = 0; l < _ts._npost[row*nu+col]; ++l) {
 			postid = stpost[row*nu+col];
 			r = l;
 			for (int k = 0; k < n; ++k) {
@@ -272,7 +272,7 @@ namespace rocs {
 	    size_t idtspre;
 	    for (size_t row = 0; row < nx; ++row) {
 		for (size_t col = 0; col < nu; ++col) {
-		    for (size_t ip = 0; ip < _ts._npost[row*nu + col]; ++ip) {
+		    for (int ip = 0; ip < _ts._npost[row*nu + col]; ++ip) {
 			if (_ts._idpost[_ts._ptrpost[row*nu+col] + ip] > nx) {
 			    std::cout << "row=" << row <<", col=" << col << '\n';
 			}
@@ -412,7 +412,7 @@ namespace rocs {
 		    /* assign post grid point IDs to _idpost */
 		    if (_ts._npost[row*nu+col] == 0)
 			continue;
-		    for (size_t l = 0; l < _ts._npost[row*nu+col]; ++l) {
+		    for (int l = 0; l < _ts._npost[row*nu+col]; ++l) {
 			/* assign cost (worst case): maximum from all posts */
 			postid = _ts._ptrpost[row*nu+col]+l;
 			if (_wf) {

@@ -97,7 +97,8 @@ namespace rocs {
 	 * \brief [x].isin([a]) is true if a real value val is inside [x].
 	 */
 	bool isin(const double val) const {
-	    return !isempty() && m_inf <= val && m_sup >= val;
+	    return !isempty() && !(m_inf > val) && !(m_sup < val);
+	    // return !isempty() && m_inf <= val && m_sup >= val;
 	}
 
 	/**

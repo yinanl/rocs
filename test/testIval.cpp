@@ -42,6 +42,9 @@ BOOST_AUTO_TEST_CASE(test_init_basics)
     BOOST_CHECK(d == b);
     BOOST_CHECK(a != b);
 
+    /* test set operations */
+    BOOST_CHECK(b.isin(0.2));
+
     /* test print function */
 //    std::cout << b<< std::endl;
 }

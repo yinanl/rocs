@@ -94,7 +94,7 @@ namespace rocs {
 		// std::cout << '\n';
 		for (size_t col = 0; col < m; ++col) {
 		    // std::cout << nts._npost[row*m+col] << '\n';
-		    for (size_t l = 0; l < nts._npost[row*m+col]; ++l) {
+		    for (int l = 0; l < nts._npost[row*m+col]; ++l) {
 			_txtfile << ++i << ' ';
 			_txtfile << row << ' ' << col << ' ' << nts._idpost[nts._ptrpost[row*m+col]+l];
 			_txtfile << '\n';
@@ -127,7 +127,7 @@ namespace rocs {
 		std::cout << '\n';
 		for (size_t col = 0; col < m; ++col) {
 		    // std::cout << nts._npost[row*m+col] << '\n';
-		    for (size_t l = 0; l < nts._npre[row*m+col]; ++l) {
+		    for (int l = 0; l < nts._npre[row*m+col]; ++l) {
 			_txtfile << ++i << ' ';
 			_txtfile << nts._idpre[nts._ptrpre[row*m+col]+l] << ' ' << col << ' ' << row;
 			_txtfile << '\n';

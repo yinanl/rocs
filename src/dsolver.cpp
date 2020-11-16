@@ -20,7 +20,7 @@ namespace rocs {
     void DSolver::reachability(std::vector<size_t> &target) {
     	size_t n = _ts->_nx;
     	size_t m = _ts->_nu;
-    	std::vector<size_t> outdeg(_ts->_npost);
+    	std::vector<int> outdeg(_ts->_npost);
     	std::vector<double> pjmax_cost(n*m,0);
 	
     	/* initialize _win, _val, and queue */
@@ -35,13 +35,14 @@ namespace rocs {
     	}
 
 	/* continuously compute predecessors */
+	_nw = target.size();
     	size_t s, p; /* p->s */
     	while (!que.empty()) {
     	    s = que.front();
     	    que.pop();
     	    for (size_t j = 0; j < m; ++j) {
     		/* loop all predecessors of s under input j */
-    		for (size_t l = 0; l < _ts->_npre[s*m+j]; ++l) {
+    		for (int l = 0; l < _ts->_npre[s*m+j]; ++l) {
     		    p = _ts->_idpre[_ts->_ptrpre[s*m+j]+l]; /* p(j)->s */
     		    /* evaluate the edge p(j)->s */
 		    if (!_win[p]) {
@@ -50,6 +51,7 @@ namespace rocs {
 		    	    _leastctlr[p*m+j] = true;
 		    	    _win[p] = true;
 		    	    que.push(p);
+			    ++_nw;
 		    	}
 		    }
 		    // --outdeg[p*m+j];
@@ -98,9 +100,9 @@ namespace rocs {
 		/* consider the state marked winning */
 		if (_win[i]) {
 		    isout = true;
-		    for (int j = 0; j < m; ++j) {
+		    for (size_t j = 0; j < m; ++j) {
 			if (_ts->_npost[i*m+j]) {/* if j is a valid control input for i */
-			    for(size_t l = 0; l < _ts->_npost[i*m+j]; ++l) {
+			    for(int l = 0; l < _ts->_npost[i*m+j]; ++l) {
 				s = _ts->_idpost[_ts->_ptrpost[i*m+j]+l]; /* i,j->s */
 				if (!_win[s]) {
 				    out[i*m+j] = true;
@@ -121,8 +123,9 @@ namespace rocs {
 		}
 	    } /* end loop states */
 	} /* end while */
-    }
 
+	_nw = nt;
+    }
 
 
 } // namespace rocs

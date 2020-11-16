@@ -336,7 +336,7 @@ namespace rocs {
 	for (size_t row = 0; row < trans._nx; ++row) {
 	    for (size_t col = 0; col < trans._nu; ++col) {
 
-		for (size_t ip = 0; ip < trans._npost[row*trans._nu + col]; ++ip) {
+		for (int ip = 0; ip < trans._npost[row*trans._nu + col]; ++ip) {
 		    ptranspost[i] = row;
 		    ptranspost[i + trans._ntrans * 1] = trans._idpost[trans._ptrpost[row*trans._nu+col] + ip];
 		    ptranspost[i + trans._ntrans * 2] = col;
@@ -346,7 +346,7 @@ namespace rocs {
 		    i ++;
 		}
 
-		for (size_t jp = 0; jp < trans._npre[row*trans._nu + col]; ++jp) {
+		for (int jp = 0; jp < trans._npre[row*trans._nu + col]; ++jp) {
 		    ptranspre[j] = row;
 		    ptranspre[j + trans._ntrans * 1] = trans._idpre[trans._ptrpre[row*trans._nu+col] + jp];
 		    ptranspre[j + trans._ntrans * 2] = col;	    

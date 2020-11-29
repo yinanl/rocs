@@ -145,24 +145,6 @@ namespace rocs {
     } //write_transitions
 
 
-    int h5FileHandler::write_winning_graph(const Patcher &patcher) {
-	H5::Group group(_h5file.createGroup("/WinGraph"));
-	write_number<size_t>(patcher._nwin, "/WinGraph/Nx");
-	write_number<size_t>(patcher._na, "/WinGraph/Nu");
-	write_array<size_t>(patcher._winfts._idpost, "/WinGraph/postID");
-	write_array<int>(patcher._winfts._npost, "/WinGraph/postNum");
-	write_array<size_t>(patcher._winfts._ptrpost, "/WinGraph/postAddr");
-	write_array<size_t>(patcher._winfts._idpre, "/WinGraph/preID");
-	write_array<int>(patcher._winfts._npre, "/WinGraph/preNum");
-	write_array<size_t>(patcher._winfts._ptrpre, "/WinGraph/preAddr");
-	write_array<long long>(patcher._reachstep, "/reachSteps");
-	write_array<long long>(patcher._idmap, "/idMap");
-	write_array<long long>(patcher._encode, "/encode");
-	write_array<long long>(patcher._decode, "/decode");
-	return 0;
-    } //end write_winning_graph
-    
-
     int h5FileHandler::write_sptree_leaves(const SPtree &ctlr, SPnode *ptrn) {
 	if (ptrn == NULL) {
 	    std::cout << "h5FileHandler::write_sptree_leaves: Input sptree root is empty." << std::endl;
@@ -251,23 +233,6 @@ namespace rocs {
 	return 0;
     }//read_transitions
     
-    
-    int h5FileHandler::read_winning_graph(Patcher &patcher) {
-	read_number<size_t>(&patcher._nwin, "/WinGraph/Nx");
-	read_number<size_t>(&patcher._na, "/WinGraph/Nu");
-	read_array<size_t>(patcher._winfts._idpost, "/WinGraph/postID");
-	read_array<int>(patcher._winfts._npost, "/WinGraph/postNum");
-	read_array<size_t>(patcher._winfts._ptrpost, "/WinGraph/postAddr");
-	read_array<size_t>(patcher._winfts._idpre, "/WinGraph/preID");
-	read_array<int>(patcher._winfts._npre, "/WinGraph/preNum");
-	read_array<size_t>(patcher._winfts._ptrpre, "/WinGraph/preAddr");
-	read_array<long long>(patcher._reachstep, "/reachSteps");
-	read_array<long long>(patcher._idmap, "idMap");
-	read_array<long long>(patcher._encode, "/encode");
-	read_array<long long>(patcher._decode, "/decode");
-	return 0;
-    } //end save_winning_graph_to_h5
-
 
     int h5FileHandler::read_sptree_controller(std::vector<double> &pavings, size_t *pdims,
 					      std::vector<int> &tag,

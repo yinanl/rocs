@@ -809,8 +809,9 @@ void buchi_and_controller(HEAD *head)
       }
   ctrlr->ctrl=ctrl=(CTRL*)malloc(wp*sizeof(CTRL));
     
-  // for(p12=queue+cnt1;!*(acc_p+*(p12-1));p12--);
-  for(p12=p10=queue;*(acc_p+*p10);p10++)
+  /* for(p12=queue+cnt1;!*(acc_p+*(p12-1));p12--); */
+  /* for(p12=p10=queue;*(acc_p+*p10);p10++) */
+  for(p12=p10=queue;p10<queue+wp&&*(acc_p+*p10);p10++)
     if((nts_product+*p10)->in_edge)*p12++=*p10;
   for(i++,p11=queue;p11<p12;p11++)
     {

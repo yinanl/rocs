@@ -91,6 +91,8 @@ $(ODIR):
 	mkdir $(ODIR)
 $(ODIR)/%.o: $(SDIR)/%.cpp $(SDIR)/%.h
 	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
+$(ODIR)/%.o: $(SDIR)/%.c $(SDIR)/%.h
+	gcc -Wall -Wextra -o3 -c $< -o $@
 
 %.o: %.cpp $(SDIR)/system.hpp car.hpp
 	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@

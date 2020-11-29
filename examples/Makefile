@@ -24,21 +24,22 @@ TARGETS := $(basename $(ESRCS))
 .PHONY : clean
 
 
-$(ODIR)/%.o: %.cpp %.h
-	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
-
 # rules
 examples:
 	for dir in $(EDIRS); do \
 		$(MAKE) -C $$dir;\
 	done
 
+aircraft:
+	cd ./aircraft && $(MAKE)
 car:
 	cd ./car && $(MAKE)
 dcdc:
 	cd ./dcdc && $(MAKE)
 ipdl:
 	cd ./ipdl && $(MAKE)
+Moore-Greitzer:
+	cd ./Moore-Greitzer && $(MAKE)
 temp:
 	cd ./temp && $(MAKE)
 vdp:

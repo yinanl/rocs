@@ -22,7 +22,6 @@
 
 #include "grid.h"
 #include "csolver.h"
-#include "patcher.h"
 #include "dsolver.h"
 
 #include "transition.hpp"
@@ -106,7 +105,6 @@ namespace rocs {
 	 */
 	int write_discrete_controller(const DSolver &dsol);
 	int write_transitions(const fts &trans);
-	int write_winning_graph(const Patcher &patcher);
 
 	/**
 	 * Write CSolver into a .h5 file.
@@ -129,8 +127,6 @@ namespace rocs {
 			  const std::string varname);
 	
 	int read_transitions(fts &trans);
-	int read_winning_graph(Patcher &patcher);
-	int read_discrete_controller();
 	int read_sptree_controller(std::vector<double> &pavings, size_t *pdims,
 				   std::vector<int> &tag,
 				   boost::dynamic_bitset<> &cntl, size_t *cdims);

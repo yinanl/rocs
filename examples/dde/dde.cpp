@@ -108,7 +108,7 @@ int main()
     rocs::DTSys<dde4> ddeInv("dcdc", 1, dde4::n);
     ddeInv.init_workspace(xlb, xub);
     
-    rocs::CSolver solver(&ddeInv, rocs::ABSMAX);
+    rocs::CSolver solver(&ddeInv, 0, rocs::ABSMAX);
     double eps[]{0.1, 0.1, 0.1, 0.1};
     solver.init(rocs::GOAL, &cset<rocs::ivec>, eps);
     solver.invariance_control(&ddeInv, eps);

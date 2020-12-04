@@ -22,6 +22,7 @@ W2 = 3*W*W;
 % load('data_caseII_Cobuchi2.mat')
 load('data_caseIIReachstay2.mat')
 % load('data_caseIIReach2.mat')
+vf= @engineMG;
 
 % winid= find(any(ctlr,2));
 % winset= pavings(winid,:);
@@ -75,7 +76,7 @@ while( t <= Tsim)
     u= uall(ind,:);
 
     % compute next state
-    [tt,xx]= ode45(@(t,x) mg(t,x,u), [0 ts], x);
+    [tt,xx]= ode45(@(t,x) vf(t,x,u), [0 ts], x);
     
     % append state for simulation
     usim= cat(1, usim, repmat(u,size(tt,1),1)); % a col

@@ -1,5 +1,5 @@
 /**
- *  engine.cpp
+ *  engine2dDBA.cpp
  *
  *  Reach and stay control of the ode model of Moore-Greitzer engine.
  *
@@ -15,8 +15,10 @@
 
 #include "src/system.hpp"
 #include "src/csolver.h"
-#include "src/matlabio.h"
 #include "src/DBAparser.h"
+
+// #include "src/matlabio.h"
+#include "src/hdf5io.h"
 
 
 double a = 1./3.5;
@@ -97,8 +99,8 @@ int main(int argc, char *argv[])
      * Control system setup
      **/
     /* set the state space */
-    double xlb[3]{0.44, 0.6};
-    double xub[3]{0.54, 0.7};
+    double xlb[]{0.44, 0.6};
+    double xub[]{0.54, 0.7};
     
     /* set the control values */
     double Lmu = 0.01;
@@ -182,7 +184,8 @@ int main(int argc, char *argv[])
 	std::cout << std::endl << "S-domain for q" << std::to_string(i) << '\n';
 	w[i]->print_controller_info();
     }
-    rocs::write_results_to_mat(engine, specfile, w);
+    // rocs::write_results_to_mat(engine, specfile, w);
+    rocs::write_csolvers_to_h5(engine, specfile, w);
     
 
     /**

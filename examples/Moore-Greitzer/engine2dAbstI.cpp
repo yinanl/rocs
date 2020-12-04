@@ -1,5 +1,5 @@
 /**
- *  engineAbst.cpp
+ *  engineAbstI.cpp
  *
  *  Abstraction-based reach-stay-avoid control of an engine ode.
  *  
@@ -12,6 +12,7 @@
 #include <fstream>
 #include <sstream>
 #include <cstdlib>
+#include <sys/stat.h>
 
 #include <string>
 #include <cmath>
@@ -21,9 +22,10 @@
 #include "src/abstraction.hpp"
 #include "src/bsolver.hpp"
 #include "src/txtfileio.h"
+#include "src/hdf5io.h"
 
 
-const double a = 1.67;
+const double a = 1./3.5;
 const double B = 2.0;
 const double H = 0.18;
 const double W = 0.25;
@@ -99,6 +101,7 @@ int main(int argc, char *argv[])
      */
     rocs::abstraction< rocs::CTCntlSys<mgode2> > abst(&engine);
     const double eta[]{0.00018, 0.00018};
+    // const double eta[]{0.002, 0.002};
     abst.init_state(eta, xlb, xub);
     std::cout << "The number of abstraction states: " << abst._x._nv << '\n';
     double obs[][2]{{0.520, 0.526}, {0.658, 0.664}};
@@ -113,21 +116,41 @@ int main(int argc, char *argv[])
 		     return 0;
 		 };
     abst.assign_labels(avoid);
+    abst.assign_label_outofdomain(0);
     std::vector<size_t> obstacles;
     for (size_t i = 0; i < abst._x._nv; ++i) {
     	if (abst._labels[i] < 0)
     	    obstacles.push_back(i);
     }
-    /* Robustness margins */
-    double e1[] = {0,0};
-    double e2[] = {0.0, 0.0};
-    tb = clock();
-    abst.assign_transitions(e1, e2);
-    te = clock();
-    float tabst = (float)(te - tb)/CLOCKS_PER_SEC;
-    std::cout << "Time of computing abstraction: " << tabst << '\n';
-    std::cout << "# of transitions: " << abst._ts._ntrans << '\n';
 
+    std::string transfile = "abstI_0.00018.h5";
+    struct stat buffer;
+    float tabst;
+    if(stat(transfile.c_str(), &buffer) == 0) {
+	/* Read from a file */
+	std::cout << "Transitions have been computed. Reading transitions...\n";
+	rocs::h5FileHandler transRdr(transfile, H5F_ACC_RDONLY);
+	tb = clock();
+	transRdr.read_transitions(abst._ts);
+	te = clock();
+	tabst = (float)(te - tb)/CLOCKS_PER_SEC;
+	std::cout << "Time of reading abstraction: " << tabst << '\n';
+    } else {
+	std::cout << "Transitions haven't been computed. Computing transitions...\n";
+	/* Robustness margins */
+	double e1[] = {0.0, 0.0};
+	double e2[] = {0.0, 0.0};
+	tb = clock();
+	abst.assign_transitions(e1, e2);
+	te = clock();
+	tabst = (float)(te - tb)/CLOCKS_PER_SEC;
+	std::cout << "Time of computing abstraction: " << tabst << '\n';
+	/* Write abstraction to file */
+	rocs::h5FileHandler transWtr(transfile, H5F_ACC_TRUNC);
+	transWtr.write_transitions(abst._ts);
+    }
+    std::cout << "# of transitions: " << abst._ts._ntrans << '\n';
+    
 
     /**
      * Read DBA from spec*.txt file
@@ -154,11 +177,22 @@ int main(int argc, char *argv[])
 			    double c2= eta[1]/2.0; //+1e-10;
 			    
 			    return (goal[0][0] <= (x[0]-c1) && (x[0]+c1) <= goal[0][1] && 
-				    goal[1][0] <= (x[1]-c2) && (x[1]+c2) <= goal[1][1]) ? 1: 0;
+				    goal[1][0] <= (x[1]-c2) && (x[1]+c2) <= goal[1][1]) ?
+				1: abst._labels[i];
 			};
     abst.assign_labels(label_target);
     std::cout << "Specification assignment is done.\n";
-
+    std::vector<size_t> targetIDs;
+    std::vector<rocs::Rn> targetPts;   //initial invariant set
+    rocs::Rn x(abst._x._dim);
+    for(size_t i = 0; i < abst._labels.size(); ++i) {
+    	if(abst._labels[i] > 0) {
+    	    targetIDs.push_back(i);
+    	    abst._x.id_to_val(x, i);
+    	    targetPts.push_back(x);
+    	}
+    }
+    
 
     /**
      * Solve a Buchi game on the product of NTS and DBA.
@@ -178,8 +212,15 @@ int main(int argc, char *argv[])
      * Display and save memoryless controllers.
      */
     std::cout << "Writing the controller...\n";
-    std::string datafile = "controller_abstI.txt";
-    solver.write_controller_to_txt(const_cast<char*>(datafile.c_str()));
+    // std::string datafile = "controller_abstI_0.00018.txt";
+    // solver.write_controller_to_txt(const_cast<char*>(datafile.c_str()));
+    std::string datafile = "controller_abstI_0.00018.h5";
+    rocs::h5FileHandler ctlrWtr(datafile, H5F_ACC_TRUNC);
+    ctlrWtr.write_problem_setting< rocs::CTCntlSys<mgode2> >(engine);
+    ctlrWtr.write_2d_array<double>(targetPts, "G");
+    ctlrWtr.write_array<double>(eta, mgode2::n, "eta");
+    ctlrWtr.write_2d_array<double>(abst._x._data, "xgrid");
+    ctlrWtr.write_discrete_controller(&(solver._sol));
     std::cout << "Controller writing is done.\n";
 
     std::cout << "Total time of used (abstraction+synthesis): " << tabst+tsyn << '\n';

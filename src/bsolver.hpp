@@ -20,11 +20,8 @@
 
 #include "config.h"
 #include "abstraction.hpp"
-#include "hdf5io.h"
 
-extern "C" {
 #include "buchi.h"
-}
 
 
 namespace rocs {
@@ -77,10 +74,7 @@ namespace rocs {
 	void write_controller_to_txt(char *filename) {
 	    write_controller(&_sol, filename);
 	}
-	// void write_controller_to_h5(const std::string filename) {
-	//     h5FileHandler wtr(filename, H5F_ACC_TRUNC);
-	//     /* Write W_X0: the list of winning nodes */
-	// }
+	
     };
 
 
@@ -94,25 +88,25 @@ namespace rocs {
      * - q_prime_size: the total # of elements in q_prime (2^k x n).
      */
     inline void BSolver::construct_dba(int nAP, int nNodes, int q0,
-				       std::vector<rocs::UintSmall> &acc,
-				       std::vector<std::vector<rocs::UintSmall>> arrayM) {
-	DBA *dba = &(_sol.dba);
+    				       std::vector<rocs::UintSmall> &acc,
+    				       std::vector<std::vector<rocs::UintSmall>> arrayM) {
+    	DBA *dba = &(_sol.dba);
 	
-	dba->k = nAP;
-	dba->n = nNodes;
-	dba->ini = q0;
-	dba->acc = (BOOL*)calloc(nNodes, sizeof(BOOL)); // initialize to zero
-	for(rocs::UintSmall i = 0; i < acc.size(); ++i)
-	    *(dba->acc + acc[i]) = 1;
+    	dba->k = nAP;
+    	dba->n = nNodes;
+    	dba->ini = q0;
+    	dba->acc = (BOOL*)calloc(nNodes, sizeof(BOOL)); // initialize to zero
+    	for(rocs::UintSmall i = 0; i < acc.size(); ++i)
+    	    *(dba->acc + acc[i]) = 1;
 
-	/* Assign q_prime */
-	size_t R = arrayM.size();  // R = nNodes
-	size_t C = arrayM[0].size();  // C = nProps = 2^nAP
-	dba->q_prime_size = (int)std::pow(2,nAP) * nNodes;
-	dba->q_prime = (int*)malloc(dba->q_prime_size * sizeof(int));
-	for(size_t i = 0; i < R; ++i)
-	    for(size_t j = 0; j < C; ++j)
-		*(dba->q_prime + j*R + i) = arrayM[i][j];
+    	/* Assign q_prime */
+    	size_t R = arrayM.size();  // R = nNodes
+    	size_t C = arrayM[0].size();  // C = nProps = 2^nAP
+    	dba->q_prime_size = (int)std::pow(2,nAP) * nNodes;
+    	dba->q_prime = (int*)malloc(dba->q_prime_size * sizeof(int));
+    	for(size_t i = 0; i < R; ++i)
+    	    for(size_t j = 0; j < C; ++j)
+    		*(dba->q_prime + j*R + i) = arrayM[i][j];
     } //end construct_dba
     
 

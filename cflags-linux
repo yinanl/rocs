@@ -23,7 +23,7 @@ LIBS = -lblas -llapack \
 	-Wl, -rpath,$(MATDIR)/bin/glnxa64
 LIBTEST = -lboost_unit_test_framework
 
-CXXFLAGS = -Wall -Wextra -g \
+CXXFLAGS = -Wall -Wextra\
 	$(ARMA) $(OPT) \
 	-std=c++11
 

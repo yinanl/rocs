@@ -880,56 +880,60 @@ void write_controller(HEAD *head, char *buffer) {
   NODE_POST *p15, *p16;
   CTRL *p17, *p18;
 
-  if (ctrlr->w0) {
-    start_t=clock();
-    printf("Write controller into %s:\n",buffer);
-    fout=fopen(buffer,"wb");
+  if (!ctrlr->ctrl)
+    {
+      printf("No controller generated. Writing the controller is abandoned.\n");
+      return;
+    }
+  
+  start_t=clock();
+  printf("Write controller into %s:\n",buffer);
+  fout=fopen(buffer,"wb");
     
-    /// W_X0 size: ctrlr->w0 * (long long == 2 * int)
-    printf("W_X0\tsize: %lld * (long long == 2 * int)\n",ctrlr->w0);
-    fprintf(fout,"%lld\n",ctrlr->w0);
-    for(p13=scope, cnt2=0; cnt2 < ctrlr->w0; cnt2++)
-      {
-	p13+=p13->next;
-	fprintf(fout,"%lld\n",*(decode1+*(decode2+p13->x)/head->dba.n));
-      }
-    /* free(scope),product->scope=0; */
-    /* free(decode2),head->decode2=0; */
+  /// W_X0 size: ctrlr->w0 * (long long == 2 * int)
+  printf("W_X0\tsize: %lld * (long long == 2 * int)\n",ctrlr->w0);
+  fprintf(fout,"%lld\n",ctrlr->w0);
+  for(p13=scope, cnt2=0; cnt2 < ctrlr->w0; cnt2++)
+    {
+      p13+=p13->next;
+      fprintf(fout,"%lld\n",*(decode1+*(decode2+p13->x)/head->dba.n));
+    }
+  /* free(scope),product->scope=0; */
+  /* free(decode2),head->decode2=0; */
     
-    /// encode3 size: head->nts_pre.n * (long long == 2 * int)
-    printf("encode3\tsize: %lld * (long long == 2 * int)\n",head->nts_pre.n);
-    fprintf(fout,"%lld\n",head->nts_pre.n);
-    for(p11=encode3, p12=p11+head->nts_pre.n; p11<p12;)
-      fprintf(fout,"%lld\n",*p11++);
-    /* free(encode3),head->encode3=0; */
+  /// encode3 size: head->nts_pre.n * (long long == 2 * int)
+  printf("encode3\tsize: %lld * (long long == 2 * int)\n",head->nts_pre.n);
+  fprintf(fout,"%lld\n",head->nts_pre.n);
+  for(p11=encode3, p12=p11+head->nts_pre.n; p11<p12;)
+    fprintf(fout,"%lld\n",*p11++);
+  /* free(encode3),head->encode3=0; */
     
-    /// ctrlr size: ctrlr->n * (NODE_POST == 4 * int)
-    printf("ctrlr\tsize: %lld * (NODE_POST == 4 * int)\n", ctrlr->n);
-    fprintf(fout,"%lld\n", ctrlr->n);
-    for(p15=nts_ctrlr2, p16=p15+ctrlr->n; p15<p16;p15++)
-      fprintf(fout,"%d %d %lld\n",p15->num_a,p15->label,p15->pos);
-    /* free(nts_ctrlr2),ctrlr->graph=0; */
+  /// ctrlr size: ctrlr->n * (NODE_POST == 4 * int)
+  printf("ctrlr\tsize: %lld * (NODE_POST == 4 * int)\n", ctrlr->n);
+  fprintf(fout,"%lld\n", ctrlr->n);
+  for(p15=nts_ctrlr2, p16=p15+ctrlr->n; p15<p16;p15++)
+    fprintf(fout,"%d %d %lld\n",p15->num_a,p15->label,p15->pos);
+  /* free(nts_ctrlr2),ctrlr->graph=0; */
     
-    /// ctrl size: wp * (CTRL == 2 * int)
-    printf("ctrl\tsize: %lld * (CTRL == 2 * int)\n",ctrlr->wp);
-    fprintf(fout,"%lld\n",ctrlr->wp);
-    for(p17=ctrlr->ctrl, p18=p17+ctrlr->wp; p17<p18; p17++)
-      fprintf(fout,"%d %d\n",p17->q,p17->u);
-    /* free(ctrlr->ctrl),ctrlr->ctrl=0; */
+  /// ctrl size: wp * (CTRL == 2 * int)
+  printf("ctrl\tsize: %lld * (CTRL == 2 * int)\n",ctrlr->wp);
+  fprintf(fout,"%lld\n",ctrlr->wp);
+  for(p17=ctrlr->ctrl, p18=p17+ctrlr->wp; p17<p18; p17++)
+    fprintf(fout,"%d %d\n",p17->q,p17->u);
+  /* free(ctrlr->ctrl),ctrlr->ctrl=0; */
     
-    /// q_prime size: 2^k*head->dba.n * (int)
-    cnt2=head->dba.q_prime_size;
-    p3=head->dba.q_prime;
-    printf("q_prime\tsize: %lld * (int)\n",cnt2);
-    fprintf(fout,"%lld\n",cnt2);
-    for(p4=p3+cnt2; p3<p4;)
-      fprintf(fout,"%d\n",*p3++);
-    /* free(head->dba.q_prime),head->dba.q_prime=0; */
-    fclose(fout);
-    end_t=clock();
-    printf("Time used to write controller = %.4f\n",
-	   (double)(end_t-start_t)/CLOCKS_PER_SEC);
-  }
+  /// q_prime size: 2^k*head->dba.n * (int)
+  cnt2=head->dba.q_prime_size;
+  p3=head->dba.q_prime;
+  printf("q_prime\tsize: %lld * (int)\n",cnt2);
+  fprintf(fout,"%lld\n",cnt2);
+  for(p4=p3+cnt2; p3<p4;)
+    fprintf(fout,"%d\n",*p3++);
+  /* free(head->dba.q_prime),head->dba.q_prime=0; */
+  fclose(fout);
+  end_t=clock();
+  printf("Time used to write controller = %.4f\n",
+	 (double)(end_t-start_t)/CLOCKS_PER_SEC);
 }
 
 

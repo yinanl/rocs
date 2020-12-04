@@ -39,6 +39,8 @@ engine2dAbstII: engine2dAbstII.o $(OBJS) $(ODIR)/buchi.o
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
 testReachset: testReachset.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+testInv: testInv.o $(OBJS) $(ODIR)/buchi.o
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
 
 clean:
 	rm -rf *.o *.dSYM $(TARGETS)

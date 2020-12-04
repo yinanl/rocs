@@ -49,7 +49,7 @@ int main()
     reach.init_workspace(xlb, xub);
     reach.init_inputset(mu, ulb, uub);
 
-    rocs::CSolver solver(&reach, rocs::RELMAX);
+    rocs::CSolver solver(&reach, 0, rocs::RELMAX);
     double glb[]{-3.5, -0.5};
     double gub[]{-2.5, 0.5};
     solver.init(rocs::GOAL, glb, gub);

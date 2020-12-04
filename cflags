@@ -27,7 +27,7 @@ LIBS := -larmadillo \
 
 LIBTEST := -lboost_unit_test_framework-mt
 
-CXXFLAGS := -Wall -Wextra -g\
+CXXFLAGS := -Wall -Wextra\
 	$(DEBUG) $(OPT) $(EXTRA_OPT)\
 	-std=c++11 -stdlib=libc++
 

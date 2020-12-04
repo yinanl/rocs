@@ -31,7 +31,7 @@ int main()
     double gub[] = {1.6, 1.18};
 
     /* solve the problem */
-    rocs::CSolver solver(&dcdcRS, rocs::RELMAX);
+    rocs::CSolver solver(&dcdcRS, 0, rocs::RELMAX);
     solver.init(rocs::GOAL, glb, gub);
     solver.init_goal_area();
 

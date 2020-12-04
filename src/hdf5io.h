@@ -22,7 +22,10 @@
 
 #include "grid.h"
 #include "csolver.h"
+#include "patcher.h"
 #include "dsolver.h"
+// #include "bsolver.hpp" //this will give a linking error
+#include "buchi.h"
 
 #include "transition.hpp"
 
@@ -91,20 +94,22 @@ namespace rocs {
 	int write_state_space(const ivec &ws, const std::string varname);
 	int write_input_values(const grid &ugrid, const std::string varname);
 	template<typename S>
-	void write_problem_setting(const S &sys, const CSolver &sol) {
+	void write_problem_setting(const S &sys) {//, const CSolver &sol) {
 	    write_number<double>(sys._tau, "ts");
 	    write_state_space(sys._workspace, "X");
 	    write_input_values(sys._ugrid, "U");
-	    write_ivec_array(sol._goal, "G");
-	    write_ivec_array(sol._obs, "xobs");
+	    // write_ivec_array(sol._goal, "G");
+	    // write_ivec_array(sol._obs, "xobs");
 	}
 	
 	/**
 	 * Write DSolver into a .h5 file.
 	 * @param filename the name of the file to be saved.
 	 */
+	int write_discrete_controller(HEAD *sol);
 	int write_discrete_controller(const DSolver &dsol);
 	int write_transitions(const fts &trans);
+	int write_winning_graph(const Patcher &patcher);
 
 	/**
 	 * Write CSolver into a .h5 file.
@@ -127,6 +132,17 @@ namespace rocs {
 			  const std::string varname);
 	
 	int read_transitions(fts &trans);
+	int read_winning_graph(Patcher &patcher);
+	int read_discrete_controller(boost::dynamic_bitset<> &win,
+				     boost::dynamic_bitset<> &lsctlr,
+				     size_t *cdims,
+				     std::vector<size_t> &optctlr,
+				     std::vector<double> &value);
+	int read_discrete_controller(std::vector<long long> &w_x0,
+				     std::vector<long long> &encode3,
+				     std::vector<NODE_POST> &nts_ctrlr,
+				     std::vector<CTRL> &ctrl,
+				     std::vector<int> &q_prime);
 	int read_sptree_controller(std::vector<double> &pavings, size_t *pdims,
 				   std::vector<int> &tag,
 				   boost::dynamic_bitset<> &cntl, size_t *cdims);
@@ -150,7 +166,9 @@ namespace rocs {
     int h5FileHandler::write_array(const T *arr, const size_t len,
 				   const std::string varname) {
 	if(!len) {
-	    std::cout << "hdf5FileHandler::write_array: Input array is empty. Writing is abandoned.\n ";
+	    std::cout << "hdf5FileHandler::write_array: "
+		      << varname << " is empty."
+		      << " Writing is abandoned.\n ";
 	    return 1;
 	}
 	hsize_t dim[1]= {len};
@@ -178,7 +196,9 @@ namespace rocs {
     int h5FileHandler::write_2d_array(const std::vector< std::vector<T> > &arr,
 				     const std::string varname) {
 	if(arr.empty()) {
-	    std::cout << "hdf5FileHandler::write_array: Input array is empty. Writing is abandoned.\n ";
+	    std::cout << "hdf5FileHandler::write_2d_array: "
+		      << varname << " is empty."
+		      << " Writing is abandoned.\n ";
 	    return 1;
 	}
 	size_t dim[2];
@@ -202,7 +222,9 @@ namespace rocs {
 				      const size_t *len,
 				      const std::string varname) {
 	if(!len[0] || !len[1]) {
-	    std::cout << "hdf5FileHandler::write_array: Input array is empty. Writing is abandoned.\n ";
+	    std::cout << "hdf5FileHandler::write_2d_array: "
+		      << varname << " is empty."
+		      << " Writing is abandoned.\n ";
 	    return 1;
 	}
 	size_t dim[2];
@@ -224,7 +246,9 @@ namespace rocs {
     int h5FileHandler::write_2d_array(const T *arr, const size_t *len,
 				     const std::string varname) {
 	if(!len[0] || !len[1]) {
-	    std::cout << "hdf5FileHandler::write_array: Input array is empty. Writing is abandoned.\n ";
+	    std::cout << "hdf5FileHandler::write_2d_array: "
+		      << varname << " is empty."
+		      << " Writing is abandoned.\n ";
 	    return 1;
 	}
 	hsize_t dim[2];
@@ -319,9 +343,11 @@ namespace rocs {
 	    // std::cout << std::endl << "S-domain for q" << std::to_string(i) << '\n';
 	    // w[i]->print_controller_info();
 
-	    datafile = "data_" + tokens[0] + "_w" + std::to_string(i) + ".h5";
+	    datafile = "controller_" + tokens[0] + "_w" + std::to_string(i) + ".h5";
 	    rocs::h5FileHandler h5f(datafile, H5F_ACC_TRUNC);
-	    h5f.write_problem_setting(sys, *(w[i]));
+	    h5f.write_problem_setting(sys);
+	    h5f.write_ivec_array(w[i]->_goal, "G");
+	    h5f.write_ivec_array(w[i]->_obs, "xobs");
 	    h5f.write_sptree_controller(*(w[i]));
 	}
     }

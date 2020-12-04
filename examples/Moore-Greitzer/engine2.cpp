@@ -80,19 +80,19 @@ int main(int argc, char *argv[]) {
     // double e;
     // convert >> e;
     
-    // /* case I */
-    // double e = 0.003;
-    // double glb[]{0.5039-e, 0.6605-e};
-    // double gub[]{0.5039+e, 0.6605+e};
-    // double olb[]{0.520, 0.658};
-    // double oub[]{0.526, 0.664};
-    
-    /* case II */
+    /* case I */
     double e = 0.003;
-    double glb[]{0.4519-e, 0.6513-e};
-    double gub[]{0.4519+e, 0.6513+e};
-    double olb[]{0.497, 0.650};
-    double oub[]{0.503, 0.656};
+    double glb[]{0.5039-e, 0.6605-e};
+    double gub[]{0.5039+e, 0.6605+e};
+    double olb[]{0.520, 0.658};
+    double oub[]{0.526, 0.664};
+    
+    // /* case II */
+    // double e = 0.003;
+    // double glb[]{0.4519-e, 0.6513-e};
+    // double gub[]{0.4519+e, 0.6513+e};
+    // double olb[]{0.497, 0.650};
+    // double oub[]{0.503, 0.656};
 
     /* solve the problem */
     rocs::CSolver solver(&engine, 0, rocs::RELMAX, 70);
@@ -114,7 +114,7 @@ int main(int argc, char *argv[]) {
 
     /* save the problem data and the solution */
     // rocs::matWriter wtr("data_caseII_Cobuchi2.mat");
-    rocs::matWriter wtr("data_caseIIReachstay2.mat");
+    rocs::matWriter wtr("data_2d_caseIReachstay.mat");
     // rocs::matWriter wtr("data_caseIIReach2.mat");
     wtr.open();
     wtr.write_problem_setting(engine, solver);

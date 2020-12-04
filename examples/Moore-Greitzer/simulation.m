@@ -23,7 +23,7 @@ W2 = 3*W*W;
 % load('data_engineReachstay.mat')
 % load('data_engineReach.mat')
 load('data_engineInv.mat')
-vf= @mgode_modified;
+vf= @engineMGaug;
 
 winid= find(any(ctlr,2));
 winset= pavings(winid,:);

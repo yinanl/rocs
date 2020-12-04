@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
     double gub[] = {75, 0, 2.5};
 
     /* Solve the reachability problem */
-    rocs::CSolver solver(&aircraft, rocs::RELMAX, 100);
+    rocs::CSolver solver(&aircraft, 0, rocs::RELMAX, 100);
     // solver.init(rocs::GOAL, glb, gub);
     solver.init(rocs::GOAL, &target_area<rocs::ivec>, eta);
     solver.init_goal_area(); /* save the goal area information */

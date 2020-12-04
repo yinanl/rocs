@@ -57,16 +57,16 @@ namespace rocs {
 	/**
 	 * State initialization
 	 *
-	 * - Initialize state grid by bound and grid size.
-	 * - Assign the subgridding parameter.
-	 * @param n dimension
+	 * Initialize 
+	 * - state grid by bound and grid size.
+	 * - labels
 	 * @param eta[n] an array of grid size.
 	 * @param xlb[n] an array of lower bounds.
 	 * @param xub[n] an array of upper bounds.
 	 */
 	void init_state(const double eta[], const double xlb[], const double xub[]) {
 	    _x.gridding(eta, xlb, xub);
-	    _labels.resize(_x._nv, 0);
+	    _labels.resize(_x._nv+1, 0); //the extra one is an out-of-domain node
 	}
 
 	/**
@@ -74,7 +74,7 @@ namespace rocs {
 	 */
 	bool init_transitions() {
 	    if (_x._nv > 0 && _ptrsys->_ugrid._nv > 0) {
-		_ts.init(_x._nv, _ptrsys->_ugrid._nv);
+		_ts.init(_x._nv+1, _ptrsys->_ugrid._nv);
 	    } else {
 		std::cout << "Transition initialization failed: gridding problem.\n";
 		return false;
@@ -138,6 +138,9 @@ namespace rocs {
 		//     _labels[i] = l;
 	    }
 	}
+	void assign_label_outofdomain(int label) {
+	    _labels[_x._nv] = label;
+	}
 	
 
 	/**
@@ -156,19 +159,23 @@ namespace rocs {
 	    size_t nu = _ptrsys->_ugrid._nv;
 	    // std::cout << "dim=" << n << ',' << "#states=" << nx << ",#inputs=" << nu <<'\n';
 
+	    ivec ie2(n);
+	    for (int j = 0; j < n; ++j)
+	    	ie2.setval(j, interval(-e2[j],e2[j]));
+
 	    std::vector<double> xmin(n), xmax(n);
 	    for (int k = 0; k < n; ++k) {
 	    	xmin[k] = _x._valmin[k]-_x._gw[k]/2.0;
 	    	xmax[k] = xmin[k] + _x._gw[k]*_x._size[k];
 	    }
-	    // bool out_of_domain = false;
 	    ivec xbds(n);
 	    for (int k = 0; k < n; ++k)
 		xbds.setval(k, interval(xmin[k], xmax[k]));
-	    
-	    ivec ie2(n);
-	    for (int j = 0; j < n; ++j)
-	    	ie2.setval(j, interval(-e2[j],e2[j]));
+
+	    /* Out-of-domain indicator:
+	     * 0:inside, 1:fully outside, 2:partially outside
+	     */
+	    std::vector<int> out_of_domain(nx*nu,0);
 	
 	    ivec y0(n);
 	    std::vector<ivec> yt(nu, ivec(n));
@@ -177,9 +184,10 @@ namespace rocs {
 	    double idu;
 	    std::vector<size_t> il(n), iu(n);
 	    std::vector<size_t> stpost(nx*nu, 0), rngpost(nx*nu*n, 0);
+	    
 	    /* loop state grids */
 	    for (size_t row = 0; row < nx; ++row) {
-		/* skip the avoid grid points (labeled by -1) */
+		/* the avoid points (labeled by -1) has no outgoing edges */
 		if (_labels[row] == -1)
 		    continue;
 		/* compute reachable set */
@@ -194,19 +202,35 @@ namespace rocs {
 		    /* loop inputs */
 		    for (size_t col = 0; col < nu; ++col) {
 			// yt[col] += ie2;
-		    
-			/* Skip the yt[col] that is out of the domain _bds.
-			 * No need to delete the transitions to avoid area, since they are sinks.
-			 * */
-			if (!xbds.isin(yt[col]))
-			    continue;
-			/** Using this line will probably result in failure in synthesis **/
-			// if (!_x._bds.isin(yt[col]))
+			// /* Skip the yt[col] that is out of the domain _bds.
+			//  * No need to delete the transitions to avoid area, since they are sinks.
+			//  * */
+			// if (!xbds.isin(yt[col]))
 			//     continue;
+			// /** Using this line will probably result in failure in synthesis **/
+			// // if (!_x._bds.isin(yt[col]))
+			// //     continue;
 			
-			yt[col].getinf(ytl); yt[col].getsup(ytu);
-			_ts._npost[row*nu + col] = 1;
+			if(xbds.isout(yt[col])) { //fully out of domain
+			    out_of_domain[row*nu+col] = 1;
+			    _ts._npost[row*nu+col] = 1;
+			    _ts._ptrpost[row*nu+col] = _ts._ntrans;
+			    ++_ts._ntrans;
+			    continue;
+			}
+			if(!xbds.isin(yt[col])) {//partially inside domain
+			    out_of_domain[row*nu+col] = 2;
+			    /* Take intersection of xbds and yt[col] */
+			    for(int k = 0; k < n; ++k) {
+				ytl[k] = yt[col][k].getinf()<xmin[k] ? xmin[k] : yt[col][k].getinf();
+				ytu[k] = yt[col][k].getsup()>xmax[k] ? xmax[k] : yt[col][k].getsup();
+			    }
+			} else { //fully inside domain
+			    yt[col].getinf(ytl);
+			    yt[col].getsup(ytu);
+			}
 			/* compute the indices of the bounds of the yt[col] */
+			_ts._npost[row*nu + col] = 1;
 			for (int k = 0; k < n; ++k) {
 			    il[k] = static_cast<size_t> ((ytl[k]-_x._valmin[k])/_x._gw[k]+0.5);
 			    idu = (ytu[k]-_x._valmin[k])/_x._gw[k] + 0.5;
@@ -219,66 +243,176 @@ namespace rocs {
 			    // 	iu[k] = static_cast<size_t> ((ytu[k]-_x._valmin[k]+_x._gw[k]/2.0)/_x._gw[k]);
 			    stpost[row*nu+col] += _x._base[k] * il[k]; /* compute the smallest post ID of all the post grid points */
 			    rngpost[n*(row*nu+col)+k] = iu[k] - il[k] + 1;
-			    _ts._npost[row*nu + col] *= rngpost[n*(row*nu+col)+k];
+			    _ts._npost[row*nu+col] *= rngpost[n*(row*nu+col)+k];
 			}
-			_ts._ptrpost[row*nu + col] = _ts._ntrans;
-			_ts._ntrans += _ts._npost[row*nu + col];
-		    }  // end input loop
+			_ts._ptrpost[row*nu+col] = _ts._ntrans;
+			_ts._ntrans += _ts._npost[row*nu+col];
+
+			/* Add an out-of-domain transition */
+			if(out_of_domain[row*nu+col]) {
+			    ++_ts._npost[row*nu+col];
+			    ++_ts._ntrans;
+			}
+			// /********** logging **********/
+			// if(row == 0 && col == 16) {
+			//     std::cout << "y0=" << y0 << '\n'
+			// 	      << "yt=" << yt[col] << '\n'
+			// 	      << "out_of_domain=" << out_of_domain[row*nu+col] << '\n';
+			//     if(out_of_domain[row*nu+col]>1) {
+			// 	std::cout << "Intersection with domain: ";
+			// 	for(int k = 0; k < n; ++k)
+			// 	    std::cout << '[' << ytl[k] << ',' << ytu[k] << "] ";
+			// 	std::cout << '\n';
+			//     }
+			//     std::cout << "starting address of post transitions: "
+			// 	      << _ts._ptrpost[row*nu+col] << '\n';
+			//     std::cout << "# of post transitions: "
+			// 	      << _ts._npost[row*nu+col] << '\n';
+			// }
+			// /********** logging **********/
+		    } // end input loop
 		} else {
 		    yt.resize(nu, ivec(n));
 		}// end yt empty check
+	    }  //end loop state grids
+	    /* Assign out-of-domain posts */
+	    if(_labels[nx] >= 0) {//assign a self-loop if the out-of-domain node is not avoided
+		for(size_t col = 0; col < nu; ++col) {
+		    _ts._npost[nx*nu+col] = 1;
+		    _ts._ptrpost[nx*nu+col] = _ts._ntrans;
+		    ++_ts._ntrans;
+		}
+	    }
 	    
-	    }  // end state loop
-	    
-	    /* assign _idpost and _cost */
+	    /* assign _idpost, _cost and _npre */
 	    _ts._idpost.resize(_ts._ntrans);
 	    double w;
+	    // for (size_t row = 0; row < nx; ++row) {
+	    // 	for (size_t col = 0; col < nu; ++col) {
+	    // 	    /* assign post grid point IDs to _idpost */
+	    // 	    if (_ts._npost[row*nu+col] == 0)
+	    // 		continue;
+	    // 	    for (int l = 0; l < _ts._npost[row*nu+col]; ++l) {
+	    // 		postid = stpost[row*nu+col];
+	    // 		r = l;
+	    // 		for (int k = 0; k < n; ++k) {
+	    // 		    postid += (r % rngpost[n*(row*nu+col)+k])*_x._base[k];
+	    // 		    r = r / rngpost[n*(row*nu+col)+k];
+	    // 		}
+	    // 		_ts._idpost[_ts._ptrpost[row*nu+col]+l] = postid;
+	    // 		/* assign cost (worst case): maximum from all posts */
+	    // 		if (_wf) {
+	    // 		    w = (*_wf)(_x._data[row], _x._data[postid], _ptrsys->_ugrid._data[col]);
+	    // 		    _ts._cost[row*nu+col] = _ts._cost[row*nu+col]<w ? w : _ts._cost[row*nu+col];
+	    // 		}
+			
+	    // 		_ts._npre[postid*nu+col] ++;
+	    // 	    }
+	    // 	} /* end for col */
+	    // } /* end for row */
+	    int num_post;
+	    size_t ptrout;
 	    for (size_t row = 0; row < nx; ++row) {
 		for (size_t col = 0; col < nu; ++col) {
+		    // /********** logging **********/
+		    // if(row == 0 && col == 16) {
+		    // 	std::cout << "post nodes: ";
+		    // }
+		    // /********** logging **********/
 		    /* assign post grid point IDs to _idpost */
-		    if (_ts._npost[row*nu+col] == 0)
-			continue;
-		    for (int l = 0; l < _ts._npost[row*nu+col]; ++l) {
-			postid = stpost[row*nu+col];
-			r = l;
-			for (int k = 0; k < n; ++k) {
-			    postid += (r % rngpost[n*(row*nu+col)+k])*_x._base[k];
-			    r = r / rngpost[n*(row*nu+col)+k];
+		    if(out_of_domain[row*nu+col] != 1) {//intersect with domain
+			if(out_of_domain[row*nu+col]) {
+			    num_post = _ts._npost[row*nu+col] - 1;
+			} else {
+			    num_post = _ts._npost[row*nu+col];
 			}
-			_ts._idpost[_ts._ptrpost[row*nu+col]+l] = postid;
-			/* assign cost (worst case): maximum from all posts */
-			if (_wf) {
-			    w = (*_wf)(_x._data[row], _x._data[postid], _ptrsys->_ugrid._data[col]);
-			    _ts._cost[row*nu+col] = _ts._cost[row*nu+col]<w ? w : _ts._cost[row*nu+col];
-			}
+			for (int l = 0; l < num_post; ++l) {
+			    postid = stpost[row*nu+col];
+			    r = l;
+			    for (int k = 0; k < n; ++k) {
+				postid += (r % rngpost[n*(row*nu+col)+k])*_x._base[k];
+				r = r / rngpost[n*(row*nu+col)+k];
+			    }
+			    _ts._idpost[_ts._ptrpost[row*nu+col]+l] = postid;
+			    // /********** logging **********/
+			    // if(row == 0 && col == 16) {
+			    // 	std::cout << "ptrpost[" << _ts._ptrpost[row*nu+col]+l << "]="
+			    // 		  << postid << '\n';
+			    // }
+			    // /********** logging **********/
+			    /* assign cost (worst case): maximum from all posts */
+			    if (_wf) {
+				w = (*_wf)(_x._data[row], _x._data[postid], _ptrsys->_ugrid._data[col]);
+				_ts._cost[row*nu+col] = _ts._cost[row*nu+col]<w ? w : _ts._cost[row*nu+col];
+			    }
 			
-			_ts._npre[postid*nu+col] ++;
+			    ++_ts._npre[postid*nu+col];
+			    // /********** logging **********/
+			    // if(postid == 0 && col == 16)
+			    // 	std::cout << "current # of predecessor of node x=0 under u=16: "
+			    // 		  << _ts._npre[postid*nu+col] << '\n';
+			    // /********** logging **********/
+			}
+		    }
+		    if(out_of_domain[row*nu+col]) {//fully or partially out of domain
+			ptrout = _ts._ptrpost[row*nu+col]+_ts._npost[row*nu+col]-1;
+			_ts._idpost[ptrout] = nx; //post node is xout
+			++_ts._npre[nx*nu+col];
+			// /********** logging **********/
+			// if(row == 0 && col == 16) {
+			//     std::cout << "ptrpost[" << ptrout << "]="
+			// 	      << nx << '\n';
+			// }
+			// /********** logging **********/
 		    }
 		} /* end for col */
 	    } /* end for row */
-	
-	    /* determine pre's by post's: loop _npost and _idpost */
-	    _ts._idpre.resize(_ts._ntrans);  // initialize the size of pre's
-	    /* assign _ptrpre */
-	    size_t sum = 0;
-	    for (size_t row = 0; row < nx; ++row) {
-		for (size_t col = 0; col < nu; ++col) {
-		    _ts._ptrpre[row*nu + col] = sum;
-		    sum += _ts._npre[row*nu + col];
+	    if(_labels[nx] >= 0) {//assign a self-loop if the out-of-domain node is not avoided
+		for(size_t col = 0; col < nu; ++col) {
+		    _ts._idpost[_ts._ptrpost[nx*nu+col]] = nx; //xout is a sink
+		    ++_ts._npre[nx*nu+col];
 		}
 	    }
-	    /* assign _idpre */
-	    std::vector<size_t> precount(nu*nx, 0);
-	    size_t idtspre;
-	    for (size_t row = 0; row < nx; ++row) {
+	
+	    /* Determine pre's by post's: loop _npost and _idpost */
+	    _ts._idpre.resize(_ts._ntrans);  // initialize the size of pre's
+	    /* assign _ptrpre by _npre */
+	    size_t sum = 0;
+	    for (size_t row = 0; row < nx+1; ++row) {
 		for (size_t col = 0; col < nu; ++col) {
-		    for (int ip = 0; ip < _ts._npost[row*nu + col]; ++ip) {
-			if (_ts._idpost[_ts._ptrpost[row*nu+col] + ip] > nx) {
-			    std::cout << "row=" << row <<", col=" << col << '\n';
-			}
-			idtspre = _ts._idpost[_ts._ptrpost[row*nu+col] + ip]*nu + col;
-			_ts._idpre[_ts._ptrpre[idtspre] + precount[idtspre]] = row;
-			precount[idtspre] ++;
+		    _ts._ptrpre[row*nu+col] = sum;
+		    sum += _ts._npre[row*nu+col];
+		}
+	    }
+	    assert(sum == _ts._ntrans);
+	    
+	    /* assign _idpre */
+	    std::vector<size_t> precount(nu*(nx+1), 0);
+	    size_t idtspre;
+	    for (size_t row = 0; row < nx+1; ++row) {
+		for (size_t col = 0; col < nu; ++col) {
+		    // /********** logging **********/
+		    // if (row == 0 && col == 16) {
+		    // 	std::cout << "Assign pre transitions:\n";
+		    // }
+		    // /********** logging **********/
+		    for (int ip = 0; ip < _ts._npost[row*nu+col]; ++ip) {
+			postid = _ts._idpost[_ts._ptrpost[row*nu+col]+ip];
+			idtspre = postid * nu + col;
+			_ts._idpre[_ts._ptrpre[idtspre]+precount[idtspre]++] = row;
+			// precount[idtspre]++;
+			// /********** logging **********/
+			// if (row == 0 && col == 16) {
+			//     std::cout << postid << ": idpre[" << _ts._ptrpre[idtspre]
+			// 	      << '+' << precount[idtspre]-1 << "]="
+			// 	      << row << '\n';
+			// }
+			// if(_ts._ptrpre[idtspre]+precount[idtspre]-1 == 46) {
+			//     std::cout << "idpre[46] is filled at: "
+			// 	      << row << "->(" << col << ")->" << postid
+			// 	      << '\n';
+			// }
+			// /********** logging **********/
 		    }
 		}
 	    }

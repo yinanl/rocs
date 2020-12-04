@@ -79,7 +79,7 @@ int main() {
     double gub[] = {0.05, 0.01};
 
     /* solve the problem */
-    rocs::CSolver solver(&ipdl, rocs::RELMAX, 100);
+    rocs::CSolver solver(&ipdl, 0, rocs::RELMAX, 100);
     solver.init(rocs::GOAL, glb, gub);
     solver.init_goal_area();
     double ei[]{0.001, 0.001};

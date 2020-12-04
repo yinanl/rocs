@@ -54,6 +54,9 @@ testHDF5: testHDF5.o $(OBJS)
 testAbst: testAbst.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) $(LIBTEST) -o $@ $^
 
+testReachSet: testReachSet.o $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) $(LIBTEST) -o $@ $^
+
 
 display:
 	@echo $(ODIR)

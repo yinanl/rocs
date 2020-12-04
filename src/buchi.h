@@ -7,7 +7,10 @@
  *  Created by Zhibing Sun on Mar. 27, 2020.
  *  Hybrid Systems Group, University of Waterloo.
  */
-
+#ifdef __cplusplus
+extern "C" {
+#endif
+  
 #ifndef _buchi_h
 #define _buchi_h
 
@@ -309,4 +312,8 @@ void write_controller(HEAD *head, char *buffer);
 void free_memory(HEAD *head,int flag);
 
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif

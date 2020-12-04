@@ -52,7 +52,7 @@ xobs= [0.497, 0.503;
     0.650, 0.656];
 controller.A= xobs;
 
-vf= @mg;
+vf= @engineMG;
 
 
 %% winning set

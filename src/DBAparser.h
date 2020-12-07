@@ -14,10 +14,10 @@
 #include <sstream>
 #include <cstdlib>
 #include <cmath>
-
+#include <vector>
 #include <boost/algorithm/string.hpp>
 
-#include "config.h"
+#include "definitions.h"
 
 namespace rocs {
 

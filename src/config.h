@@ -39,8 +39,6 @@ namespace rocs {
 	return ((x < 0.0) ? ONEPLUSEPS : ONEMINUSEPS) * (x) - ETA;
     }
 
-    typedef uint16_t UintSmall;
-
 } // namespace rocs
 
 #endif

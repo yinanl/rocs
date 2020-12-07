@@ -25,18 +25,30 @@ nNodes= 3;
 controller.ctlr= cell(nNodes,1);
 controller.pavings= cell(nNodes,1);
 controller.tags= cell(nNodes,1);
+% % Using .mat
+% for i=1:nNodes
+%     ctlrfile = strcat('data_', spec, '_w', num2str(i-1),'.mat');
+%     load(ctlrfile);
+%     controller.ctlr{i,1}= ctlr;
+%     controller.partition{i,1}= pavings;
+%     controller.tags{i,1}= tag;
+%     winid= find(any(ctlr,2));
+%     winset= pavings(winid,:);
+%     % winset= pavings(tag==1,:);
+% %     wc= [(winset(:,1)+winset(:,2))/2,...
+% %         (winset(:,3)+winset(:,4))/2];
+%     plot2_boxes(winset(:,1:4), [0.5,0.5,0.5], 'k', 1);
+% end
+% % Using .h5
 for i=1:nNodes
-    ctlrfile = strcat('data_', spec, '_w', num2str(i-1),'.mat');
-    load(ctlrfile);
-    controller.ctlr{i,1}= ctlr;
-    controller.partition{i,1}= pavings;
-    controller.tags{i,1}= tag;
-    winid= find(any(ctlr,2));
-    winset= pavings(winid,:);
-    % winset= pavings(tag==1,:);
-%     wc= [(winset(:,1)+winset(:,2))/2,...
-%         (winset(:,3)+winset(:,4))/2];
-    plot2_boxes(winset(:,1:4), [0.5,0.5,0.5], 'k', 1);
+    ctlrfile = strcat('controller_I_', spec, '_w', num2str(i-1),'.h5');
+    controller.ctlr{i}= h5read(ctlrfile, '/ctlr')';
+    controller.pavings{i}= h5read(ctlrfile, '/pavings')';
+    controller.tags{i}= h5read(ctlrfile, '/tag');
+    controller.obs{i}= controller.pavings{i}(controller.tags{i}==-1,:);
+%     figure
+%     plot2_boxes([controller.obs{i}(:,1:2),controller.obs{i}(:,3:4)],...
+%         [0.5,0.5,0.5], 'k', 1)
 end
 
 controller.X= X;
@@ -44,12 +56,16 @@ controller.U= U;
 controller.ts= ts;
 
 e= 0.003;
-G= [0.4519-e, 0.4519+e;
-    0.6513-e, 0.6513+e];
+% G= [0.4519-e, 0.4519+e;
+%     0.6513-e, 0.6513+e];
+G= [0.5039-e, 0.5039+e;
+    0.6605-e, 0.6605+e];
 controller.G= {G};
 
-xobs= [0.497, 0.503; 
-    0.650, 0.656];
+% xobs= [0.497, 0.503; 
+%     0.650, 0.656];
+xobs= [0.520, 0.526; 
+    0.658, 0.664];
 controller.A= xobs;
 
 vf= @engineMG;
@@ -62,9 +78,10 @@ winset= controller.partition{i}(controller.tags{i}==1,:);
 % winset= controller.partition{i}(winid,:);
 wc= [(winset(:,1)+winset(:,2))/2,...
     (winset(:,3)+winset(:,4))/2];
-% figure
+figure
 % plot(wc(:,1), wc(:,2), '.')
-% plot2_boxes(winset(:,1:4), [0.5,0.5,0.5], 'k', 1);
+plot2_boxes(winset(:,1:4), [0.5,0.5,0.5], 'k', 1);
+axis([X(1,:) X(2,:)])
 
 
 %% simulation

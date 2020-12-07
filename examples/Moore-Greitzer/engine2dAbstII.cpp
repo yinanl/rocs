@@ -138,13 +138,16 @@ int main(int argc, char *argv[])
     } else {
 	std::cout << "Transitions haven't been computed. Computing transitions...\n";
 	/* Robustness margins */
-	double e1[] = {0,0};
+	double e1[] = {0.0, 0.0};
 	double e2[] = {0.0, 0.0};
 	tb = clock();
 	abst.assign_transitions(e1, e2);
 	te = clock();
-	float tabst = (float)(te - tb)/CLOCKS_PER_SEC;
+	tabst = (float)(te - tb)/CLOCKS_PER_SEC;
 	std::cout << "Time of computing abstraction: " << tabst << '\n';
+	/* Write abstraction to file */
+	rocs::h5FileHandler transWtr(transfile, H5F_ACC_TRUNC);
+	transWtr.write_transitions(abst._ts);
     }
     std::cout << "# of transitions: " << abst._ts._ntrans << '\n';
 

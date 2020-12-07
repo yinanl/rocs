@@ -17,7 +17,7 @@
 #include "interval_vector.h"
 
 namespace rocs {
-  
+  typedef uint16_t UintSmall;
   typedef std::vector<double> Rn;
   typedef std::vector< std::vector<double> > vecRn;
   typedef std::vector<ivec> vecIv;

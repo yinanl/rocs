@@ -204,8 +204,11 @@ namespace rocs {
 	    itag = 1; break;
 	case AVOID:
 	    itag = -1; break;
-	default:
+	case FREE:
 	    itag = 0; break;
+	default:
+	    std::cout << "CSolver::init: Specification should be one of (GOAL, AVOID, FREE).\n";
+	    exit(EXIT_FAILURE);
 	}
 	// short itag = (ap == GOAL) ? 1 : -1;
 	if (_ctlr.isleaf(_ctlr._root)) { // first time
@@ -225,6 +228,7 @@ namespace rocs {
 	    return;
 
 	bool b1 = (itag == 1) ? true : false;
+	bool b0 = (itag == 0) ? true : false;
 
 	ivec rbox, lbox;
     
@@ -263,7 +267,7 @@ namespace rocs {
 		}
 		else {
 
-		    current->_right = new SPnode(rbox, current->_cntl, itag, false, b1, current->_label);
+		    current->_right = new SPnode(rbox, current->_cntl, itag, b0, b1, current->_label);
 		}
 
 		current->_left = new SPnode(lbox, current->_cntl, current->_tag,
@@ -277,7 +281,7 @@ namespace rocs {
 		if (i >= cbox.getdim() - 1) {
 
 		    current->_tag = itag;
-		    current->_b0 = false;
+		    current->_b0 = b0;
 		    current->_b1 = b1;
 		}
 	    
@@ -337,8 +341,11 @@ namespace rocs {
 	    itag = 1; inner = true; break;
 	case AVOID:
 	    itag = -1; inner = false; break;
-	default:
+	case FREE:
 	    itag = 0; inner = false; break;
+	default:
+	    std::cout << "CSolver::init: Specification should be one of (GOAL, AVOID, FREE).\n";
+	    exit(EXIT_FAILURE);
 	}
 
 	if (_ctlr.isleaf(_ctlr._root)) {
@@ -408,6 +415,7 @@ namespace rocs {
 	    return;
     
 	bool b1 = (itag == 1) ? true : false;
+	bool b0 = (itag == 0) ? true : false;
 
 	/* evaluate mapping */
 	ivec box = ptrnode->_box;
@@ -415,7 +423,7 @@ namespace rocs {
     
 	if (cst.isin(fbox)) { // inside change _tag
 	    ptrnode->_tag = itag;
-	    ptrnode->_b0 = false;
+	    ptrnode->_b0 = b0;
 	    ptrnode->_b1 = b1;
 	    return;
 	}
@@ -428,7 +436,7 @@ namespace rocs {
 	if (box[axis].width() < eps[axis]) {
 	    if (!inner) { // outer approximation
 		ptrnode->_tag = itag;
-		ptrnode->_b0 = false;
+		ptrnode->_b0 = b0;
 		ptrnode->_b1 = b1;
 	    } // _tag unchanged if inner
 	    return;

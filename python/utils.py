@@ -1,14 +1,30 @@
+import scipy.io as sio
+from scipy.integrate import solve_ivp
 import h5py
 import numpy as np
 import re
 from functools import reduce
 from matplotlib.collections import PolyCollection
+from collections import namedtuple
+
+
+CtlrAbst = namedtuple('CtlrAbst', ['ugrid', 'xgrid', 'ctlr',
+                                   'encode3', 'nts_ctrlr', 'q_prime'])
+CtlrItvl = namedtuple('CtlrItvl', ['ugrid', 'pavings', 'tag', 'ctlr'])
+CtlrSpec = namedtuple('CtlrSpec', ['n_dba', 'n_props',
+                                   'q0', 'acc', 'q_prime'])
 
 
 def read_controller_itvl_from_h5(filename):
+    '''
+    Make sure that the file contains at least:
+    ts, X, U, tag, pavings, ctlr
+    '''
     tau = 0.01
     X = np.array([])
     U = np.array([])
+    G = np.array([])
+    A = np.array([])
     tag = np.array([])
     pavings = np.array([])
     ctlr = np.array([])
@@ -19,10 +35,32 @@ def read_controller_itvl_from_h5(filename):
         tag = f['tag'][...]
         pavings = f['pavings'][...]
         ctlr = f['ctlr'][...]
-    return tau, X, U, tag, pavings, ctlr
+        if("/G" in f):
+            G = f['G'][...]
+        if("/xobs" in f):
+            A = f['xobs'][...]
+    return tau, X, U, G, A, pavings, tag, ctlr
+
+
+def read_controller_itvl_from_mat(filename):
+    '''
+    Make sure that the file contains at least:
+    ts, X, U, tag, pavings, ctlr
+    '''
+    mat = sio.loadmat(filename)
+    if("G" in mat):
+        G = mat['G']
+    else:
+        G = np.array([])
+    return mat['ts'][0, 0], mat['X'], mat['U'], G, \
+        mat['tag'].squeeze(), mat['pavings'], mat['ctlr']
 
 
 def read_controller_abst_from_h5(filename):
+    '''
+    Make sure that the file contains at least:
+    ts, X, U, eta, xgrid, WinSet, OptCtlr, encode3, nts_ctrlr, and q_prime
+    '''
     tau = np.array([])
     eta = np.array([])
     X = np.array([])
@@ -40,14 +78,17 @@ def read_controller_abst_from_h5(filename):
         U = f['U'][...]
         eta = f['eta'][...]
         xgrid = f['xgrid'][...]
-        goalset = f['G'][...]
+        if("/G" in f):
+            goalset = f['G'][...]
         winids = f['WinSet'][...]
         ctlr = f['OptCtlr'][...]
         encode3 = f['encode3'][...]
         nts_ctrlr = f['nts_ctrlr'][...]
         q_prime = f['q_prime'][...]
-    return tau, X, U, eta, xgrid, goalset, winids, \
-        ctlr, encode3, nts_ctrlr, q_prime
+    # return tau, X, U, eta, xgrid, goalset, winids, \
+    #     ctlr, encode3, nts_ctrlr, q_prime
+    return tau, X, eta, goalset, winids, \
+        CtlrAbst(U, xgrid, ctlr, encode3, nts_ctrlr, q_prime)
 
 
 def read_spec_from_txt(filename):
@@ -81,11 +122,18 @@ def read_spec_from_txt(filename):
             cells = re.split('#|,', line)
             if(len(cells) == 3):
                 M[int(cells[0]), int(cells[1])] = int(cells[2])
-    return n_dba, n_props, q0, acc, M.astype(int)
+    return CtlrSpec(n_dba, n_props, q0, acc, M.astype(int))
 
 
-def polycoll_winset_itvl(winset):
-    xys = winset[:, 0:4]
+def polycoll_interval_array(arr, closed, color, alpha):
+    '''
+    Compile a 2d interval array into a collection of polytopes.
+    arr (N x 2d): an array of size N with d-dimension (2d columns, [lower, upper]).
+    closed: True or False.
+    color: color for the polytopes.
+    alpha: [0, 1] transparency.
+    '''
+    xys = arr[:, 0:4]
     tmp = np.zeros((xys.shape[0], xys.shape[1]*2))
     tmp[:, 0] = xys[:, 0]
     tmp[:, 1] = xys[:, 2]
@@ -96,12 +144,19 @@ def polycoll_winset_itvl(winset):
     tmp[:, 6] = xys[:, 0]
     tmp[:, 7] = xys[:, 3]
     verts = tmp.reshape(xys.shape[0], 4, 2)
-    return PolyCollection(verts, closed=True,
-                          color='palegoldenrod', alpha=0.7)
+    return PolyCollection(verts, closed=closed, color=color, alpha=alpha)
 
 
-def polycoll_winset_abst(winset, eta):
-    xys = winset[:, 0:2]
+def polycoll_grid_array(arr, eta, closed, color, alpha):
+    '''
+    Compile an array of data points into a collection of polytopes.
+    arr (N x d): an array of size N with d-dimension (d columns).
+    eta: an array of grid size (length of d).
+    closed: True or False.
+    color: color for the polytopes.
+    alpha: [0, 1] transparency.
+    '''
+    xys = arr[:, 0:2]
     tmp = np.zeros((xys.shape[0], 8))
     tmp[:, 0] = xys[:, 0] - eta[0]/2.
     tmp[:, 1] = xys[:, 1] - eta[1]/2.
@@ -112,8 +167,7 @@ def polycoll_winset_abst(winset, eta):
     tmp[:, 6] = xys[:, 0] - eta[0]/2.
     tmp[:, 7] = xys[:, 1] + eta[1]/2.
     verts = tmp.reshape(xys.shape[0], 4, 2)
-    return PolyCollection(verts, closed=True,
-                          color='palegoldenrod', alpha=0.7)
+    return PolyCollection(verts, closed=closed, color=color, alpha=alpha)
 
 
 def index_in_interval_array(x, arr):
@@ -131,7 +185,10 @@ def index_in_interval_array(x, arr):
     cond_right = np.asarray([x[i] <= arr[:, 2*i+1] for i in range(x.shape[0])])
     test_array = np.concatenate((cond_left, cond_right), axis=0)
     ids = np.argwhere(test_array.all(axis=0))
-    return ids[0, 0]
+    if(not ids.size):
+        return ids
+    else:
+        return ids[0, 0]
 
 
 def index_in_grid(x, arr):
@@ -155,3 +212,123 @@ def is_inside(x, w):
     w (n x 2): the given n-dim interval area
     '''
     return np.all(x > w[:, 0]) and np.all(x < w[:, 1])
+
+
+def simulate_abstbased_dba_control(tau, Tsim, num_acc, x0, vf, dba, controller):
+    '''
+    Generate sequences of closed-loop trajectories and control values.
+    tau: Simulation time step.
+    Tsim: Simulation time horizon.
+    num_acc: The number of times visiting accepting nodes.
+    x0: The initial condition.
+    vf: Vector field of the dynamical system (or ODEs)
+    dba: The CtlrSpec tuple with DBA info.
+    controller: The CtlrAbst tuple with abstraction-based controller info.
+    '''
+    rng = np.random.default_rng()
+    t = 0
+    x = x0
+    q = dba.q0
+    tsim = []
+    xsim = []
+    usim = []
+    qsim = []
+    nacc = 0
+    while(t < Tsim or nacc < num_acc):
+        if(q == dba.acc):
+            nacc += 1
+
+        i = index_in_grid(x, controller.xgrid)  # convert x to node id
+        p5 = controller.nts_ctrlr[controller.encode3[i], :]
+        p7 = controller.ctlr[p5[2]:p5[2]+p5[0], :]
+        uset = np.argwhere(p7[:, 0] == q).squeeze()
+        if(uset.size > 1):
+            uid = rng.choice(uset, 1)  # randomly pick one
+        else:
+            uid = int(uset)
+            u = controller.ugrid[p7[uid, 1], :].squeeze()
+
+        # Integrate ode
+        sol = solve_ivp(vf, [0, tau], x, method='RK45', args=(u,))
+        tt = sol.t[-1]
+        y = sol.y[:, -1]
+        if(y[2] > np.pi):
+            y[2] -= 2*np.pi
+        if(y[2] < -np.pi):
+            y[2] += 2*np.pi
+
+        # Update DBA state
+        q = controller.q_prime[p5[1]*dba.n_dba+q]  # p5[1] is the label of current x
+
+        # Save trajectories
+        tsim.append(t)
+        xsim.append(x)
+        usim.append(u)
+        qsim.append(q)
+
+        # Update state
+        x = y
+        t += tt
+
+    return np.asarray(xsim), np.asarray(usim), \
+        np.asarray(qsim), np.asarray(tsim)
+
+
+def simulate_itvl_dba_control(tau, Tsim, num_acc, x0, vf, dba,
+                              controller, labeling):
+    rng = np.random.default_rng()
+    t = 0
+    x = x0
+    q = dba.q0
+    tsim = []
+    xsim = []
+    usim = []
+    qsim = []
+    nacc = 0
+    while(t < Tsim or nacc < num_acc):
+        if(q == dba.acc):
+            nacc += 1
+
+        x_id = index_in_interval_array(x, controller.pavings[q])
+        if(x_id < 0):
+            print("System state ")
+            print(x)
+            print(" is not inside the winning set.")
+            break
+        if(q < 0):
+            print("System unsafe.")
+            break
+
+        if(any(controller.ctlr[q][x_id, :])):
+            uset = np.argwhere(controller.ctlr[q][x_id, :]).squeeze()  # get the indices of valid input
+        else:
+            print("No valid control input.")
+            break
+
+        if(uset.size > 1):
+            uid = rng.choice(uset, 1)  # randomly pick one
+        else:
+            uid = int(uset)
+        u = controller.ugrid[uid, :].squeeze()
+
+        # Integrate ode
+        sol = solve_ivp(vf, [0, tau], x, method='RK45', args=(u,))
+        tt = sol.t[-1]
+        y = sol.y[:, -1]
+        if(y[2] > np.pi):
+            y[2] -= 2*np.pi
+        if(y[2] < -np.pi):
+            y[2] += 2*np.pi
+
+        # Save trajectories
+        tsim.append(t)
+        xsim.append(x)
+        usim.append(u)
+        qsim.append(q)
+        # Update state
+        q = dba.q_prime[q, labeling(x)]
+        x = y
+        t += tt
+
+    return np.asarray(xsim), np.asarray(usim), \
+        np.asarray(qsim), np.asarray(tsim)

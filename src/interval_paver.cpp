@@ -325,7 +325,7 @@ namespace rocs {
 	    current = stk.top();
 	    stk.pop();
 	    if(current->_tag != -1) {
-		current->_b0 = false;
+		current->_b0 = true;
 		current->_b1 = false;
 		current->_tag = 0;
 	    }
@@ -334,6 +334,8 @@ namespace rocs {
 	    if(current->_left)
 		stk.push(current->_left);
 	}
+
+	tagging(EXACT);
     }
 
     /* Count numbers */

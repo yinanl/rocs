@@ -1,45 +1,26 @@
-from os.path import dirname,realpath
 import numpy as np
 from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import sys
+from os.path import dirname, realpath
 pypath = dirname(dirname(dirname(realpath(__file__)))) + '/python/'
 sys.path.insert(1, pypath)
 import utils
-from odes import engineMG
+from odes import MG, MG_scaled
 
 
 dirpath = dirname(realpath(__file__))
-w0 = "/controller_I_nba_w0.h5"
-w1 = "/controller_I_nba_w1.h5"
-w2 = "/controller_I_nba_w2.h5"
-specfile = "/nba.txt"
+spec = "nba"
+s = 10
 
 
-# # Read the specification file
-n_dba, n_props, q0, acc, q_prime = utils.read_spec_from_txt(dirpath+specfile)
+# # Set up state space
+goal_real = np.array([[0.5009, 0.5069], [0.6575*s, 0.6635*s]])
+obs = np.array([[0.520, 0.526], [0.658*s, 0.664*s]])
 
 
-# # Read the controller file and problem settings
-tau, X, U, tag0, pavings0, ctlr0 = utils.read_controller_itvl_from_h5(dirpath+w0)
-tau, X, U, tag1, pavings1, ctlr1 = utils.read_controller_itvl_from_h5(dirpath+w1)
-tau, X, U, tag2, pavings2, ctlr2 = utils.read_controller_itvl_from_h5(dirpath+w2)
-tag = [tag0, tag1, tag2]
-pavings = [pavings0, pavings1, pavings2]
-ctlr = [ctlr0, ctlr1, ctlr2]
-
-winset = pavings[q0][np.argwhere(tag[q0] == 1).squeeze()]
-print("\nWinning set coverage:")
-wsize = np.sum((winset[:, 1]-winset[:, 0])*(winset[:, 3]-winset[:, 2]))
-winper = "{:.2%}".format(wsize/((X[0, 1]-X[0, 0])*(X[1, 1]-X[1, 0])))
-print(winper)
-
-goal_real = np.array([[0.5009, 0.5069], [0.6575, 0.6635]])
-obs = np.array([[0.520, 0.526], [0.658, 0.664]])
-
-
-def get_propositions(x):
+def get_labels(x):
     if(x[0] > goal_real[0, 0] and x[0] < goal_real[0, 1] and
        x[1] > goal_real[1, 0] and x[1] < goal_real[1, 1]):
         return 1
@@ -50,7 +31,37 @@ def get_propositions(x):
         return 0
 
 
+# # Read the specification file
+specfile = '/' + spec + ".txt"
+dba = utils.read_spec_from_txt(dirpath+specfile)
+
+
+# # Read the controller files
+tag = []
+pavings = []
+ctlr = []
+for k in range(dba.n_dba):
+    w = "/controller_" + spec + "_w" + str(k) + ".h5"
+    tau, X, U, _, _, p, t, c = utils.read_controller_itvl_from_h5(dirpath+w)
+    tag.append(t)
+    pavings.append(p)
+    ctlr.append(c)
+controller = utils.CtlrItvl(U, pavings, tag, ctlr)
+
+
+# # Compute the percentage of winning set on the state space
+winset = pavings[dba.q0][np.argwhere(tag[dba.q0] == 1).squeeze()]
+print("\nWinning set coverage:")
+wsize = np.sum((winset[:, 1]-winset[:, 0])*(winset[:, 3]-winset[:, 2]))
+winper = "{:.2%}".format(wsize/((X[0, 1]-X[0, 0])*(X[1, 1]-X[1, 0])))
+print(winper)
+
+
 # # x-y 2D plot of winning set
+fig, ax = plt.subplots()
+ax.set_xlim(X[0, 0], X[0, 1])
+ax.set_ylim(X[1, 0], X[1, 1])
+
 rect_goal = patches.Rectangle((goal_real[0, 0], goal_real[1, 0]),
                               goal_real[0, 1]-goal_real[0, 0],
                               goal_real[1, 1]-goal_real[1, 0],
@@ -60,22 +71,22 @@ rect_obs = patches.Rectangle((obs[0, 0], obs[1, 0]),
                              obs[1, 1]-obs[1, 0],
                              linewidth=1, edgecolor='k',
                              fill=True, facecolor='k')
-fig, ax = plt.subplots()
-ax.set_xlim(X[0, 0], X[0, 1])
-ax.set_ylim(X[1, 0], X[1, 1])
+
 ax.add_patch(rect_goal)
 ax.add_patch(rect_obs)
-ax.add_collection(utils.polycoll_winset_itvl(winset))
+ax.add_collection(
+    utils.polycoll_interval_array(winset, True, 'palegoldenrod', 0.7)
+)
 
 
 # # Simulation
 rng = np.random.default_rng()
 Tsim = 20
 
-x0 = np.array([0.5343, 0.6553])
+x0 = np.array([0.5343, 0.6553*s])
 t = 0
 x = x0
-q = q0
+q = dba.q0
 tsim = []
 xsim = []
 usim = []
@@ -104,7 +115,7 @@ while(t < Tsim):
     u = U[uid, :].squeeze()
 
     # Integrate ode
-    sol = solve_ivp(engineMG, [0, tau], x, method='RK45', args=(u,))
+    sol = solve_ivp(MG_scaled, [0, tau], x, method='RK45', args=(u,))
     tt = sol.t[-1]
     y = sol.y[:, -1]
 
@@ -114,7 +125,7 @@ while(t < Tsim):
     usim.append(u)
     qsim.append(q)
     # Update state
-    q = q_prime[q, get_propositions(x)]
+    q = dba.q_prime[q, get_labels(x)]
     x = y
     t += tt
 

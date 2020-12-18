@@ -47,9 +47,6 @@ carDBA: carDBA.o $(OBJS)
 carDBA4: carDBA_dba4.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
 
-carDBA0: carDBA_0.o $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
-
 carDBAp4: carDBA_p4.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
 
@@ -71,7 +68,7 @@ carFullmap: carFullmap.o $(OBJS)
 testConstraints: testConstraints.cpp $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
 
-sim_carAbst: sim_carAbst.o $(OBJS)
+sim_abst: sim_abst.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
 
 showtargets:

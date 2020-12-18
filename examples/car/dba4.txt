@@ -1,5 +1,5 @@
 Name=(F(a1 & Fa3) | F(a2 & (!a4 U a3))) & (GFc & GFd)
-AP=a1(32) a2(10) a3(20) a4(1) c(8,10) d(4,20) others(0)
+AP=a1(32) a2(10) a3(20) a4(1) c(8 10) d(4 20) others(0)
 acc=2
 nNodes=6
 nAP=6

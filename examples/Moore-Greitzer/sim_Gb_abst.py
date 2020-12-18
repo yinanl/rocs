@@ -7,7 +7,7 @@ import sys
 pypath = dirname(dirname(dirname(realpath(__file__)))) + '/python/'
 sys.path.insert(1, pypath)
 import utils
-from odes import engineMG
+from odes import MG
 
 
 dirpath = dirname(realpath(__file__))
@@ -68,7 +68,7 @@ while(t < Tsim):
     u = U[p7[uid, 1], :].squeeze()
 
     # Integrate ode
-    sol = solve_ivp(engineMG, [0, tau], x, method='RK45', args=(u,))
+    sol = solve_ivp(MG, [0, tau], x, method='RK45', args=(u,))
     tt = sol.t[-1]
     y = sol.y[:, -1]
 

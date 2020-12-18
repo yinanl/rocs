@@ -133,9 +133,8 @@ namespace rocs {
 	template<typename F>
 	void assign_labels(F labeling) {
 	    for (size_t i = 0; i < _x._nv; ++i) {
-		_labels[i] = labeling(i);
-		// if (fcn(i))
-		//     _labels[i] = l;
+		if(_labels[i] > -1)
+		    _labels[i] = labeling(i);
 	    }
 	}
 	void assign_label_outofdomain(int label) {

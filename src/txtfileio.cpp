@@ -13,8 +13,8 @@
 
 namespace rocs {
     
-    void txtWriter::write_uniform_grids(const grid &g) {
-	if (!_txtfile.is_open()) {open();}
+    void txtFileHandler::write_uniform_grids(const grid &g) {
+	if (!_txtfile.is_open()) {open(std::ios::out);}
 	if (g._data.empty()) {
 	    std::cout << "txtWriter: No valid data in the grid.\n";
 	    return;
@@ -26,9 +26,9 @@ namespace rocs {
 	    }
 	    _txtfile << '\n';
 	}
-    }//txtWriter::write_uniform_grids
+    }//txtFileHandler::write_uniform_grids
 
-    void txtWriter::write_sptree_leaves(const SPtree &c, SPnode *node) {
+    void txtFileHandler::write_sptree_leaves(const SPtree &c, SPnode *node) {
 
 	if (node == NULL) {
 	    std::cout << "txtWriter: Nothing Generated." << std::endl;
@@ -69,11 +69,11 @@ namespace rocs {
 
 	    // std::cout << std::endl; //logging
 	}
-    }//txtWriter::write_sptree_leaves
+    }//txtFileHandler::write_sptree_leaves
 
-    void txtWriter::write_post_transitions(const fts &nts, const grid &g,
+    void txtFileHandler::write_post_transitions(const fts &nts, const grid &g,
 					   const double xlb[], const double xub[]) {
-	if (!_txtfile.is_open()) {open();}
+	if (!_txtfile.is_open()) {open(std::ios::out);}
 
 	size_t n = nts._nx;
 	size_t m = nts._nu;
@@ -104,9 +104,9 @@ namespace rocs {
 	}
     }
 
-    void txtWriter::write_pre_transitions(const fts &nts, const grid &g,
+    void txtFileHandler::write_pre_transitions(const fts &nts, const grid &g,
 					  const double xlb[], const double xub[]) {
-	if (!_txtfile.is_open()) {open();}
+	if (!_txtfile.is_open()) {open(std::ios::out);}
 
 	size_t n = nts._nx;
 	size_t m = nts._nu;
@@ -134,6 +134,69 @@ namespace rocs {
 		    }
 		}
 	    }
+	}
+    }
+
+    void txtFileHandler:: read_discrete_controller(std::vector<long long> &w_x0,
+						   std::vector<long long> &encode3,
+						   std::vector<NODE_POST> &nts_ctrlr,
+						   std::vector<CTRL> &ctrl,
+						   std::vector<int> &q_prime) {
+	if (!_txtfile.is_open())
+	    open(std::ifstream::in | std::ifstream::binary);
+
+	/* Read the winning states to w_x0 */
+	long long w0;
+	_txtfile >> w0; //read the # of winning set in X
+	std::cout << "W_X0 size: " << w0 << '\n';
+	w_x0.resize(w0);
+	for(long long i = 0; i < w0; ++i) {
+	    _txtfile >> w_x0[i];
+	}
+	std::cout << w_x0[0] << ',' << w_x0[1] << '\n';
+	/* Read encode3:n0->n0_2 for getting the index in nts_ctlr */
+	long long n0;
+	_txtfile >> n0;
+	std::cout << "encode3 size: " << n0 << '\n';
+	encode3.resize(n0);
+	for(size_t i = 0; i < encode3.size(); ++i) {
+	    _txtfile >> encode3[i];
+	}
+	std::cout << encode3[0] << ',' << encode3[1] << '\n';
+	/* Read nts_ctrlr */
+	long long n0_2;
+	_txtfile >> n0_2;
+	std::cout << "nts_ctrlr size: " << n0_2 << '\n';
+	nts_ctrlr.resize(n0_2);
+	for(size_t i = 0; i < nts_ctrlr.size(); ++i) {
+	    _txtfile >> nts_ctrlr[i].num_a;
+	    _txtfile >> nts_ctrlr[i].label;
+	    _txtfile >> nts_ctrlr[i].pos;
+	}
+	for(long long i = 0; i < 3; ++i)
+	    std::cout << '(' << nts_ctrlr[i].num_a << ','
+		      << nts_ctrlr[i].label << ','
+		      << nts_ctrlr[i].pos << ") ";
+	std::cout << '\n';
+	/* Read ctrl: stores the control input u by searching for q. */
+	long long wp;
+	_txtfile >> wp;
+	ctrl.resize(wp);
+	std::cout << "Product controller size: " << wp << '\n';
+	for(long long i = 0; i < wp; ++i) {
+	    _txtfile >> ctrl[i].q;
+	    _txtfile >> ctrl[i].u;
+	}
+	for(long long i = 0; i < 3; ++i)
+	    std::cout << '(' << ctrl[i].q << ',' << ctrl[i].u << ") ";
+	std::cout << '\n';
+	/* Read q_prime: the DBA transition matrix */
+	long long q_prime_size;
+	_txtfile >> q_prime_size;
+	std::cout << "q_prime size: " << q_prime_size << '\n';
+	q_prime.resize(q_prime_size);
+	for(size_t i = 0; i < q_prime.size(); ++i) {
+	    _txtfile >> q_prime[i];
 	}
     }
 

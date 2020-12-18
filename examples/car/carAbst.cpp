@@ -18,9 +18,10 @@
 
 #include "src/abstraction.hpp"
 #include "src/DBAparser.h"
-
 #include "src/bsolver.hpp"
-#include "src/txtfileio.h"
+
+// #include "src/txtfileio.h"
+#include "src/hdf5io.h"
 
 #include "car.hpp"
 
@@ -199,16 +200,18 @@ int main(int argc, char *argv[])
 	if (i < 2)
 	    datafile += "-";
     }
-    datafile += ".txt";
+    datafile += ".h5";
     
     std::cout << "Writing the controller...\n";
-    // rocs::write_controller_to_txt(&psolver, datafile.c_str());
-    solver.write_controller_to_txt(const_cast<char*>(datafile.c_str()));
+    // solver.write_controller_to_txt(const_cast<char*>(datafile.c_str()));
+    rocs::h5FileHandler ctlrWtr(datafile, H5F_ACC_TRUNC);
+    ctlrWtr.write_problem_setting< rocs::DTCntlSys<carde> >(car);
+    ctlrWtr.write_array<double>(eta, carde::n, "eta");
+    ctlrWtr.write_2d_array<double>(abst._x._data, "xgrid");
+    ctlrWtr.write_discrete_controller(&(solver._sol));
     std::cout << "Controller writing is done.\n";
 
     std::cout << "Total time of used (abstraction+synthesis): " << tabst+tsyn << '\n';
-    
-    // rocs::free_memory(&psolver, 1); // release all memory
     
     return 0;
 }

@@ -19,6 +19,7 @@
 
 #include <fstream>
 
+#include "definitions.h"
 #include "interval_vector.h"
 
 

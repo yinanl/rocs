@@ -1,4 +1,28 @@
 import numpy as np
+from scipy.linalg import expm, inv
+
+
+def dcdc(t, x, u):
+    xc = 70
+    xl = 3
+    rc = 0.005
+    rl = 0.05
+    r0 = 1
+    vs = 1
+    A1 = np.array([[-rl/xl, 0], [0, -1/(xc*(rc+r0))]])
+    b1 = np.array([[vs/xl], [0]])
+    A2 = np.array([[(-1/xl)*(rl + r0*rc/(r0+rc)), (-1/xl)*(r0/(r0+rc))],
+                   [(1/xc)*(r0/(r0+rc)), (-1/xc)*(1/(r0+rc))]])
+    b2 = b1
+    I = np.eye(2)
+    if(u == 1):
+        return np.matmul(expm(A1*t), x) \
+            + np.matmul(inv(A1), np.matmul((expm(A1*t)-I), b1))
+    elif(u == 2):
+        return np.matmul(expm(A2*t), x) \
+            + np.matmul(inv(A2), np.matmul((expm(A2*t)-I), b2))
+    else:
+        raise ValueError('dcdc: Wrong input value.')
 
 
 def car(t, x, u):
@@ -43,20 +67,25 @@ def MG_scaled(t, x, u):
     return np.array([dx, dy])
 
 
-class scara:
-    def __init__(self, tau, m1, m2, l1, l2, r1, r2, I1, I2):
-        self.tau = tau
-        self.m1 = m1
-        self.m2 = m2
-        self.l1 = l1
-        self.l2 = l2
-        self.r1 = r1
-        self.r2 = r2
-        self.I1 = I1
-        self.I2 = I2
+def scara_2dbint(t, x, u):
+    return np.array([x[2], x[3], u[0], u[1]])
 
-        self.z1 = self.I1+self.I2+self.m1*self.r1**2+self.m2*(self.l1**2+self.r2**2)
-        self.z2 = self.m2*self.l1*self.r1
+
+class scara:
+    def __init__(self, tau):
+        self.tau = tau
+        self.m1 = 0.1
+        self.m2 = 0.1
+        self.l1 = 0.15
+        self.l2 = 0.15
+        self.r1 = 0.5*self.l1
+        self.r2 = 0.5*self.l2
+        self.I1 = 1.33e-5
+        self.I2 = 1.33e-5
+
+        self.z1 = self.I1+self.I2+self.m1*self.r1**2 \
+            + self.m2*(self.l1**2+self.r2**2)
+        self.z2 = self.m2*self.l1*self.r2
         self.z3 = self.I2+self.m2*self.r2**2
 
     def xy2theta(self, x, y):
@@ -75,7 +104,7 @@ class scara:
     def ode_full(self, t, x, u):
         s2 = np.sin(x[1])
         c2 = np.cos(x[1])
-        D = self.z3*(self.z1-self.z3) - self.z2*self.z2*c2**2
+        D = self.z3*(self.z1-self.z3) - self.z2**2 * c2**2
 
         dw1dt = (self.z3*u[0] + self.z3*self.z2*s2*(2*x[2]+x[3])*x[3]
                  + (self.z3+self.z2*c2)*(self.z2*x[2]**2*s2-u[1])) / D
@@ -92,6 +121,15 @@ class scara:
                          x[1] + t*x[3] + 0.5*t**2*u[1],
                          x[3] + t*u[1]])
 
-
-def scara_2dbint(t, x, u):
-    return np.array([x[2], x[3], u[0], u[1]])
+    def compute_torque(self, u, w, theta):
+        '''
+        Calculate the torque for corresponding angles and angular velocities.
+        u(2 x 1):
+        '''
+        ct2 = np.cos(theta[1])
+        st2 = np.sin(theta[1])
+        M = np.array([[self.z1+2*self.z2*ct2, self.z3+self.z2*ct2],
+                      [self.z3+self.z2*ct2, self.z3]])
+        C = np.array([[-self.z2*st2*w[1], -self.z2*st2*(w[0]+w[1])],
+                      [self.z2*st2*w[0], 0]])
+        return np.matmul(M, u)+np.matmul(C, w)

@@ -11,7 +11,8 @@
 
 #include "src/system.hpp"
 #include "src/csolver.h"
-#include "src/matlabio.h"
+#include "src/hdf5io.h"
+// #include "src/matlabio.h"
 
 #include "dcdc.hpp"
 
@@ -41,11 +42,17 @@ int main()
 
 
     /* save the problem data and the solution */
-    rocs::matWriter wtr("data_dcdcInv.mat");
-    wtr.open();
-    wtr.write_problem_setting(dcdcInv, solver);
-    wtr.write_sptree_controller(solver);
-    wtr.close();
+    // rocs::matWriter wtr("data_dcdcInv.mat");
+    // wtr.open();
+    // wtr.write_problem_setting(dcdcInv, solver);
+    // wtr.write_sptree_controller(solver);
+    // wtr.close();
+    std::string datafile = "controller_dcdcInv.h5";
+    rocs::h5FileHandler ctlrWtr(datafile, H5F_ACC_TRUNC);
+    ctlrWtr.write_problem_setting< rocs::DTSwSys<dcde> >(dcdcInv);
+    ctlrWtr.write_ivec_array(solver._goal, "G");
+    ctlrWtr.write_ivec_array(solver._obs, "xobs");
+    ctlrWtr.write_sptree_controller(solver);
 
     return 0;
 }

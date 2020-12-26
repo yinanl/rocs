@@ -1,4 +1,5 @@
-
+clear
+clc
 addpath('../../matlab/')
 %% Work space setup
 a1= [1,2; 0.5,2; -pi,pi];
@@ -16,6 +17,10 @@ A(:,:,3)= [4.5,5.2; 0,2.5; -pi,pi];
 
 
 %% load spec & controller
+%%% Define ODEs or DEs for car kinematics %%%
+vf= @car; % ODEs
+fm= @carflow; % DEs
+
 %%% Read the specification %%%
 % - n_dba: # of DBA nodes.
 % - n_props: # of all propositions (2^AP)
@@ -25,8 +30,7 @@ A(:,:,3)= [4.5,5.2; 0,2.5; -pi,pi];
 spec= 'dba4';
 [n_dba,n_props,q0,acc,q_prime]=read_spec(strcat(spec,'.txt'));
 
-%%% Load controllers %%%
-% data saved in .mat:
+%%% Controller data %%%
 % - U : All input values.
 % - X : Workarea.
 % - ts: Sampling time.
@@ -55,10 +59,9 @@ for i=1:n_dba
     controller.partitions{i}= h5read(ctlrfile, '/pavings')';
     controller.tags{i}= h5read(ctlrfile, '/tag');
 end
-
-%%% Define ODEs or DEs for car kinematics %%%
-vf= @car; % ODEs
-fm= @carflow; % DEs
+ts= h5read(ctlrfile, '/ts');
+X= h5read(ctlrfile, '/X')';
+U= h5read(ctlrfile, '/U')';
 
 
 %% simulation
@@ -140,9 +143,10 @@ while(t<T || nacc<num_acc)
     %     usim= [usim; u];
     %%% use ode
     [tt, xx]= ode45(@(t,x) vf(t,x,u), [0, ts], x);
+    
+    %%% update x, t %%%
     x= xx(end,:)';
     t= t + tt(end,:);
-    
 end
 
 

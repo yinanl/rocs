@@ -1,4 +1,4 @@
-# 1) get directories of external packages: 
+# 1) get directories of external packages:
 # BSTDIR (boost), MATDIR (matlab), LADIR (armadillo).
 # 2) get compiling and linking flags:
 # CXX, CXXFLAGS, INCS, LIBS, LIBTEST, LDFLAGS.
@@ -19,7 +19,8 @@ ESRCS := $(wildcard *.cpp)
 EOBJS := $(patsubst %.cpp, %.o, $(ESRCS))
 EDIR := $(dir $(ESRCS))
 
-TARGETS := $(basename $(ESRCS))
+TARGETS := reach dba abst
+TESTS := testReachset testInitialize
 
 .PHONY : clean
 
@@ -27,19 +28,19 @@ TARGETS := $(basename $(ESRCS))
 # rules
 all: $(TARGETS)
 
-engine2dRS: engine2dRS.o $(OBJS)
+reach: dbintReach.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
-engine2dDBA: engine2dDBA.o $(OBJS)
+
+dba: dbintDBA.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
-engine2dAbstI: engine2dAbstI.o $(OBJS) $(ODIR)/buchi.o
+
+abst: dbintAbst.o $(OBJS) $(ODIR)/buchi.o
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
-engine2dAbstII: engine2dAbstII.o $(OBJS) $(ODIR)/buchi.o
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+
 testReachset: testReachset.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
-testInv: testInv.o $(OBJS) $(ODIR)/buchi.o
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
-engineScaledDBA: engineScaledDBA.o $(OBJS)
+
+testInitialize: testInitialize.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
 
 clean:
@@ -57,5 +58,5 @@ $(ODIR)/%.o: $(SDIR)/%.cpp $(SDIR)/%.h
 $(ODIR)/%.o: $(SDIR)/%.c $(SDIR)/%.h
 	gcc -Wall -Wextra -o3 -c $< -o $@
 
-%.o: %.cpp $(SDIR)/system.hpp
+%.o: %.cpp $(SDIR)/system.hpp scara.hpp scara_decom.hpp
 	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@

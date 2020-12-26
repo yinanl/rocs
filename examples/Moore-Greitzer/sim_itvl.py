@@ -11,7 +11,7 @@ from odes import MG, MG_scaled
 
 
 dirpath = dirname(realpath(__file__))
-spec = "nba"
+spec = "FGb"
 s = 10
 
 

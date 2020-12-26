@@ -541,10 +541,16 @@ namespace rocs {
 	q.push(sp._root);
 
 	bool t0(false), t1(false);
-	
-	/* test if y is out of domain */
+
+	/**
+	 * Handle out-of-domain scenarios
+	 */
+	/* If box is fully out of domain */
 	if (_ctlr._root->_box.isout(box))
 	    return 0;
+	/* If box is partially out of domain */
+	if(!_ctlr._root->_box.isin(box))
+	    t0 = true;
 	
 	SPnode *current;
 	while (!q.empty()) {
@@ -554,7 +560,7 @@ namespace rocs {
 
 	    switch (current->_tag) {
 	    case 1 :
-		if (current->_box.isin(box))
+		if (current->_box.isin(box))  // box must be inside domain
 		    return 1;
 		if (!current->_box.isout(box))
 		    t1 = true;
@@ -576,7 +582,7 @@ namespace rocs {
 		break;
 
 	    default :  // for 0, -1, -2
-		if (current->_box.isin(box))  // box inside current
+		if (current->_box.isin(box))  // box inside current => inside domain
 		    return 0;
 		if (!current->_box.isout(box))  // box intersect current
 		    t0 = true;

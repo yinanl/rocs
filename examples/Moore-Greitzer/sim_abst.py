@@ -12,7 +12,9 @@ from odes import MG
 
 dirpath = dirname(realpath(__file__))
 ctlrfile = "/controller_abstI_0.00009.h5"
-specfile = "/nba.txt"
+specfile = "/FGb.txt"
+# ctlrfile = "/controller_Gb_abst_0.00018.h5"
+# specfile = "/Gb.txt"
 
 
 # # Set up state space
@@ -59,7 +61,8 @@ ax.add_patch(rect_obs)
 
 # # Simulation
 Tsim = 20
-x0 = np.array([0.5343, 0.6553])
+x0 = np.array([0.5343, 0.6553])  # for FGb.txt
+# x0 = np.array([0.5056, 0.6595])  # for Gb.txt
 
 rng = np.random.default_rng()
 t = 0

@@ -2,7 +2,7 @@
  *  carParking.cpp
  *
  *  Automatic parallel parking of a vehicle.
- *  
+ *
  *  Created by Yinan Li on May 12, 2018.
  *
  *  Hybrid Systems Group, University of Waterloo.
@@ -12,8 +12,8 @@
 
 #include "src/system.hpp"
 #include "src/csolver.h"
-
-#include "src/matlabio.h"
+#include "src/hdf5io.h"
+// #include "src/matlabio.h"
 
 #include "car.hpp"
 
@@ -158,7 +158,7 @@ int main() {
 
     /* set the state space */
     double alb = -M_PI/2.5; double aub = M_PI/2.5;
-    
+
     double xlb[] = {0, 0, alb};
     double xub[] = {8, 4, aub};
 
@@ -166,7 +166,7 @@ int main() {
     double ulb[] = {-1.0, -1.0};
     double uub[] = {1.0, 1.0};
     double mu[] = {0.3, 0.3};
-    
+
     /* define the control system */
     rocs::DTCntlSys<carde> carParking("parallel parking", h, carde::n, carde::m);
     carParking.init_workspace(xlb, xub);
@@ -176,8 +176,8 @@ int main() {
     double ceps = 0.02; // precision for collision area over-approximation
     double glb[] = {L+L/2.0+ceps, 0.5, -M_PI*3.0/180.0};
     double gub[] = {L+L/2.0+d-2*ceps, 0.6, M_PI*3.0/180.0};
-    
-    rocs::CSolver solver(&carParking, rocs::ABSMAX);
+
+    rocs::CSolver solver(&carParking, 0, rocs::ABSMAX);
     solver.init(rocs::GOAL, glb, gub);
     solver.init_goal_area();
     const double e[]{ceps, ceps, ceps};
@@ -198,7 +198,7 @@ int main() {
     solver.init(rocs::AVOID, &cst_v4front<rocs::ivec>, e);
     solver.init(rocs::AVOID, &cst_v4curb<rocs::ivec>, e);
     solver.init_avoid_area();
-    
+
     solver._ctlr.retract();
     solver.print_controller_info();
 
@@ -211,16 +211,26 @@ int main() {
     solver.print_controller_info();
 
     /* save data to file */
-    rocs::matWriter wtr("data_carParking.mat");
-    wtr.open();
-    wtr.write_real_number(H, "H");
-    wtr.write_real_number(L, "L");
-    wtr.write_real_number(D, "D");
-    wtr.write_real_number(d, "d");
-    wtr.write_problem_setting(carParking, solver);
-    wtr.write_sptree_controller(solver);
-    wtr.close();
-    
-    
+    // rocs::matWriter wtr("data_carParking.mat");
+    // wtr.open();
+    // wtr.write_real_number(H, "H");
+    // wtr.write_real_number(L, "L");
+    // wtr.write_real_number(D, "D");
+    // wtr.write_real_number(d, "d");
+    // wtr.write_problem_setting(carParking, solver);
+    // wtr.write_sptree_controller(solver);
+    // wtr.close();
+    std::string datafile = "controller_carParking.h5";
+    rocs::h5FileHandler ctlrWtr(datafile, H5F_ACC_TRUNC);
+    ctlrWtr.write_number<double>(H, "H");
+    ctlrWtr.write_number<double>(L, "L");
+    ctlrWtr.write_number<double>(D, "D");
+    ctlrWtr.write_number<double>(d, "d");
+    ctlrWtr.write_problem_setting< rocs::DTCntlSys<carde> >(carParking);
+    ctlrWtr.write_ivec_array(solver._goal, "G");
+    ctlrWtr.write_ivec_array(solver._obs, "xobs");
+    ctlrWtr.write_sptree_controller(solver);
+
+
     return 0;
 }

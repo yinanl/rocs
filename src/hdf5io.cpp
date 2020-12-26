@@ -82,18 +82,22 @@ namespace rocs {
 		      << varname << " is empty.\n";
 	    return 0;
 	}
-	hsize_t dim[3];
-	dim[0] = arr[0].getdim();
-	dim[1] = 2;
-	dim[2] = arr.size();
+	hsize_t dim[3] = {(hsize_t)arr[0].getdim(), 2, arr.size()};
 	H5::DataSpace dataspace(3, dim);
-	// hsize_t nData = dim[0]*dim[1]*dim[2];
 	double *data = new double[dim[0]*dim[1]*dim[2]];
-	for(hsize_t i = 0; i < dim[2]; ++i)
+	for(hsize_t i = 0; i < dim[2]; ++i) {
 	    for(hsize_t j = 0; j < dim[0]; ++j) {// j row of the i element in arr, 2 cols
-		*(data+i*dim[0]*dim[1]+j*dim[1]) = arr[i][j].getinf();
-		*(data+i*dim[0]*dim[1]+j*dim[1] + 1) = arr[i][j].getsup();
+		*(data+j*dim[2]*dim[1]+i) = arr[i][j].getinf();
+		*(data+j*dim[2]*dim[1]+dim[2]+i) = arr[i][j].getsup();
 	    }
+	}
+	// boost::multi_array<double, 3>  data(boost::extents[dim[0]][dim[1]][dim[2]]);
+	// for(hsize_t i = 0; i < dim[2]; ++i) {
+	//     for(hsize_t j = 0; j < dim[0]; ++j) {// j row of the i element in arr, 2 cols
+	// 	data[j][0][i] = arr[i][j].getinf();
+	// 	data[j][1][i] = arr[i][j].getsup();
+	//     }
+	// }
 	H5::FloatType datatype(H5::PredType::NATIVE_DOUBLE);
 	H5::DataSet dataset = _h5file.createDataSet(varname, datatype, dataspace);
 	dataset.write(data, datatype);

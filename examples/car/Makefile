@@ -1,4 +1,4 @@
-# 1) get directories of external packages: 
+# 1) get directories of external packages:
 # BSTDIR (boost), MATDIR (matlab), LADIR (armadillo).
 # 2) get compiling and linking flags:
 # CXX, CXXFLAGS, INCS, LIBS, LIBTEST, LDFLAGS.
@@ -29,25 +29,16 @@ TARGETS := $(basename $(ESRCS))
 # rules
 all: $(TARGETS)
 
-carTraj: carReachTraj.o $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
-
 carAbst: carAbst.o $(OBJS) $(ODIR)/buchi.o
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
 
 carAbst4: carAbst_dba4.o $(OBJS) $(ODIR)/buchi.o
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
 
-carAbst_ref: carAbst_ref.o $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
-
 carDBA: carDBA.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
 
 carDBA4: carDBA_dba4.o $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
-
-carDBAp4: carDBA_p4.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
 
 carReach1: carReach1.o $(OBJS)

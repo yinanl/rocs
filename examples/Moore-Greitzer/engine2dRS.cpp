@@ -13,7 +13,8 @@
 
 #include "src/system.hpp"
 #include "src/csolver.h"
-#include "src/matlabio.h"
+// #include "src/matlabio.h"
+#include "src/hdf5io.h"
 
 
 const double a = 1./3.5;
@@ -113,13 +114,18 @@ int main(int argc, char *argv[]) {
     solver.print_controller_info();
 
     /* save the problem data and the solution */
-    // rocs::matWriter wtr("data_caseII_Cobuchi2.mat");
-    rocs::matWriter wtr("data_2d_caseIReachstay.mat");
-    // rocs::matWriter wtr("data_caseIIReach2.mat");
-    wtr.open();
-    wtr.write_problem_setting(engine, solver);
-    wtr.write_sptree_controller(solver);
-    wtr.close();
+    // rocs::matWriter wtr("data_2d_caseIReachstay.mat");
+    // wtr.open();
+    // wtr.write_problem_setting(engine, solver);
+    // wtr.write_sptree_controller(solver);
+    // wtr.close();
+    std::string datafile = "controller_2d_caseIReachstay.h5";
+    rocs::h5FileHandler ctlrWtr(datafile, H5F_ACC_TRUNC);
+    ctlrWtr.write_problem_setting< rocs::CTCntlSys<mgode2> >(engine);
+    ctlrWtr.write_ivec_array(solver._goal, "G");
+    ctlrWtr.write_ivec_array(solver._obs, "xobs");
+    ctlrWtr.write_sptree_controller(solver);
+    
     
     engine.release_flows();
     

@@ -21,7 +21,6 @@
 #include "src/DBAparser.h"
 #include "src/abstraction.hpp"
 #include "src/bsolver.hpp"
-#include "src/txtfileio.h"
 #include "src/hdf5io.h"
 
 

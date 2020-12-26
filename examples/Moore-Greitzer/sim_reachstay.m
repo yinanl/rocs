@@ -1,29 +1,35 @@
-
+clear
+clc
 addpath('../../matlab')
 %% load spec & controller
-% data saved in .mat:
-% - Tree-structrued controller: ctree, cindex, cvalue.
-% - All input values: U.
-% - Workarea: X.
-% - Sampling time: ts.
-% - Target area: G.
-global a B H W lc cx cy aH H2 W2
-a = 1/3.5;
-B = 2.0;
-H = 0.18;
-W = 0.25;
-lc = 8.0;
-cx = 1.0/lc;
-cy = 1.0/(4*lc*B*B);
-aH = a+H;
-H2 = H/(2.0*W*W*W);
-W2 = 3*W*W;
+vf= @MG;
 
-% load('data_caseII_Cobuchi2.mat')
-load('data_caseIIReachstay2.mat')
-% load('data_caseIIReach2.mat')
-vf= @engineMG;
+%%% Controller data %%%
+% - ts: Sampling time.
+% - U : All input values.
+% - X : Workarea.
+% - A(can be empty): obstacles.
+% - G(can be empty): Target area.
+% - pavings: Tree-structrued controller.
+% - tag: indicating if a cell is inside the winning set.
+% - ctlr: all valid control inputs for each cell in pavings.
 
+%%% Load from .mat file %%%
+% load('controller_2d_caseIReachstay.mat')
+
+%%% Load from .h5 file %%%
+ctlrfile= 'controller_2d_caseIReachstay.h5';
+ts= h5read(ctlrfile, '/ts');
+X= h5read(ctlrfile, '/X')';
+U= h5read(ctlrfile, '/U')';
+A= permute(h5read(ctlrfile, '/xobs'), [3,2,1]);
+G= permute(h5read(ctlrfile, '/G'), [3,2,1]);
+pavings= h5read(ctlrfile, '/pavings')';
+tag= h5read(ctlrfile, '/tag');
+ctlr= h5read(ctlrfile, '/ctlr')';
+
+
+%% Winning set
 % winid= find(any(ctlr,2));
 % winset= pavings(winid,:);
 winset= pavings(tag==1,:);
@@ -31,10 +37,10 @@ wc= [(winset(:,1)+winset(:,2))/2,...
     (winset(:,3)+winset(:,4))/2];
 loseid= find(~any(ctlr,2));
 loseset= pavings(loseid,:);
-% figure
+
+figure
 % plot(wc(:,1), wc(:,2), '.')
-% plot2_boxes(winset(:,1:4), [0.5,0.5,0.5], 'k', 1);
-% plot2_boxes(pavings((tag==1)&any(ctlr,2),1:4), cg, cg, 1);
+plot2_boxes(winset(:,1:4), [0.5,0.5,0.5], 'k', 1);
 
 
 %% simulation
@@ -59,35 +65,32 @@ while( t <= Tsim)
     xid= find(x(1)>=pavings(:,1) & x(1)<=pavings(:,2) & ...
         x(2)>=pavings(:,3) & x(2)<=pavings(:,4)); % direct search
     uid= find(ctlr(xid(1),:));
-    
-%     % select a random u from all valid control values
-%     pick=randperm(numel(uid));
-%     u= U(uid(pick(1)),:);
-%     % select the minimum value
-%     uall= U(uid,:);
-%     [val, ind]= min(abs(uall(:,1)));
-%     u= uall(ind,:);
-%     % select the first/last value
-%     u= U(uid(end),:);
-
-    % select the minimum mu (u(2)) change
-    uall= U(uid,:);
-    [val, ind]= min(abs(uall(:,2)-muold));
-    u= uall(ind,:);
-
-    % compute next state
-    [tt,xx]= ode45(@(t,x) vf(t,x,u), [0 ts], x);
+    if (isempty(uid))
+        error("Invalid controller.");
+    else
+        % select a random u from all valid control values
+        pick=randperm(numel(uid));
+        u= U(uid(pick(1)),:);
+%         % select the minimum value
+%         uall= U(uid,:);
+%         [val, ind]= min(abs(uall(:,1)));
+%         u= uall(ind,:);
+%         % select the first/last value
+%         u= U(uid(end),:);
+    end
     
     % append state for simulation
     usim= cat(1, usim, repmat(u,size(tt,1),1)); % a col
     tsim= cat(1, tsim, t+tt); % a col
+    xts= cat(1, xts, x');
+    
+    % compute next state
+    [tt,xx]= ode45(@(t,x) vf(t,x,u), [0 ts], x);
     xsim= cat(1, xsim, xx);
-    xts= cat(1, xts, xx(end,:));
         
     % update x, t
     x= xx(end,:)';  % a col
     t= t + tt(end);
-    muold= u(2);
 end
 
 
@@ -141,10 +144,6 @@ hold on
 %     'LineWidth',LW, 'LineStyle', '-') 
 rectangle('Position',[0.40,0.6,0.16,0.08],...
     'LineWidth',LW, 'LineStyle', '-')
-% rectangle('Position',[X(1,1), 0.62, X(1,2)-X(1,1), 0.08],...
-%     'LineWidth',LW, 'LineStyle', '-')
-% rectangle('Position',[G(1,1),G(2,1),G(1,2)-G(1,1),G(2,2)-G(2,1)],...
-%     'LineWidth',LW, 'LineStyle', '-', 'EdgeColor', cge)
 
 % % plot the target set
 rectangle('Position',[G(1,1),G(2,1),G(1,2)-G(1,1),G(2,2)-G(2,1)],...
@@ -152,7 +151,8 @@ rectangle('Position',[G(1,1),G(2,1),G(1,2)-G(1,1),G(2,2)-G(2,1)],...
     'LineWidth',LW, 'LineStyle', '-', 'EdgeColor', cdg)
 
 % % plot the avoid area
-rectangle('Position',[xobs(1,1),xobs(2,1),xobs(1,2)-xobs(1,1),xobs(2,2)-xobs(2,1)],...
+rectangle('Position',[A(1,1),A(2,1),...
+    A(1,2)-A(1,1), A(2,2)-A(2,1)],...
     'LineWidth',LW, 'LineStyle', '-', 'EdgeColor', 'k')
 
 % % plot the simulation

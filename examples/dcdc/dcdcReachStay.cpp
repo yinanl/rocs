@@ -11,7 +11,8 @@
 
 #include "src/system.hpp"
 #include "src/csolver.h"
-#include "src/matlabio.h"
+#include "src/hdf5io.h"
+// #include "src/matlabio.h"
 
 #include "dcdc.hpp"
 
@@ -45,12 +46,19 @@ int main()
 
 
     /* save the problem data and the solution */
-    rocs::matWriter wtr("data_dcdcCoBuchi.mat");
-    // rocs::matWriter wtr("data_ReachStay.mat");
-    wtr.open();
-    wtr.write_problem_setting(dcdcRS, solver);
-    wtr.write_sptree_controller(solver);
-    wtr.close();
+    // rocs::matWriter wtr("data_dcdcCoBuchi.mat");
+    // // rocs::matWriter wtr("data_ReachStay.mat");
+    // wtr.open();
+    // wtr.write_problem_setting(dcdcRS, solver);
+    // wtr.write_sptree_controller(solver);
+    // wtr.close();
+    std::string datafile = "controller_dcdcCoBuchi.h5";
+    rocs::h5FileHandler ctlrWtr(datafile, H5F_ACC_TRUNC);
+    ctlrWtr.write_problem_setting< rocs::DTSwSys<dcde> >(dcdcRS);
+    ctlrWtr.write_ivec_array(solver._goal, "G");
+    ctlrWtr.write_ivec_array(solver._obs, "xobs");
+    ctlrWtr.write_sptree_controller(solver);
+    
 
     return 0;
 }

@@ -18,7 +18,7 @@ vf= @MG;
 % load('controller_2d_caseIReachstay.mat')
 
 %%% Load from .h5 file %%%
-ctlrfile= 'controller_2d_caseIReachstay.h5';
+ctlrfile= 'controller_caseI_cobuchi.h5';
 ts= h5read(ctlrfile, '/ts');
 X= h5read(ctlrfile, '/X')';
 U= h5read(ctlrfile, '/U')';
@@ -37,6 +37,9 @@ wc= [(winset(:,1)+winset(:,2))/2,...
     (winset(:,3)+winset(:,4))/2];
 loseid= find(~any(ctlr,2));
 loseset= pavings(loseid,:);
+
+wsize= sum((winset(:,2)-winset(:,1)).*(winset(:,4)-winset(:,3)));
+winper= wsize/((X(1,2)-X(1,1))*(X(2,2)-X(2,1)))
 
 figure
 % plot(wc(:,1), wc(:,2), '.')

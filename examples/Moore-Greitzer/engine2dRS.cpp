@@ -104,12 +104,12 @@ int main(int argc, char *argv[]) {
     solver.print_controller_info();
     solver.print_controller();
     
-    double ei[]{0.0002, 0.0002};
+    double ei[]{0.00018, 0.00018};
     double er[]{0.005, 0.005};
-    double ermin[]{0.0002, 0.0002};
+    double ermin[]{0.00018, 0.00018};
     // solver.cobuchi(&engine, ei, er);
-    // solver.reachstay_control(&engine, ei, ei);
-    solver.reachstay_control(&engine, ei, er, true, ermin);
+    solver.reachstay_control(&engine, ei, ermin);
+    // solver.reachstay_control(&engine, ei, er, true, ermin);
     // solver.reachability_control(&engine, ermin);
     solver.print_controller_info();
 

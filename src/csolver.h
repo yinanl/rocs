@@ -940,50 +940,35 @@ namespace rocs {
      * @param nNodes the number of DBA nodes.
      * @param e a partition precision. 
      */
-    template<typename system>
+    template<typename system, typename F>
     void dba_control(std::vector<CSolver*> &w, system* ptrsys,
 		     std::vector<SPtree*> &sdoms,
 		     UintSmall nNodes, boost::dynamic_bitset<> &isacc,
-		     // std::vector<UintSmall> &acc,
+		     F init_w, UintSmall oid[],
 		     const double e[]) {
 	// /***** LOGGING  *****/
 	// std::ofstream logger;
 	// /***** LOGGING  *****/
 
+	/* Initialize the S-domains */
+	std::stack<SPnode*> l;
+	std::vector< std::stack<SPnode*> > l0(nNodes);
+	std::vector< std::stack<SPnode*> > l1(nNodes);
+	std::vector< std::stack<SPnode*> > l2(nNodes);
+	for (UintSmall i = 0; i < nNodes; ++i) {
+	    init_w(w, i, oid); //initialize the partition 
+	    sdoms[oid[i]] = &(w[i]->_ctlr);
+	    if (isacc[i]) {
+	    	w[i]->init_winset();
+	    }
+	    w[i]->init_leafque(l0[i], l1[i], l2[i]);
+	}
+
 	/* Set maximum iteration for the inner loop (i.e. the reachability loop) */
 	size_t maxNoInner = 0;
-	for (rocs::UintSmall i = 0; i < nNodes; ++i) {
+	for (UintSmall i = 0; i < nNodes; ++i) {
 	    if (w[i]->_maxiter > maxNoInner)
 		maxNoInner = w[i]->_maxiter;
-	}
-	
-	/* Initialize the S-domain of the accepting nodes to the whole state space */
-	// boost::dynamic_bitset<> isacc(nNodes, false);
-	// for (rocs::UintSmall i = 0; i < acc.size(); ++i) {
-	//     isacc[acc[i]] = true;
-	//     w[acc[i]]->init_winset();
-	// }
-	for (size_t i = 0; i < isacc.size(); ++i) {
-	    if (isacc[i]) {
-		w[i]->init_winset();
-		// /***** LOGGING  *****/
-		// std::cout << "Initial winning set of w" << i <<":\n";
-		// w[i]->print_controller();
-		// /***** LOGGING  *****/
-	    }
-	}
-	
-	// std::vector<SPtree*> sdoms(nNodes);
-	// for (rocs::UintSmall i = 0; i < nNodes; ++ i) {
-	//     sdoms[i] = &(w[i]->_ctlr);
-	// }
-    
-	std::stack<rocs::SPnode*> l;
-	std::vector< std::stack<rocs::SPnode*> > l0(nNodes);
-	std::vector< std::stack<rocs::SPnode*> > l1(nNodes);
-	std::vector< std::stack<rocs::SPnode*> > l2(nNodes);
-	for (rocs::UintSmall i = 0; i < nNodes; ++i) {
-	    w[i]->init_leafque(l0[i], l1[i], l2[i]);
 	}
 
 	boost::dynamic_bitset<> stop(nNodes, false);
@@ -1012,14 +997,23 @@ namespace rocs {
 	     * empty l0, l2, and l0<-l1.
 	     */
 	    for (rocs::UintSmall i = 0; i < nNodes; ++i) {
-		if (!l1[i].empty() && !isacc[i] ) {
-		    l0[i] = std::stack<rocs::SPnode*>();
-		    l2[i] = std::stack<rocs::SPnode*>();
-		    swap(l1[i], l0[i]);
-		    w[i]->_ctlr.reset_tags();
-		    // std::cout << "The size of l1[" << i << "]=" << l1[i].size()
-		    // 	      << ". The size of l0[" << i << "]=" << l0[i].size() << '\n';
+		if (!isacc[i] && iter[1] > 1) {
+		    delete w[i];
+		    init_w(w, i, oid);
+		    sdoms[oid[i]] = &(w[i]->_ctlr);
+		    l0[i] = std::stack<SPnode*>();
+		    l1[i] = std::stack<SPnode*>();
+		    l2[i] = std::stack<SPnode*>();
+		    w[i]->init_leafque(l0[i], l1[i], l2[i]);
 		}
+		// if (!l1[i].empty() && !isacc[i] ) {
+		//     l0[i] = std::stack<rocs::SPnode*>();
+		//     l2[i] = std::stack<rocs::SPnode*>();
+		//     swap(l1[i], l0[i]);
+		//     w[i]->_ctlr.reset_tags();
+		//     // std::cout << "The size of l1[" << i << "]=" << l1[i].size()
+		//     // 	      << ". The size of l0[" << i << "]=" << l0[i].size() << '\n';
+		// }
 	    }
 
 #ifdef VERBOSE
@@ -1039,12 +1033,12 @@ namespace rocs {
 		// /***** LOGGING  *****/
 		
 		/* Check and compute the predecessors */
-		for (rocs::UintSmall i = 0; i < nNodes; ++i) {
+		for (UintSmall i = 0; i < nNodes; ++i) {
 		    if (!isacc[i] ) {
 			lold[i] = l1[i].size();
 			if (!start[i]) {
 			    if (w[i]->targetset_in_sdoms(sdoms)) {
-				std::cout << iter[1] << ": start to compute w" << i << "...\n";
+				std::cout << iter[1] << ": start to compute w" << oid[i] << "...\n";
 				start[i] = true;
 			    }
 			}
@@ -1068,7 +1062,7 @@ namespace rocs {
 				w[i]->union_of_pres(ptrsys, sdoms, l, l0[i], l1[i], l2[i], e);  //l=empty, l012 fill
 				// std::cout << "dba_control: computing l0 is complete.\n";
 			    }
-			    w[i]->_ctlr.tagging(rocs::INNER);
+			    w[i]->_ctlr.tagging(INNER);
 
 			    ce = clock();
 			    t[i] += (double)(ce - cb)/CLOCKS_PER_SEC;
@@ -1080,7 +1074,7 @@ namespace rocs {
 			    // w[i]->print_controller();
 			    // /***** LOGGING  *****/
 #ifdef VERBOSE
-			    std::cout << 'w' << i << ", iter " << iter[0] << ": " << l1[i].size() << ", ["; // w[i]->_fpiter[0] <<
+			    std::cout << 'w' << oid[i] << ", iter " << iter[0] << ": " << l1[i].size() << ", ["; // w[i]->_fpiter[0] <<
 			    for (int k = 0; k < ptrsys->_xdim; ++k) {
 				std::cout << e[k];
 				if (k < ptrsys->_xdim-1)
@@ -1103,12 +1097,12 @@ namespace rocs {
 
 	    /* Modify w of accepting nodes by w of non-accepting nodes */
 	    outerfp = true;
-	    for (rocs::UintSmall i = 0; i < nNodes; ++i) {
+	    for (UintSmall i = 0; i < nNodes; ++i) {
 		if (isacc[i]) {
 		    lold[i] = l0[i].size() + l2[i].size();
 		    if (!start[i]) {
 			if (w[i]->targetset_in_sdoms(sdoms)) {
-			    std::cout << ": start to compute w" << i << "...\n";
+			    std::cout << ": start to compute w" << oid[i] << "...\n";
 			    start[i] = true;
 			}
 		    }
@@ -1125,7 +1119,7 @@ namespace rocs {
 			    swap(l, l1[i]);  // l=l2, l2=empty
 			    w[i]->union_of_pres(ptrsys, sdoms, l, l0[i], l1[i], l2[i], e);  //l=empty, l012 fill
 			}
-			w[i]->_ctlr.tagging(rocs::INNER);
+			w[i]->_ctlr.tagging(INNER);
 
 			ce = clock();
 			t[i] += (double)(ce - cb)/CLOCKS_PER_SEC;
@@ -1133,7 +1127,7 @@ namespace rocs {
 		    stop[i] = (l0[i].size() + l2[i].size()) <= lold[i];
 		    outerfp &= stop[i];
 #ifdef VERBOSE
-		    std::cout << 'w' << i << ", iter " << w[i]->_fpiter[0] << ": " << l1[i].size() << ", [";
+		    std::cout << 'w' << oid[i] << ", iter " << w[i]->_fpiter[0] << ": " << l1[i].size() << ", [";
 		    for (int k = 0; k < ptrsys->_xdim; ++k) {
 			std::cout << e[k];
 			if (k < ptrsys->_xdim-1)
@@ -1149,7 +1143,7 @@ namespace rocs {
 	te = clock();
 	std::cout << "Control synthesis stops." << std::endl;
 
-	for (rocs::UintSmall i = 0; i < nNodes; ++i) {
+	for (UintSmall i = 0; i < nNodes; ++i) {
 	    w[i]->_timer = t[i];
 	}
 	std::cout << "Total Number of outer iterations: " << iter[1] << std::endl;

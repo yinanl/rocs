@@ -58,5 +58,5 @@ $(ODIR)/%.o: $(SDIR)/%.cpp $(SDIR)/%.h
 $(ODIR)/%.o: $(SDIR)/%.c $(SDIR)/%.h
 	gcc -Wall -Wextra -o3 -c $< -o $@
 
-%.o: %.cpp $(SDIR)/system.hpp scara.hpp scara_decom.hpp
+%.o: %.cpp $(SDIR)/system.hpp scara.hpp
 	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@

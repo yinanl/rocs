@@ -25,7 +25,7 @@ fm= @carflow; % DEs
 % - q0: the initial node of the DBA.
 % - acc: accepting nodes.
 % - q_prime: the DBA transition matrix.
-spec= 'dba3';
+spec= 'dba2';
 [n_dba,n_props,q0,acc,q_prime]=read_spec(strcat(spec,'.txt'));
 
 %%% Controller data %%%
@@ -64,14 +64,15 @@ U= h5read(ctlrfile, '/U')';
 
 %% simulation
 rng('shuffle')
-T= 50;
+T= 40;
 num_acc= 3;
 
 %%% Set up an initial condition %%%
 % x0= [1.3; 5; 3*pi/4];
 % x0= [3; 2; pi/2];
-x0= [6; 1; pi/2];
-% x0= [9; 5; pi/4];
+% x0= [6; 1; pi/2];
+x0= [9; 5; pi/4];
+% x0= [1.5; 9; pi/4];
 
 x= x0;  % a column
 t= 0;

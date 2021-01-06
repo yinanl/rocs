@@ -29,6 +29,12 @@ TARGETS := $(basename $(ESRCS))
 # rules
 all: $(TARGETS)
 
+carDBA1pre: carDBA_dba1pre.o $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+
+carDBA4pre: carDBA_dba4pre.o $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+
 carAbst: carAbst.o $(OBJS) $(ODIR)/buchi.o
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
 

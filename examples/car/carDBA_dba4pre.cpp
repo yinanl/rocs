@@ -1,11 +1,9 @@
 /**
- *  carDBA.cpp
- *
- *  A general main program performing DBA control synthesis.
- *  Based on the T operator: U_{j} pre(W_i | O_ij)
- *  Case II: a different setup of goal and obstacle.
+ *  carDBA_dba4pre.cpp
  *  
- *  Created by Yinan Li on July 8, 2020.
+ *  Control synthesis for dba4 with preprocessing. (TO BE AUTOMATED)
+ *  
+ *  Created by Yinan Li on Jan. 5, 2020.
  *
  *  Hybrid Systems Group, University of Waterloo.
  */
@@ -31,30 +29,26 @@ int main(int argc, char *argv[])
     /**
      * Default values
      **/
-    std::string specfile;
+    std::string specfile = "dba4.txt";
     double e[]{0.2, 0.2, 0.2}; /* partition precision */
     
     
     /**
-     * Input arguments: (2<= argc <= 5)
-     * carAbst dbafile precision(e.g. 0.2 0.2 0.2)
+     * Input arguments: (argc = 1 or 4)
+     * carAbst precision(e.g. 0.2 0.2 0.2)
      */
-    if (argc < 2 || argc > 5) {
-	std::cout << "Improper number of arguments.\n";
-	std::exit(1);
-    }
-    specfile = std::string(argv[1]);
-    if (argc > 2 && argc < 5) {
+    if (argc > 1 && argc < 4) {
 	std::cout << "Input precision should be of 3-dim, e.g. 0.2 0.2 0.2.\n";
 	std::exit(1);
     }
-    if (argc > 2) {
-	for(int i = 2; i < 5; ++i)
-	    e[i-2] = std::atof(argv[i]);
+    
+    if (argc > 1) {
+	for(int i = 1; i < 4; ++i)
+	    e[i-1] = std::atof(argv[i]);
     }
     std::cout << "Partition precision: " << e[0] << ' '
 	      << e[1] << ' ' << e[2] << '\n';
-    std::cout << "Not using preprocessing.\n";
+    std::cout << "Using preprocessing.\n";
     
 
     /**
@@ -138,12 +132,42 @@ int main(int argc, char *argv[])
 		      w[i]->set_M(arrayM[oid[i]]);
 		  };
     
+    
     /* Perform synthesis */
-    rocs::UintSmall oid[nNodes];
-    for(int i = 0; i < nNodes; ++i)
-	oid[i] = i;
-    rocs::dba_control< rocs::DTCntlSys<carde> >(w, &carvf, sdoms, nNodes,
-						isacc, init_w, oid, e);
+    /* order: q2,3,4 --> q5 --> q1,2 */
+    /* W 2,3,4 */
+    rocs::UintSmall n1 = 3;
+    std::vector<rocs::CSolver*> w1(n1);
+    boost::dynamic_bitset<> acc1(n1, false);
+    acc1[0] = isacc[2];
+    acc1[1] = isacc[3];
+    acc1[2] = isacc[4];
+    rocs::UintSmall oid1[]{2, 3, 4};
+    rocs::dba_control< rocs::DTCntlSys<carde> >(w1, &carvf, sdoms, n1, acc1,
+						init_w, oid1, e);
+    w[2] = w1[0];
+    w[3] = w1[1];
+    w[4] = w1[2];
+    /* W 5 */
+    rocs::UintSmall n2 = 1;
+    std::vector<rocs::CSolver*> w2(n2);
+    boost::dynamic_bitset<> acc2(n2, false);
+    acc2[0] = isacc[5];
+    rocs::UintSmall oid2[]{5};
+    rocs::dba_control< rocs::DTCntlSys<carde> >(w2, &carvf, sdoms, n2, acc2,
+						init_w, oid2, e);
+    w[5] = w2[0];
+    /* W 0 1 */
+    rocs::UintSmall n3 = 2;
+    std::vector<rocs::CSolver*> w3(n3);
+    boost::dynamic_bitset<> acc3(n3, false);
+    acc3[0] = isacc[0];
+    acc3[1] = isacc[1];
+    rocs::UintSmall oid3[]{0, 1};
+    rocs::dba_control< rocs::DTCntlSys<carde> >(w3, &carvf, sdoms, n3, acc3,
+						init_w, oid3, e);
+    w[0] = w3[0];
+    w[1] = w3[1];
     
 
     /**

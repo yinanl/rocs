@@ -10,10 +10,17 @@ pypath = dirname(dirname(dirname(realpath(__file__)))) + '/python/'
 sys.path.insert(1, pypath)
 import utils
 from odes import car
+import argparse
+
+parser = argparse.ArgumentParser(description='Indicate control scenarios.')
+parser.add_argument("spec", type=str, help="indicate the case number")
+args = parser.parse_args()
 
 
 dirpath = dirname(realpath(__file__))
-spec = "dba2"
+# spec = "dba2"
+spec = args.spec
+
 
 # # Set up workspace
 theta = 3.5

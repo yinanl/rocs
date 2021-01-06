@@ -1,5 +1,5 @@
 Name=Fa1 & Fa2 & Fa3
-AP=a1(1) a2(2) a3(3) others(0)
+AP=a1(1) a2(2) a3(4) others(0)
 acc=0
 nNodes=8
 nAP=3

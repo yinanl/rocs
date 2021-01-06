@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.linalg import expm, inv
+from scipy.optimize import fsolve
 
 
 def dcdc(t, x, u):
@@ -65,6 +66,30 @@ def MG_scaled(t, x, u):
     dx = cx * (aH+H2*(x[0]-W)*(W2-(x[0]-W)*(x[0]-W)) - x[1]/s) + u[0]
     dy = s*cy * (x[0] - u[1]*np.sqrt(x[1]/s))
     return np.array([dx, dy])
+
+
+def MG_EP(psi_c0, H, W, mu):
+    psi_c = lambda x: psi_c0+H*(1+1.5*(x/W-1)-0.5*(np.power((x/W-1),3)))-x**2/mu/mu
+    xe = fsolve(psi_c, 0.5)
+    ye = np.square(xe/mu)
+    return (xe, ye)
+
+
+def MG_plotEP(ax):
+    H = 0.18
+    W = 0.25
+    xe = []
+    ye = []
+    mu_0 = 0.5
+    for i in range(0, 20):
+        mu2 = mu_0+i*0.01
+        x, y = MG_EP(1.67*H, H, W, mu2)
+
+        xe.append(x[0])
+        ye.append(y[0])
+    ax.plot(xe[0:12],ye[0:12],'--', label='Ustable Equilibrium Points')
+    ax.plot(xe[11:20],ye[11:20], label='Stable Equilibrium Points')
+    ax.legend(loc='lower right')
 
 
 def scara_2dbint(t, x, u):

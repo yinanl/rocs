@@ -7,17 +7,34 @@ from os.path import dirname, realpath
 pypath = dirname(dirname(dirname(realpath(__file__)))) + '/python/'
 sys.path.insert(1, pypath)
 import utils
-from odes import MG, MG_scaled
+from odes import MG, MG_scaled, MG_plotEP
+import argparse
+parser = argparse.ArgumentParser(description='Indicate control scenarios.')
+parser.add_argument("case", type=int, help="indicate the case number")
+args = parser.parse_args()
+# from matplotlib import rc
+# rc('font',**{'family':'serif','serif':['Times']})
+# rc('text', usetex=True)
 
 
 dirpath = dirname(realpath(__file__))
 spec = "FGb"
-s = 10
+s = 1.0
 
 
 # # Set up state space
-goal_real = np.array([[0.5009, 0.5069], [0.6575*s, 0.6635*s]])
-obs = np.array([[0.520, 0.526], [0.658*s, 0.664*s]])
+if(args.case == 1):
+    # case I
+    goal_real = np.array([[0.5009, 0.5069], [0.6575*s, 0.6635*s]])
+    obs = np.array([[0.520, 0.526], [0.658*s, 0.664*s]])
+    head = "/controller_I_"
+elif(args.case == 2):
+    # case II
+    goal_real = np.array([[0.4489, 0.4549], [0.6483, 0.6543]])
+    obs = np.array([[0.497, 0.503], [0.650, 0.656]])
+    head = "/controller_II_"
+else:
+    raise ValueError('Wrong input value.')
 
 
 def get_labels(x):
@@ -41,8 +58,8 @@ tag = []
 pavings = []
 ctlr = []
 for k in range(dba.n_dba):
-    w = "/controller_" + spec + "_w" + str(k) + ".h5"
-    tau, X, U, _, _, p, t, c = utils.read_controller_itvl_from_h5(dirpath+w)
+    w = head + spec + "_w" + str(k) + ".h5"
+    tau, X, U, G, A, p, t, c = utils.read_controller_itvl_from_h5(dirpath+w)
     tag.append(t)
     pavings.append(p)
     ctlr.append(c)
@@ -60,8 +77,14 @@ print(winper)
 # # x-y 2D plot of winning set
 fig, ax = plt.subplots()
 ax.set_xlim(X[0, 0], X[0, 1])
+ax.set_xlabel(r'$\Phi$', **{'fontname':'Times New Roman'})
 ax.set_ylim(X[1, 0], X[1, 1])
-
+ax.set_ylabel(r'$\Psi$', **{'fontname':'Times New Roman'})
+ax.set_aspect('equal',adjustable='box')
+# ax.axis('equal')
+MG_plotEP(ax)
+# rect_ss = patches.Rectangle((X[0, 0], X[1, 0]), X[0, 1]-X[0, 0], X[1, 1]-X[1, 0],
+#                               linewidth=1.5, edgecolor='k', fill=False)
 rect_goal = patches.Rectangle((goal_real[0, 0], goal_real[1, 0]),
                               goal_real[0, 1]-goal_real[0, 0],
                               goal_real[1, 1]-goal_real[1, 0],
@@ -70,8 +93,8 @@ rect_obs = patches.Rectangle((obs[0, 0], obs[1, 0]),
                              obs[0, 1]-obs[0, 0],
                              obs[1, 1]-obs[1, 0],
                              linewidth=1, edgecolor='k',
-                             fill=True, facecolor='k')
-
+                             fill=True, facecolor='grey')
+# ax.add_patch(rect_ss)
 ax.add_patch(rect_goal)
 ax.add_patch(rect_obs)
 ax.add_collection(
@@ -115,7 +138,7 @@ while(t < Tsim):
     u = U[uid, :].squeeze()
 
     # Integrate ode
-    sol = solve_ivp(MG_scaled, [0, tau], x, method='RK45', args=(u,))
+    sol = solve_ivp(MG, [0, tau], x, method='RK45', args=(u,))
     tt = sol.t[-1]
     y = sol.y[:, -1]
 

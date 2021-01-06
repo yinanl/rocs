@@ -103,10 +103,14 @@ while(t < Tsim):
         break
 
     if(uset.size > 1):
-        uid = rng.choice(uset, 1)  # randomly pick one
+        if(t < tau):
+            uid = rng.choice(uset, 1)  # randomly pick one
+        else:
+            uid = uset[np.argmin(np.linalg.norm(U[uset, :]-upre, axis=1))]
     else:
         uid = int(uset)
     u = U[uid, :].squeeze()
+    upre = u
 
     # Calculate torque
     torq = model.compute_torque(np.atleast_2d(u).T, np.atleast_2d(x[2:4]).T,
@@ -179,6 +183,7 @@ ax.plot(xsim[0, 0], xsim[0, 1], marker='^',
         markerfacecolor='r', markeredgecolor='r')
 ax.plot(xsim[-1, 0], xsim[-1, 1], marker='v',
         markerfacecolor='g', markeredgecolor='g')
+plt.savefig(dirpath+'/fig_traj-gb2-js.png')
 
 
 figs, axs = plt.subplots(2)
@@ -187,17 +192,41 @@ fu = interp1d(tsim, torqsim, axis=0, kind='previous')
 torq_interp = fu(t_interp)
 fq = interp1d(tsim, qsim, axis=0, kind='previous')
 q_interp = fq(t_interp)
-
 axs[0].plot(t_interp, torq_interp)
 axs[0].title.set_text('Time-Control Curves')
 axs[0].legend((r'$\tau_1$', r'$\tau_2$'), loc="upper right")
 axs[0].set_xlabel(r'$t$(s)')
 axs[0].set_ylabel(r'$\tau_{1,2}$(N$\cdot$m)')
-axs[1].plot(t_interp, q_interp)
+# axs[1].plot(t_interp, q_interp)
+axs[1].plot(tsim, qsim)
 axs[1].title.set_text('Time-Automaton State Curve')
 axs[1].set_xlabel(r'$t$(s)')
 axs[1].set_ylabel(r'$q$')
 plt.subplots_adjust(left=None, bottom=None, right=None, top=None,
                     wspace=None, hspace=0.5)
+plt.savefig(dirpath+'/fig_t-uq-gb2.png')
+
+
+figs2, axs2 = plt.subplots(2)
+fthe = interp1d(tsim, xsim[:, 0:2], axis=0, kind='previous')
+the_interp = fthe(t_interp)
+model = scara(tau)
+xy2 = model.theta2xy(xsim[:, 0], xsim[:, 1])
+fxy = interp1d(tsim, xy2.T, axis=0, kind='previous')
+xy_interp = fxy(t_interp)
+axs2[0].plot(t_interp, the_interp)
+axs2[0].title.set_text(r't-$\theta$ Curves')
+axs2[0].legend((r'$\theta_1$', r'$\theta_2$'), loc="upper right")
+axs2[0].set_xlabel(r'$t$(s)')
+axs2[0].set_ylabel(r'$\theta_{1,2}$(rad)')
+axs2[1].plot(t_interp, xy_interp)
+axs2[1].title.set_text('t-xy Curves')
+axs2[1].set_xlabel(r'$t$(s)')
+axs2[1].set_ylabel(r'$x,y$(m)')
+axs2[1].legend((r'$x$', r'$y$'), loc="upper right")
+plt.subplots_adjust(left=None, bottom=None, right=None, top=None,
+                    wspace=None, hspace=0.5)
+plt.savefig(dirpath+'/fig_t-x-gb2.png')
+
 
 plt.show()

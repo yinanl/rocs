@@ -98,6 +98,20 @@ int main(int argc, char *argv[])
     scara.init_workspace(xlb, xub);
     scara.init_inputset(mu, ulb, uub);
 
+    double obs[2][4] = {{a1, xlb[1], xlb[2], xlb[3]},
+    			{M_PI/2.0, xub[1], xub[2], xub[3]}};
+    /* Two goals:
+     * (x=0.05, y=0.2), the joint space (0.5126, 1.6264)
+     * (x=0.27, y=0.03), the joint space (0.5488, -0.8763)
+     */
+    rocs::UintSmall nG = 2;
+    // double goal[2][4] = {{0.4080, 1.6172, -0.1, -0.1},
+    // 			 {0.6172, 1.6355, 0.1, 0.1}};
+    double glb[][4] = {{0.4980, 1.5739, -0.1, -0.1},
+		       {0.4903, -0.9363, -0.1, -0.1}};
+    double gub[][4] = {{0.5772, 1.7055, 0.1, 0.1},
+		       {0.6069, -0.8363, 0.1, 0.1}};
+
 
     // /**
     //  * Convert from the operational space to the joint space
@@ -123,41 +137,29 @@ int main(int argc, char *argv[])
     /* Initialize the set of S-domains */
     std::vector<rocs::CSolver*> w(nNodes);
     std::vector<rocs::SPtree*> sdoms(nNodes);
-    /* Set avoid area */
-    double obs[2][4] = {{a1, xlb[1], xlb[2], xlb[3]},
-    			{M_PI/2.0, xub[1], xub[2], xub[3]}};
-
+    rocs::UintSmall labels[]{1, 2}; // corresponding to goal1,2.
     const double e[]{0.01, 0.01, 3, 3};  // only bisect x[0] and x[1].
-    for (rocs::UintSmall i = 0; i < nNodes; ++i) {
-	w[i] = new rocs::CSolver(&scara, nProps, rocs::RELMAX);
-	w[i]->init(rocs::AVOID, obs[0], obs[1]);
-	w[i]->init(rocs::AVOID, &collision1<rocs::ivec>, e);
-	w[i]->init(rocs::AVOID, &collision2<rocs::ivec>, e);
-	w[i]->init_avoid_area();
-    }
-    /* Assign labels */
-    rocs::UintSmall nG = 2;
-    /* Two goals:
-     * (x=0.05, y=0.2), the joint space (0.5126, 1.6264)
-     * (x=0.27, y=0.03), the joint space (0.5488, -0.8763)
-     */
-    // double goal[2][4] = {{0.4080, 1.6172, -0.1, -0.1},
-    // 			 {0.6172, 1.6355, 0.1, 0.1}};
-    double glb[][4] = {{0.4980, 1.5739, -0.1, -0.1},
-		       {0.4903, -0.9363, -0.1, -0.1}};
-    double gub[][4] = {{0.5772, 1.7055, 0.1, 0.1},
-		       {0.6069, -0.8363, 0.1, 0.1}};
-    rocs::UintSmall labels[]{1, 2}; // corresponding to goal1,2,3.
-    for (rocs::UintSmall i = 0; i < nNodes; ++ i) {
-	w[i]->set_M(arrayM[i]);
-	for (rocs::UintSmall j = 0; j < nG; ++j)
-	    w[i]->labeling(glb[j], gub[j], labels[j]);
-	sdoms[i] = &(w[i]->_ctlr);
-	w[i]->init_goal_area();
-    }
-
+    auto init_w = [&scara, nProps, &labels, &arrayM,
+		   &obs, &e, &glb, &gub, nG](std::vector<rocs::CSolver*> &w,
+					     rocs::UintSmall i,
+					     rocs::UintSmall oid[]) {
+		      w[i] = new rocs::CSolver(&scara, nProps, rocs::RELMAX);
+		      w[i]->init(rocs::AVOID, obs[0], obs[1]);
+		      w[i]->init(rocs::AVOID, &collision1<rocs::ivec>, e);
+		      w[i]->init(rocs::AVOID, &collision2<rocs::ivec>, e);
+		      w[i]->init_avoid_area();
+		      for (rocs::UintSmall j = 0; j < nG; ++j)
+			  w[i]->labeling(glb[j], gub[j], labels[j]);
+		      w[i]->init_goal_area();
+		      w[i]->set_M(arrayM[oid[i]]);
+		  };
+    /* Perform synthesis */
+    rocs::UintSmall oid[nNodes];
+    for(int i = 0; i < nNodes; ++i)
+	oid[i] = i;
     double eta[]{0.05, 0.05, 0.1, 0.1};
-    rocs::dba_control< rocs::DTCntlSys<integrator> >(w,&scara,sdoms,nNodes,isacc,eta);
+    rocs::dba_control< rocs::DTCntlSys<integrator> >(w,&scara,sdoms,nNodes,isacc,
+						     init_w, oid, eta);
 
 
     /**

@@ -126,15 +126,7 @@ int main(int argc, char *argv[])
     engine.init_inputset(mu, ulb, uub);
     engine.allocate_flows();
 
-    /* set the specifications */
-    // std::stringstream convert(argv[1]);
-    // double e;
-    // convert >> e;
-
-
-    /**
-     * DBA control synthesis
-     */
+    /* define the target areas */
     /* case I */
     double e = 0.003;
     double glb[][2]{{0.5039-e, 0.6605-e}};
@@ -148,33 +140,36 @@ int main(int argc, char *argv[])
     // double olb[][2] {{0.497, 0.650}};
     // double oub[][2] {{0.503, 0.656}};
     rocs::UintSmall nG = 1, nA = 1;
+
+
+    /**
+     * DBA control synthesis
+     */
+    
     /* Initialize the set of S-domains */
     std::vector<rocs::CSolver*> w(nNodes);
     std::vector<rocs::SPtree*> sdoms(nNodes);
-    /* Set avoid area */
-    for (rocs::UintSmall i = 0; i < nNodes; ++i) {
-	w[i] = new rocs::CSolver(&engine, nProps, rocs::RELMAX, 50);
-	for (rocs::UintSmall j = 0; j < nA; ++j)
-	    w[i]->init(rocs::AVOID, olb[j], oub[j]);
-    }
-    rocs::UintSmall labels[]{1}; // corresponding to goal1,2,3.
-    for (rocs::UintSmall i = 0; i < nNodes; ++ i) {
-	w[i]->set_M(arrayM[i]);
-	std::cout << "Outgoig transitions of w" << i <<":\n";
-	for (auto &m : w[i]->_M)
-	    std::cout << m << ' ';
-	std::cout << '\n';
-	for (rocs::UintSmall j = 0; j < nG; ++j)
-	    w[i]->labeling(glb[j], gub[j], labels[j]);
-	sdoms[i] = &(w[i]->_ctlr);
-	std::cout << "Initial partition of w" << i <<":\n";
-	w[i]->print_controller();
-    }
-
-    /* DBA control synthesis */
+    rocs::UintSmall labels[]{1}; // label the goal area
+    auto init_w = [&engine, nProps, &labels, &arrayM,
+		   &olb, &oub, nA,
+		   &glb, &gub, nG](std::vector<rocs::CSolver*> &w,
+				   rocs::UintSmall i,
+				   rocs::UintSmall oid[]) {
+		      w[i] = new rocs::CSolver(&engine, nProps, rocs::RELMAX);
+		      for (rocs::UintSmall j = 0; j < nA; ++j)
+			  w[i]->init(rocs::AVOID, olb[j], oub[j]); // avoid areas
+		      for (rocs::UintSmall j = 0; j < nG; ++j)
+			  w[i]->labeling(glb[j], gub[j], labels[j]); // labeled areas
+		      w[i]->set_M(arrayM[oid[i]]);
+		  };
+    /* Perform synthesis */
     // double ei[]{0.0002, 0.0002};
     double er[]{0.00018, 0.00018};
-    rocs::dba_control< rocs::CTCntlSys<mgode2> >(w,&engine,sdoms,nNodes,isacc,er);
+    rocs::UintSmall oid[nNodes];
+    for(int i = 0; i < nNodes; ++i)
+	oid[i] = i;
+    rocs::dba_control< rocs::CTCntlSys<mgode2> >(w,&engine,sdoms,nNodes,isacc,
+						 init_w, oid, er);
     
 
     /**

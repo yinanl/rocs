@@ -30,7 +30,13 @@ all: $(TARGETS)
 dcdcInv: dcdcInv.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
 
-dcdcReachStay: dcdcReachStay.o $(OBJS)
+dcdcRS: dcdcRS.o $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+
+dcdcAbstInv: dcdcAbstInv.o $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+
+dcdcAbstDBA: dcdcAbstDBA.o $(OBJS) $(ODIR)/buchi.o
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
 
 display:
@@ -49,6 +55,8 @@ $(ODIR):
 	mkdir $(ODIR)
 $(ODIR)/%.o: $(SDIR)/%.cpp $(SDIR)/%.h
 	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
+$(ODIR)/%.o: $(SDIR)/%.c $(SDIR)/%.h
+	gcc -Wall -Wextra -o3 -c $< -o $@
 
 %.o: %.cpp $(SDIR)/system.hpp
 	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@

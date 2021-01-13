@@ -1,7 +1,7 @@
 /**
- *  safelanding.cpp
+ *  aircraft_itvl.cpp
  *
- *  Safe landing of DC9-30.
+ *  Interval method for the safe landing of DC9-30.
  *
  *  Created by Yinan Li on Feb. 10, 2020.
  *  Hybrid Systems Group, University of Waterloo.
@@ -11,7 +11,8 @@
 
 #include "src/system.hpp"
 #include "src/csolver.h"
-#include "src/matlabio.h"
+// #include "src/matlabio.h"
+#include "src/hdf5io.h"
 
 
 /* Parameters of the model */
@@ -116,11 +117,17 @@ int main(int argc, char *argv[])
     solver.print_controller_info();
 
     /* save the problem data and the solution */
-    rocs::matWriter wtr("data_safe_landing.mat");
-    wtr.open();
-    wtr.write_problem_setting(aircraft, solver);
-    wtr.write_sptree_controller(solver);
-    wtr.close();
+    // rocs::matWriter wtr("data_safe_landing.mat");
+    // wtr.open();
+    // wtr.write_problem_setting(aircraft, solver);
+    // wtr.write_sptree_controller(solver);
+    // wtr.close();
+    std::string datafile = "controller_itvl_safelanding.h5";
+    rocs::h5FileHandler ctlrWtr(datafile, H5F_ACC_TRUNC);
+    ctlrWtr.write_problem_setting< rocs::CTCntlSys<eomlong> >(aircraft);
+    ctlrWtr.write_ivec_array(solver._goal, "G");
+    ctlrWtr.write_ivec_array(solver._obs, "xobs");
+    ctlrWtr.write_sptree_controller(solver);
 
     // /* Simulate the closed-loop control */
     // double x[3] = {81, -M_PI/180, 55};

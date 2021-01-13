@@ -30,6 +30,9 @@ all: $(TARGETS)
 ipdl: ipdl.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
 
+ipdlAbst: ipdlAbst.o $(OBJS) $(ODIR)/buchi.o
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+
 clean:
 	rm -rf *.o *.dSYM $(TARGETS)
 
@@ -42,9 +45,8 @@ $(ODIR):
 	mkdir $(ODIR)
 $(ODIR)/%.o: $(SDIR)/%.cpp $(SDIR)/%.h
 	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
+$(ODIR)/%.o: $(SDIR)/%.c $(SDIR)/%.h
+	gcc -Wall -Wextra -o3 -c $< -o $@
 
 %.o: %.cpp $(SDIR)/system.hpp
 	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@
-
-# $(EDIR)/%.o: $(EDIR)/%.cpp $(SDIR)/system.hpp
-#	$(CXX) $(CXXFLAGS) $(INCS) -c $< -o $@

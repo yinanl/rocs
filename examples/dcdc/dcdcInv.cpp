@@ -20,8 +20,8 @@
 int main()
 {
     /* set the state space */
-    double xlb[] = {-2, 0.70};
-    double xub[] = {2, 1.50};
+    double xlb[] = {0.649, 0.9898};
+    double xub[] = {1.65, 1.19};
 
     /* define the control system */
     rocs::DTSwSys<dcde> dcdcInv("dcdc", tau, dcde::n, dcde::m);

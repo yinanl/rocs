@@ -262,8 +262,8 @@ namespace rocs {
 	    /* Search for the least and greatest reachstep */
 	    if(_reachstep[_idmap[queue[f]]] < minstep)
 		minstep = _reachstep[_idmap[queue[f]]];
-	    // if(_reachstep[_idmap[queue[f]]] > maxstep)
-	    // 	maxstep = _reachstep[_idmap[queue[f]]];
+	    if(_reachstep[_idmap[queue[f]]] > maxstep)
+	    	maxstep = _reachstep[_idmap[queue[f]]];
 	}
 	/* Fill up outdeg for f=0 */
 	for(size_t j = 0; j < _na; ++j) {
@@ -294,16 +294,21 @@ namespace rocs {
 	boost::dynamic_bitset<> reach(e, false);
 	for(f = 0, ie = 0; f < e; ++f) { //enqueue targets
 	    if(_reachstep[_idmap[queue[f]]]>=minstep &&
-	       _reachstep[_idmap[queue[f]]]<maxstep) { //maxstep=_reachstep[queue[0]]
+	       _reachstep[_idmap[queue[f]]]<=minstep+h/3) {
+	    // if(_reachstep[_idmap[queue[f]]]>=minstep &&
+	    //    _reachstep[_idmap[queue[f]]]<maxstep) { //maxstep=_reachstep[queue[0]]
 		reach[f] = true;
 		rque[ie] = queue[f];
 		++ie;
 	    }
 	} //end targets enqueue
 
-	// /********** Logging ***********/
+	/********** Logging ***********/
 	// std::cout << "# of target nodes: " << ie << '\n';
-	// /********** Logging ***********/
+	std::cout << "minstep= " << minstep << ", "
+		  << "maxstep= " << maxstep << ", "
+		  << "# of targets= " << ie << '\n';
+	/********** Logging ***********/
 	
 	/* Solve by BFS */
 	size_t rpre, rpost;

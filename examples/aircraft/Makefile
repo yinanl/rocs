@@ -31,7 +31,10 @@ all: $(TARGETS)
 testR: test_dynlong.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
 
-safelanding: safelanding.o $(OBJS)
+aircraft: aircraft.o $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+
+aircraftAbst: aircraftAbst.o $(OBJS)
 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
 
 display:

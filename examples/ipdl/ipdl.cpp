@@ -13,8 +13,8 @@
 
 #include "src/system.hpp"
 #include "src/csolver.h"
-
-#include "src/matlabio.h"
+#include "src/hdf5io.h"
+// #include "src/matlabio.h"
 
 
 const double m = 0.2;
@@ -89,11 +89,17 @@ int main() {
     solver.print_controller_info();
 
     /* save the problem data and the solution */
-    rocs::matWriter wtr("data_ipdlCobuchi.mat");
-    wtr.open();
-    wtr.write_problem_setting(ipdl, solver);
-    wtr.write_sptree_controller(solver);
-    wtr.close();
+    // rocs::matWriter wtr("data_ipdlCobuchi.mat");
+    // wtr.open();
+    // wtr.write_problem_setting(ipdl, solver);
+    // wtr.write_sptree_controller(solver);
+    // wtr.close();
+    std::string datafile = "controller_ipdlCobuchi.h5";
+    rocs::h5FileHandler ctlrWtr(datafile, H5F_ACC_TRUNC);
+    ctlrWtr.write_problem_setting< rocs::CTCntlSys<ipdlode> >(ipdl);
+    ctlrWtr.write_ivec_array(solver._goal, "G");
+    ctlrWtr.write_ivec_array(solver._obs, "xobs");
+    ctlrWtr.write_sptree_controller(solver);
     
     ipdl.release_flows();
     

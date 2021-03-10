@@ -1,7 +1,7 @@
 /**
- *  simulation.cpp
+ *  sim_onlineca.cpp
  *
- *  Simulate the DBA motion planning with collision avoidance
+ *  Simulate the LTL motion planning with collision avoidance
  *  with moving obstacles.
  *
  *  Created by Yinan Li on Oct. 24, 2020.
@@ -26,79 +26,45 @@
 #include "src/DBAparser.h"
 #include "src/bsolver.hpp"
 #include "src/patcher.h"
-
-#include "src/txtfileio.h"
 #include "src/hdf5io.h"
 
 #include "car.hpp"
-
-
-/* Define dynamics in inertia and body frames */
-struct car_dynamics {
-    rocs::Rn u;
-    car_dynamics (const rocs::Rn param): u (param) {}
-
-    void operator() (rocs::Rn &x, rocs::Rn &dxdt, double t) const
-    {
-	dxdt[0] = u[0]*std::cos(x[2]);
-	dxdt[1] = u[0]*std::sin(x[2]);
-	dxdt[2] = u[1];
-    }
-};
-struct twoagent_ode {
-    rocs::Rn u;
-    rocs::Rn d;
-    twoagent_ode (const rocs::Rn p1, const rocs::Rn p2): u(p1), d(p2){}
-    /**
-     * ODE model
-     * @param x system state: [x,y,theta], n=3
-     * @param dxdt vector field
-     * @param t time
-     */
-    void operator() (rocs::Rn &x, rocs::Rn &dxdt, double t) const
-    {
-	dxdt[0] = -u[0] + d[0]*cos(x[2]) + u[1]*x[1];
-	dxdt[1] = d[0]*sin(x[2]) - u[1]*x[0];
-	dxdt[2] = d[1] - u[1];
-    }
-};
-
-
-/* Frame conversions */
-void inertia_to_body(rocs::Rn &z, rocs::Rn z0) {
-    double x = std::cos(z0[2])*z[0] + std::sin(z0[2])*z[1];
-    double y = -std::sin(z0[2])*z[0] + std::cos(z0[2])*z[1];
-    z[0] = x;
-    z[1] = y;
-}
-void body_to_inertia(rocs::Rn &z, rocs::Rn z0) {
-    double x = std::cos(z0[2])*z[0] - std::sin(z0[2])*z[1];
-    double y = std::sin(z0[2])*z[0] + std::cos(z0[2])*z[1];
-    z[0] = x;
-    z[1] = y;
-}
-
+#include "odes.hpp"
 
 
 int main(int argc, char *argv[])
 {
-    std::string specfile, ctlrfile, patchfile;
-    // /* Input arguments:
-    //  * simulation dbafile controllerfile
-    //  */
-    // if(argc != 3) {
-    // 	std::cout << "Improper number of arguments.\n";
-    // 	std::exit(1);
-    // }
-    // specfile = std::string(argv[1]);
-    // ctlrfile = std::string(argv[2]);
-    // std::cout << "Simulate " << specfile << " with controller " << ctlrfile << '\n';
-    clock_t tb, te;
-    
+    std::string specfile, ctlrfile, cafile, graphfile;
     specfile = "dba1.txt";
-    // ctlrfile = "controller2_dba1_0.2-0.2-0.2.txt";
-    ctlrfile = "controller2_dba1_0.2-0.2-0.2.h5";
-    patchfile = "controller_safety_abst_0.8-1.2-0.3-0.2.h5";
+    ctlrfile = "controller_dba1_0.2-0.2-0.2.h5";
+    graphfile = "gwin.h5";
+    double eta[] = {0.2, 0.2, 0.2};
+    
+    cafile = "controller_safety_abst-0.8-0.9-0.1-0.1.h5";
+    double eta_r[] = {0.1, 0.1, 0.1};
+    
+    /* Input arguments:
+     * ./sim (dbafile ctlrfile cafile graphfile eta[0] eta_r[0])
+     */
+    if(argc!=1) {
+	if(argc==7) {
+	    specfile = std::string(argv[1]);
+	    ctlrfile = std::string(argv[2]);
+	    cafile = std::string(argv[3]);
+	    graphfile = std::string(argv[4]);
+	    eta[0] = std::atof(argv[5]);
+	    eta[1] = std::atof(argv[5]);
+	    eta[2] = std::atof(argv[5]);
+	    eta_r[0] = std::atof(argv[6]);
+	    eta_r[1] = std::atof(argv[6]);
+	    eta_r[2] = std::atof(argv[6]);
+	} else {
+	    std::cout << "Improper number of arguments.\n";
+	    std::exit(1);
+	}
+    }
+    std::cout << "Simulate " << specfile << " with controller " << ctlrfile << '\n';
+    
 
     /**
      * Setup the motion planning workspace
@@ -106,20 +72,21 @@ int main(int argc, char *argv[])
     const int x_dim = 3;
     const double theta = 3.5;
     const double xlb[] = {0, 0, -theta};
-    const double xub[] = {10+10, 10+10, theta};
+    const double xub[] = {10, 10, theta};
     /* set the control values */
     const int u_dim = 2;
     const double ulb[] = {-1.0, -1.0};
     double uub[] = {1.0, 1.0};
     /* discretization precision */
     double mu[] = {0.3, 0.3};
-    const double eta[] = {0.2, 0.2, 0.2};
     /* generate grid */
     rocs::grid x_grid(x_dim,eta,xlb,xub);
     x_grid.gridding();
     rocs::grid u_grid(u_dim,mu,ulb,uub);
     std::cout << "Number of discrete states: " << x_grid._nv << "\n";
     std::cout << "Number of discrete inputs: " << u_grid._nv << "\n";
+
+    clock_t tb, te;
 
 
     /**
@@ -152,20 +119,7 @@ int main(int argc, char *argv[])
      * Load local safety controller
      **/
     std::cout << "\nLoading local safety controller...\n";
-    rocs::h5FileHandler reader(patchfile, H5F_ACC_RDONLY);
-    /* Non-uniform grid */
-    // std::vector<double> safeIvecs;
-    // std::vector<int> safeTags;
-    // boost::dynamic_bitset<> safeCtlr;
-    // size_t pdims[2], cdims[2];
-    // reader.read_sptree_controller(safeIvecs, pdims, safeTags, safeCtlr, cdims);
-    // std::vector< std::vector<double> > safevv(pdims[0], std::vector<double>(pdims[1]));
-    // for(size_t i = 0; i < pdims[0]; ++i)
-    // 	for(size_t j = 0; j < pdims[1]; ++j)
-    // 	    safevv[i][j] = safeIvecs[i*pdims[1]+j];
-    // assert(cdims[1] == u_grid._nv);
-
-    /* Uniform grid */
+    rocs::h5FileHandler reader(cafile, H5F_ACC_RDONLY);
     std::vector<size_t> optCtlr;
     std::vector<double> value;
     boost::dynamic_bitset<> safeCtlr;
@@ -174,7 +128,7 @@ int main(int argc, char *argv[])
     reader.read_discrete_controller(win, safeCtlr, cdims, optCtlr, value);
     double xrlb[] = {-3, -3, -theta};
     double xrub[] = {3, 3, theta};
-    rocs::grid rel_grid(3, eta, xrlb, xrub);
+    rocs::grid rel_grid(3, eta_r, xrlb, xrub);
     rel_grid.gridding();
 
 
@@ -183,7 +137,6 @@ int main(int argc, char *argv[])
      * Launch patcher
      **/
     rocs::Patcher local;
-    std::string graphfile = "graph_winning.h5";
     struct stat buffer;
     if(stat(graphfile.c_str(), &buffer) == 0) {
     	/* Read from a file */
@@ -197,7 +150,7 @@ int main(int argc, char *argv[])
     	std::cout << "Graph file doesn't exist.\n";
     	return 1;
     }
-    int horizon = 10;  //set forward propagation horizon
+    int horizon = 3;  //set forward propagation horizon
 
 
     /**
@@ -205,12 +158,12 @@ int main(int argc, char *argv[])
      **/
     const double drange[] = {3.0, 3.0};
     /* set ode solver */
-    const double tsim = 0.3; //simulation time
+    const double tsim = 0.1; //simulation time
     const double dt = 0.001; //integration step size for odeint
     boost::numeric::odeint::runge_kutta_cash_karp54<rocs::Rn> rk45;
 
     /* Initial condition of the ego robot */
-    rocs::Rn x{3, 2, 0};
+    rocs::Rn x{1, 1, M_PI/3.0};
     rocs::Rn u{0, 0};
     long long x_index = x_grid.val_to_id(x);
     std::vector<long long>::iterator p1;
@@ -221,90 +174,116 @@ int main(int argc, char *argv[])
 	return 1;
     }
     /* Initial condition of the other robot */
-    rocs::Rn uomax{0.7, 0.7};
-    rocs::Rn uomin{-0.7, -0.7};
+    rocs::Rn uomax{0.8, 0.8};
+    rocs::Rn uomin{-0.8, -0.8};
     double v;
-    rocs::Rn xo{-5, -5, 0};
+    rocs::Rn xo{0.0, 3.0, 0};
     rocs::Rn uo{0.0, 0.0};
     /* State in local relative coordinate */
     rocs::Rn xr{0,0,0};
     long long xr_id;
     boost::dynamic_bitset<> u_safe(cdims[1]);
     rocs::Rn ui{0.3, 0.0};
-    
-    // /* Test case 1,2: constant v and w for the obstacle */
-    // int j0 = 76;
-    // rocs::Rn xi{14.0, 11.2, 85*M_PI/180};
-    
-    /* Test case 3: a designed pattern for the obstacle */
-    int j0 = 28, j1 = 33, j2 = 60, j3 = 90;
-    rocs::Rn xi{2.44, 10.8, 0.0}; //xi{3.7, 10.8, 0.0};
 
-    // /* Test case 4: random v, w for the obstacle */
-    // int j0 = 120;
-    // rocs::Rn xi{8.08, 3.67, 1.7};
+    /* Test case 1: a designed pattern for the obstacle */
+    auto obstacle_behavior1 = [&uo, &xo, tsim](int j) {
+				  double t = tsim*j;
+				  if(t >= 0) {
+				      if(t == 0) {
+					  rocs::Rn xi{0.0, 3.0, 0};
+					  xo.assign(xi.begin(), xi.end());
+				      }
+				      if(t < 1.5) {
+					  uo[0] = 0.33;
+					  uo[1] = 0.0;
+				      } else if(t < 3.0) {
+					  uo[0] = 0.8;
+					  uo[1] = 0.7;
+				      } else if(t < 10.8) {
+					  uo[0] = 0.7;
+					  uo[1] = 0;
+				      } else if(t < 18.0) {
+					  uo[0] = 0.7;
+					  uo[1] = -0.6;
+				      } else if(t < 21) {
+					  uo[0] = 0.7;
+					  uo[1] = 0.6;
+				      } else {
+					  uo[0] = 0.5;
+					  uo[1] = 0.0;
+				      }
+				  }
+			      };
 
+    /* Test case 2: circular trajectory for the obstacle */
+    auto obstacle_behavior2 = [&uo, &xo, tsim](int j) {
+				  double t = tsim*j;
+				  if(t >= 0) {
+				      if(t == 0) {
+					  rocs::Rn xi{4.5, 0.0, M_PI/2.0};
+					  xo.assign(xi.begin(), xi.end());
+				      }
+				      if(t < 8.1) {
+					  uo[0] = 0.65;
+					  uo[1] = 0.0;
+				      } else if(t < 9.0) {
+					  uo[0] = 0.4;
+					  uo[1] = -0.3;
+				      } else {
+					  uo[0] = 0.4;
+					  uo[1] = 0.3;
+				      }
+				  }
+			      };
+
+    /* Test case 3: random v, w for the obstacle */
+    auto obstacle_behavior3 = [&uo, &xo, tsim, &uomin, &uomax](int j) {
+				  double t = tsim*j;
+				  if(t >= 0) {
+				      if(t == 0) {
+					  rocs::Rn xi{10.0, 6.6, M_PI};
+					  xo.assign(xi.begin(), xi.end());
+				      }
+				      if(t < 18.9) { // straight line, constant speed
+					  uo[0] = 0.4;
+					  uo[1] = 0.0;
+				      } else { // random v, w
+					  uo[0] = (uomax[0]-uomin[0])*((double)rand()/RAND_MAX)
+					      - (uomax[0]-uomin[0])/2;
+					  uo[1] = (uomax[1]-uomin[1])*((double)rand()/RAND_MAX)
+					      - (uomax[1]-uomin[1])/2;
+				      }
+				  }
+			      };
+    
 
     /* Open files for writing results and logs */
-    std::string simfile = "sim_closedloop_ca_3_h10.txt";
+    std::string simfile = "traj_closedloop_ca_1.txt";
     std::ofstream ctlrWtr(simfile);
     if(!ctlrWtr.is_open())
 	ctlrWtr.open(simfile, std::ios::out);
-    std::string simother = "sim_other_robot_3_h10.txt";
+    std::string simother = "traj_other_robot_1.txt";
     std::ofstream otherWtr(simother);
     if(!otherWtr.is_open())
-	otherWtr.open(simother, std::ios::out);
+    	otherWtr.open(simother, std::ios::out);
     /********** Logging **********/
     std::ofstream logger;
-    logger.open("logs_3_h10.txt", std::ios::out);
+    logger.open("logs_1.txt", std::ios::out);
     /********** Logging **********/
 
 
     /* Simulation loop */
     srand(time(NULL));
     float tpat = 0;
-    int max_num_achieve_acc=5, max_num_iteration=500; //3000000;
+    int max_num_achieve_acc=5, max_num_iteration=1500; //3000000;
     rocs::UintSmall q;
     int i, j;
     std::vector<CTRL>::iterator p7;
     NODE_POST p5;
     std::cout << "\nLaunching simulation...\n";
     for(q = q0, i = j = 0; i<max_num_achieve_acc && j<max_num_iteration; ++j) {
-	/* Constant and random inputs for the obstacle */
-	// if(j >= j0) { //jstar = 76: robot loc=[12.6271, 12.5325,-0.36]
-	//     if(j == j0)
-	// 	xo = xi;
-	//     /* constant v, w for obstacle */
-	//     // uo = ui;
-	//     /* random v, w for obstacle */
-	//     uo[0] = (uomax[0]-uomin[0])*((double)rand()/RAND_MAX)
-	//     	- (uomax[0]-uomin[0])/2;
-	//     uo[1] = (uomax[1]-uomin[1])*((double)rand()/RAND_MAX)
-	//     	- (uomax[1]-uomin[1])/2;
-	//     // /* predefined v(t), w(t) for obstacle*/
-	//     // v = -0.00026*tsim*(j-80)*(j-80)+0.8;
-	//     // uo[0] = v < 0.3? 0.3 : v;
-	//     // uo[1] = -0.2;
-	// }
-	
-	/* A given trajectory for obstacle */
-	if(j >= j0) {
-	    if(j == j0)
-		xo = xi;
-	    if(j < j1) {
-		uo[0] = 0.7;
-		uo[1] = 0.0;
-	    } else if(j < j2) {
-		uo[0] = 0.6;
-		uo[1] = uo[0]/4.61;
-	    } else if(j < j3) {
-		uo[0] = 0.7;
-		uo[1] = -uo[0]/2.91158;
-	    } else {
-		uo[0] = 0.8;
-		uo[1] = 0.0;
-	    }
-	}
+	/* choose obstacle trajectory */
+	obstacle_behavior1(j);
 
 	/* Determine the control u by the product state (x_index, q) */
 	p5 = nts_ctrlr[encode3[x_index]];
@@ -327,7 +306,7 @@ int main(int argc, char *argv[])
 		  << '[' << u[0] << ',' << u[1] << "])\n";
 	std::cout << "current dba state: " << q << "\n";
 
-	
+
 	/* Get the relative state xr */
 	xr[0] = xo[0]-x[0];
 	xr[1] = xo[1]-x[1];
@@ -344,29 +323,16 @@ int main(int argc, char *argv[])
 	// if(std::fabs(xr[0])<drange[0] && std::fabs(xr[1])<drange[1]) {
 	    std::cout << "An obstacle detected.\n";
 	    
-	    /* Find the interval id in which xr lies */
-	    // for(size_t k = 0; k < safevv.size(); ++k) {//non-uniform pavings
-	    // 	if(xr[0]>safevv[k][0] && xr[0]<safevv[k][1] &&
-	    // 	   xr[1]>safevv[k][2] && xr[1]<safevv[k][3] &&
-	    // 	   xr[2]>safevv[k][4] && xr[2]<safevv[k][5]) {
-	    // 	    xr_id = k;
-	    // 	}
-	    // }
-	    /********** Logging **********/
-	    if(rel_grid._bds.isout(xr)) {
-		std::cout << "Relative coordinate: "
-			  << "([" << xr[0] << ',' << xr[1] << ',' << xr[2] << "])\n";
+	    std::cout << "Relative coordinate: ";
+	    if(rel_grid._bds.isout(xr)) { // xr is the out-of-domain node
+		std::cout << rel_grid._nv;
+	    } else {
+		xr_id = rel_grid.val_to_id(xr); //uniform grid rel_grid
+		std::cout << xr_id;
 	    }
-	    /********** Logging **********/
-	    xr_id = rel_grid.val_to_id(xr); //uniform grid rel_grid
+	    std::cout << "([" << xr[0] << ',' << xr[1] << ',' << xr[2] << "])\n";
 
 	    /********** Logging **********/
-	    std::cout << "Relative coordinate: " << xr_id
-		      << "([" << xr[0] << ',' << xr[1] << ',' << xr[2] << "])\n";
-	    // std::cout << "Belong to interval:"
-	    // 	      << '[' << safevv[xr_id][0] << ',' << safevv[xr_id][1] << "]x"
-	    // 	      << '[' << safevv[xr_id][2] << ',' << safevv[xr_id][3] << "]x"
-	    // 	      << '[' << safevv[xr_id][4] << ',' << safevv[xr_id][5] << "]\n";
 	    logger << j << ':'
 		   << x_index << '(' << x[0] << ',' << x[1] << ',' << x[2] << "),"
 		   << xr_id << '(' << xr[0] << ',' << xr[1] << ',' << xr[2] << ")\n";
@@ -415,26 +381,34 @@ int main(int argc, char *argv[])
 			//     std::cout << local._winfts._idpost[pid] << ' ';
 			// std::cout << '\n';
 		    }
-		    logger << k << ' ';
+		    // logger << k << ' ';
 		}
-		/************* Logging **************/
+		/********** Logging **********/
+		logger << u_safe[k];
+		/********** Logging **********/
 	    }
 	    /********** Logging **********/
 	    u_grid.id_to_val(uu, uid);
 	    logger << '\n'
-		   << p7->u << ' ' << u[0] << ',' << u[1] << ';'
-		   << uid << ' ' << uu[0] << ',' << uu[1] << ' ' << u_dist << ';';
+	    	   << p7->u << ' ' << u[0] << ',' << u[1] << ';'
+	    	   << uid << ' ' << uu[0] << ',' << uu[1] << ' ' << u_dist << ';';
 	    /********** Logging **********/
 
 	    /* Get a safe control from patcher */
-	    if(nSafeAct > 1) {
+	    if(u_safe[p7->u]) {
+		// if(safeCtlr[xr_id*cdims[1]+uid]) {
+		std::cout << "The static strategy is safe.\n";
+		// u_grid.id_to_val(u, uid);
+		// logger << uid << ' ';
+		logger << p7->u << ' ';
+	    } else if(nSafeAct > 1) {
 		tb = clock();
 	    	int suc = local.solve_local_reachability(xp, horizon, u_safe);
 		te = clock();
 		tpat += (float)(te - tb)/CLOCKS_PER_SEC;
 		std::cout << "Average time for replanning by the patcher: "
 			  << tpat/(j+1) << ".\n";
-	    	if(!suc) {//if fails in re-planning, use the closest u
+	    	if(!suc) {//if fails in RH, use the closest u
 	    	    std::cout << "Apply the safe control input closest to the original one.\n";
 	    	    u_grid.id_to_val(u, uid);
 	    	    logger << uid << ' ';
@@ -448,13 +422,15 @@ int main(int argc, char *argv[])
 		u_grid.id_to_val(u, uid);
 		logger << uid << ' ';
 	    } else {
-		std::cout << "No safe controls. Apply the original controller.\n";
+		std::cout << "No safe controls. Freeze.\n";
+		u[0] = 0;
+		u[1] = 0;
 		logger << p7->u << ' ';
 	    }
 	    /********** Logging **********/
 	    logger << u[0] << ',' << u[1] << "\n\n";
 	    /********** Logging **********/
-	}
+	} //end if obstacle is within range
 
 	/* Write to txt file */
 	// ctlrWtr << j << ':';
@@ -481,19 +457,19 @@ int main(int argc, char *argv[])
 	ctlrWtr << '\n';
 	otherWtr << '\n';
 
-	/* Integrate the dynamics */
+	/* Integrate ego robot trajectory */
 	boost::numeric::odeint::integrate_const(rk45, car_dynamics(u), x, 0.0, tsim, dt);
 	if(x[2] > M_PI) //convert angle into [-pi, pi]
 	    x[2] -= 2*M_PI;
 	if(x[2] < -M_PI)
 	    x[2] += 2*M_PI;
-	if(j >= j0) { //integrate obstacle trajectory after it appears
-	    boost::numeric::odeint::integrate_const(rk45, car_dynamics(uo), xo, 0.0, tsim, dt);
-	    if(xo[2] > M_PI) //convert angle into [-pi, pi]
-		xo[2] -= 2*M_PI;
-	    if(xo[2] < -M_PI)
-		xo[2] += 2*M_PI;
-	}
+
+	/* integrate obstacle trajectory after it appears */
+	boost::numeric::odeint::integrate_const(rk45, car_dynamics(uo), xo, 0.0, tsim, dt);
+	if(xo[2] > M_PI) //convert angle into [-pi, pi]
+	    xo[2] -= 2*M_PI;
+	if(xo[2] < -M_PI)
+	    xo[2] += 2*M_PI;
 
 	/* Update automaton state q */
 	x_index = x_grid.val_to_id(x);

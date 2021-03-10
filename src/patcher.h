@@ -12,6 +12,7 @@
 #ifndef _patcher_h
 #define _patcher_h
 
+#include <utility>
 #include <cassert>
 #include <string>
 #include <iostream>
@@ -20,8 +21,10 @@
 extern "C" {
 #include "buchi.h"
 }
+
+#include "definitions.h"
+#include "grid.h"
 #include "transition.hpp"
-// #include "hdf5io.h"
 
 
 namespace rocs {
@@ -83,7 +86,32 @@ namespace rocs {
 	 */
 	int solve_local_reachability(size_t v, int h,
 				      boost::dynamic_bitset<> &safecnt);
-	
+	/**
+	 * Similar to solve_local_reachability, but with avoid set.
+	 * @param v index of (x,q) pair
+	 * @param N the minimun number of target nodes to be visited in forward propagation
+	 * @param avoid the set of avoid nodes
+	 * @param target the set of target nodes
+	 * @param safecnt the address of the bool vector indicating safe controls
+	 */
+	std::vector< std::pair<size_t, int> >
+	solve_local_reachavoid(size_t v, size_t N,
+			       std::vector<long long> &avoid,
+			       std::vector<long long> &target,
+			       boost::dynamic_bitset<> &safecnt);
+
+	/**
+	 * Replanning: determine a local area within a radius around a point.
+	 * @param xo the given R^3 point
+	 * @param ro the radius
+	 * @param x_grid the grid for the state space
+	 * @param q the current automaton state
+	 * @param nNodes total number of automaton states
+	 */
+	std::vector<long long> replan_region(const rocs::Rn &xo, const double ro,
+						 rocs::grid &x_grid,
+						 const rocs::UintSmall &q,
+						 const rocs::UintSmall &nNodes);
 	
     }; //end class Patcher
     

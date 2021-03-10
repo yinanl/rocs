@@ -11,7 +11,13 @@ ODIR := ../../build
 INCS += -I$(RDIR)
 CXXFLAGS += -DVERBOSE #-DLOGGING
 
+ifdef MATDIR
 SRCS := $(wildcard $(SDIR)/*.cpp)
+else
+SRCSALL := $(wildcard $(SDIR)/*.cpp)
+SRCS := $(filter-out $(SDIR)/matlabio.cpp,$(SRCSALL))
+endif
+
 DEPS := $(patsubst %.cpp, %.h, $(SRCS))
 OBJS := $(addprefix $(ODIR)/, $(patsubst %.cpp, %.o, $(notdir $(SRCS))))
 
@@ -19,7 +25,7 @@ ESRCS := $(wildcard *.cpp)
 EOBJS := $(patsubst %.cpp, %.o, $(ESRCS))
 EDIR := $(dir $(ESRCS))
 
-TARGETS := $(basename $(ESRCS))
+TARGETS := safesetAbst plan sim simRe simMulti testReachset testWinGraph testStuck
 
 .PHONY : clean
 
@@ -27,23 +33,29 @@ TARGETS := $(basename $(ESRCS))
 # rules
 all: $(TARGETS)
 
-safeset: safeset.o $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
 safesetAbst: safesetAbst.o $(OBJS) $(ODIR)/buchi.o
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
-planning: planning.o $(OBJS) $(ODIR)/buchi.o
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
-simulation: simulation.o $(OBJS) $(ODIR)/buchi.o
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+	$(CXX) $(CXXFLAGS) $(INCS) $^ -o $@ $(LDFLAGS) $(LIBS)
+
+plan: staticplan.o $(OBJS) $(ODIR)/buchi.o
+	$(CXX) $(CXXFLAGS) $(INCS) $^ -o $@ $(LDFLAGS) $(LIBS)
+
+sim: sim_onlineca.o $(OBJS) $(ODIR)/buchi.o
+	$(CXX) $(CXXFLAGS) $(INCS) $^ -o $@ $(LDFLAGS) $(LIBS)
+
+simRe: sim_onlineca_replan.o $(OBJS) $(ODIR)/buchi.o
+	$(CXX) $(CXXFLAGS) $(INCS) $^ -o $@ $(LDFLAGS) $(LIBS)
+
+simMulti: sim_onlineca_multi.o $(OBJS) $(ODIR)/buchi.o
+	$(CXX) $(CXXFLAGS) $(INCS) $^ -o $@ $(LDFLAGS) $(LIBS)
 
 testReachset: testReachset.o $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+	$(CXX) $(CXXFLAGS) $(INCS) $^ -o $@ $(LDFLAGS) $(LIBS)
+
 testWinGraph: testWinGraph.o $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
-ref: carAbst_ref.o $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
-sim_ref: sim_carAbst.o $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+	$(CXX) $(CXXFLAGS) $(INCS) $^ -o $@ $(LDFLAGS) $(LIBS)
+
+testStuck: testStuckAvoidance.o $(OBJS)
+	$(CXX) $(CXXFLAGS) $(INCS) $^ -o $@ $(LDFLAGS) $(LIBS)
 
 clean:
 	rm -rf *.o *.dSYM $(TARGETS)

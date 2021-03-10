@@ -1,10 +1,7 @@
 # set directory of external packages
 EXTDIR := /usr/local/opt
-MATDIR := /Applications/MATLAB_R2019a.app
+#MATDIR := /Applications/MATLAB_R2019a.app
 
-# set the root dir
-#RDIR := $(CURDIR)
-#export RDIR
 
 # set all compiler and linker flags
 OPT := -O3
@@ -18,20 +15,23 @@ CXX = clang++
 INCS := -I$(EXTDIR)/boost/include \
 	-I$(EXTDIR)/armadillo/include \
 	-I$(EXTDIR)/hdf5/include \
-	-I$(MATDIR)/extern/include \
 	-I/usr/local/include
 
 LIBS := -larmadillo \
-     	-lmat -leng -lmx \
 	-lz -lm -lsz -lhdf5_hl -lhdf5 -lhdf5_cpp -lhdf5_hl_cpp
+
+LDFLAGS := -L$(EXTDIR)/boost/lib \
+	-L$(EXTDIR)/armadillo/lib \
+	-L$(EXTDIR)/hdf5/lib
+
+ifdef MATDIR
+INCS += -I$(MATDIR)/extern/include
+LIBS += -lmat -leng -lmx
+LDFLAGS += -L$(MATDIR)/bin/maci64 -rpath $(MATDIR)/bin/maci64
+endif
 
 LIBTEST := -lboost_unit_test_framework-mt
 
 CXXFLAGS := -Wall -Wextra\
-	$(DEBUG) $(OPT) $(EXTRA_OPT)\
+	$(DEBUG) $(OPT)\
 	-std=c++11 -stdlib=libc++
-
-LDFLAGS := -L$(EXTDIR)/boost/lib \
-	-L$(EXTDIR)/armadillo/lib \
-	-L$(EXTDIR)/hdf5/lib \
-	-L$(MATDIR)/bin/maci64 -rpath $(MATDIR)/bin/maci64

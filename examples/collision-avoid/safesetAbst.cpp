@@ -10,6 +10,9 @@
 
 
 #include <iostream>
+#include <sstream>
+#include <iomanip> // std::setprecision
+
 #include <cmath>
 #include <sys/stat.h>
 
@@ -47,16 +50,17 @@ int main(int argc, char *argv[])
 {
     std::string specfile = "Ga.txt";
     double eta[]{0.2, 0.2, 0.2}; /* partition precision */
+    double t = 0.3;
 
     /* Input arguments:
-     * carAbst [dbafile precision(e.g. 0.2 0.2 0.2)]
+     * safesetAbst [samplingtime precision(e.g. 0.2 0.2 0.2)]
      */
     if (argc > 5) {
 	std::cout << "Improper number of arguments.\n";
 	std::exit(1);
     }
     if(argc > 1) {
-	specfile = std::string(argv[1]);
+	t = std::atof(argv[1]);
 	if(argc >= 5) {
 	    for(int i = 2; i < 5; ++i)
 		eta[i-2] = std::atof(argv[i]);
@@ -84,7 +88,7 @@ int main(int argc, char *argv[])
     /**
      * Define the two-agent system
      */
-    double t = 0.3;
+    // double t = 0.1;
     double delta = 0.01;
     /* parameters for computing the flow */
     int kmax = 5;
@@ -108,8 +112,8 @@ int main(int argc, char *argv[])
      * Mark 0 for any box intersect or inside the cylinder: x^2+y^2<=rmin^2, any phi.
      * The invariant set is the region outside of the cylinder.
      */
-    auto inv_set = [&abst, &eta](size_t i) {
-		       const double rmin = 1.21;
+    const double rmin = 0.8 + t/2.0; // 1.21;
+    auto inv_set = [&abst, &eta, rmin](size_t i) {
 		       std::vector<double> x(abst._x._dim);
 		       abst._x.id_to_val(x, i);
 		       double xl = x[0] - eta[0]/2.;
@@ -130,11 +134,27 @@ int main(int argc, char *argv[])
 		   };
     abst.assign_labels(inv_set);
     abst.assign_label_outofdomain(1); //out of domain is safe
+
+    /* Adjustable parameters:
+     * [disturb bound, min collision free distance, sampling time, precision]
+     */
+    double p[]{0.8, rmin, t, eta[0]};
+    std::string suffix;
+    for(auto &item : p) {
+	std::stringstream ss;
+    	ss << std::setprecision(1);
+	ss << item;
+	suffix += '-';
+	suffix += ss.str();
+    }
+
+    
     /* Compute abstraction */
     clock_t tb, te;
-    std::string transfile = "abstca_0.8-1.2-0.3-0.2.h5";
+    std::string transfile = "abstca"+suffix+".h5";
     /* https://stackoverflow.com/questions/12774207/fastest-way-to-check-if-a-file-exist-using-standard-c-c11-c */
     struct stat buffer;
+    float tabst;
     if(stat(transfile.c_str(), &buffer) == 0) {
 	/* Read from a file */
 	std::cout << "Transitions have been computed. Reading transitions...\n";
@@ -142,8 +162,7 @@ int main(int argc, char *argv[])
 	tb = clock();
 	transRdr.read_transitions(abst._ts);
 	te = clock();
-	float time = (float)(te - tb)/CLOCKS_PER_SEC;
-	std::cout << "Time of reading abstraction: " << time << '\n';
+	tabst = (float)(te - tb)/CLOCKS_PER_SEC;
 	std::cout << "# of transitions: " << abst._ts._ntrans << '\n';
     } else {
 	std::cout << "Transitions haven't been computed. Computing transitions...\n";
@@ -153,13 +172,13 @@ int main(int argc, char *argv[])
 	tb = clock();
 	abst.assign_transitions(e1, e2);
 	te = clock();
-	float tabst = (float)(te - tb)/CLOCKS_PER_SEC;
+	tabst = (float)(te - tb)/CLOCKS_PER_SEC;
 	std::cout << "Time of computing abstraction: " << tabst << '\n';
-	std::cout << "# of transitions: " << abst._ts._ntrans << '\n';
 	/* Write transitions to file */
 	rocs::h5FileHandler transWtr(transfile, H5F_ACC_TRUNC);
 	transWtr.write_transitions(abst._ts);
     }
+    std::cout << "# of transitions: " << abst._ts._ntrans << '\n';
 
     std::vector<size_t> targetIDs;
     std::vector< std::vector<double> > targetPts;   //initial invariant set
@@ -186,7 +205,7 @@ int main(int argc, char *argv[])
     /**
      * Write the control synthesis result into .h5 file.
      */
-    std::string datafile = "controller_safety_abst_0.8-1.2-0.3-0.2.h5";
+    std::string datafile = "controller_safety_abst"+suffix+".h5";
     rocs::h5FileHandler ctlrWtr(datafile, H5F_ACC_TRUNC);
     ctlrWtr.write_problem_setting< rocs::CTCntlSys<twoagent> >(safety);
     ctlrWtr.write_2d_array<double>(targetPts, "G");

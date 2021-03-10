@@ -11,7 +11,13 @@ ODIR := ../../build
 INCS += -I$(RDIR)
 # CXXFLAGS += -DVERBOSE
 
+ifdef MATDIR
 SRCS := $(wildcard $(SDIR)/*.cpp)
+else
+SRCSALL := $(wildcard $(SDIR)/*.cpp)
+SRCS := $(filter-out $(SDIR)/matlabio.cpp,$(SRCSALL))
+endif
+
 DEPS := $(patsubst %.cpp, %.h, $(SRCS))
 OBJS := $(addprefix $(ODIR)/, $(patsubst %.cpp, %.o, $(notdir $(SRCS))))
 
@@ -28,16 +34,16 @@ TARGETS := $(basename $(ESRCS))
 all: $(TARGETS)
 
 dcdcInv: dcdcInv.o $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+	$(CXX) $(CXXFLAGS) $(INCS) $^ -o $@ $(LDFLAGS) $(LIBS)
 
 dcdcRS: dcdcRS.o $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+	$(CXX) $(CXXFLAGS) $(INCS) $^ -o $@ $(LDFLAGS) $(LIBS)
 
 dcdcAbstInv: dcdcAbstInv.o $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+	$(CXX) $(CXXFLAGS) $(INCS) $^ -o $@ $(LDFLAGS) $(LIBS)
 
 dcdcAbstDBA: dcdcAbstDBA.o $(OBJS) $(ODIR)/buchi.o
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+	$(CXX) $(CXXFLAGS) $(INCS) $^ -o $@ $(LDFLAGS) $(LIBS)
 
 display:
 	@echo $(OBJS)\

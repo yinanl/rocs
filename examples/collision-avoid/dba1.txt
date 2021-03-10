@@ -1,5 +1,5 @@
 Name=F(a1 & F(a2 & F(a3 & !a2 U a1)))
-AP=a1(1) a2(2) a3(3) others(0)
+AP=a1(4) a2(2) a3(1) others(0)
 nAP=3
 nNodes=5
 acc=4

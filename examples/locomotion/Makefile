@@ -10,7 +10,13 @@ ODIR := ../../build
 
 INCS += -I$(RDIR)
 
+ifdef MATDIR
 SRCS := $(wildcard $(SDIR)/*.cpp)
+else
+SRCSALL := $(wildcard $(SDIR)/*.cpp)
+SRCS := $(filter-out $(SDIR)/matlabio.cpp,$(SRCSALL))
+endif
+
 DEPS := $(patsubst %.cpp, %.h, $(SRCS))
 OBJS := $(addprefix $(ODIR)/, $(patsubst %.cpp, %.o, $(notdir $(SRCS))))
 
@@ -27,27 +33,27 @@ TARGETS := $(basename $(ESRCS))
 all: $(TARGETS)
 
 # $(EDIR)/%: $(EDIR)/%.o $(OBJS)
-# 	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+# 	$(CXX) $(CXXFLAGS) $(INCS) $^ -o $@ $(LDFLAGS) $(LIBS)
 main_pipm_unistep: pipm_unistep.o $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+	$(CXX) $(CXXFLAGS) $(INCS) $^ -o $@ $(LDFLAGS) $(LIBS)
 main_pipm_semisteps: pipm_semisteps.o $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+	$(CXX) $(CXXFLAGS) $(INCS) $^ -o $@ $(LDFLAGS) $(LIBS)
 test: test.o $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+	$(CXX) $(CXXFLAGS) $(INCS) $^ -o $@ $(LDFLAGS) $(LIBS)
 walk_pipm_ppm: pipm2ppm.o $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+	$(CXX) $(CXXFLAGS) $(INCS) $^ -o $@ $(LDFLAGS) $(LIBS)
 walk_pipms: pipms.o $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+	$(CXX) $(CXXFLAGS) $(INCS) $^ -o $@ $(LDFLAGS) $(LIBS)
 integrated_pipm_ppm: int_pipm2ppm.o $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+	$(CXX) $(CXXFLAGS) $(INCS) $^ -o $@ $(LDFLAGS) $(LIBS)
 integrated_pipms: int_pipms.o $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+	$(CXX) $(CXXFLAGS) $(INCS) $^ -o $@ $(LDFLAGS) $(LIBS)
 integrated_ppm_pipm: int_ppm2pipm.o $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+	$(CXX) $(CXXFLAGS) $(INCS) $^ -o $@ $(LDFLAGS) $(LIBS)
 integrated_pipm_mcm: int_pipm2mcm.o $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+	$(CXX) $(CXXFLAGS) $(INCS) $^ -o $@ $(LDFLAGS) $(LIBS)
 integrated_mcm_pipm: int_mcm2pipm.o $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+	$(CXX) $(CXXFLAGS) $(INCS) $^ -o $@ $(LDFLAGS) $(LIBS)
 
 clean:
 	rm -rf *.o *.dSYM $(TARGETS)

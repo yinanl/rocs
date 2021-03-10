@@ -10,7 +10,13 @@ ODIR := ../../build
 
 INCS += -I$(RDIR)
 
+ifdef MATDIR
 SRCS := $(wildcard $(SDIR)/*.cpp)
+else
+SRCSALL := $(wildcard $(SDIR)/*.cpp)
+SRCS := $(filter-out $(SDIR)/matlabio.cpp,$(SRCSALL))
+endif
+
 DEPS := $(patsubst %.cpp, %.h, $(SRCS))
 OBJS := $(addprefix $(ODIR)/, $(patsubst %.cpp, %.o, $(notdir $(SRCS))))
 
@@ -28,7 +34,7 @@ TARGETS := $(basename $(ESRCS))
 all: $(TARGETS)
 
 temp: temp.o $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) -o $@ $^
+	$(CXX) $(CXXFLAGS) $(INCS) $^ -o $@ $(LDFLAGS) $(LIBS)
 
 clean:
 	rm -rf *.o *.dSYM $(TARGETS)

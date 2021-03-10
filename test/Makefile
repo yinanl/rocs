@@ -11,7 +11,13 @@ ODIR := $(RDIR)build
 INCS += -I$(RDIR)
 
 
+ifdef MATDIR
 SRCS := $(wildcard $(SDIR)/*.cpp)
+else
+SRCSALL := $(wildcard $(SDIR)/*.cpp)
+SRCS := $(filter-out $(SDIR)/matlabio.cpp,$(SRCSALL))
+endif
+
 DEPS := $(patsubst %.cpp, %.h, $(SRCS))
 OBJS := $(addprefix $(ODIR)/, $(patsubst %.cpp, %.o, $(notdir $(SRCS))))
 
@@ -28,34 +34,34 @@ TARGETS := $(basename $(ESRCS))
 all: $(TARGETS)
 
 testAD: testAD.o $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) $(LIBTEST) -o $@ $^
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $^ -o $@ $(LIBS) $(LIBTEST)
 
 testGrid: testGrid.o $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) $(LIBTEST) -o $@ $^
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $^ -o $@ $(LIBS) $(LIBTEST)
 
 testIval: testIval.o $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) $(LIBTEST) -o $@ $^
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $^ -o $@ $(LIBS) $(LIBTEST)
 
 testIvec: testIvec.o $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) $(LIBTEST) -o $@ $^
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $^ -o $@ $(LIBS) $(LIBTEST)
 
 testPaver: testPaver.o $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) $(LIBTEST) -o $@ $^
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $^ -o $@ $(LIBS) $(LIBTEST)
 
 testPrecision: testPrecision.o $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) $(LIBTEST) -o $@ $^
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $^ -o $@ $(LIBS) $(LIBTEST)
 
 testDSolver: testDsolver.o $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) $(LIBTEST) -o $@ $^
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $^ -o $@ $(LIBS) $(LIBTEST)
 
 testHDF5: testHDF5.o $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) $(LIBTEST) -o $@ $^
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $^ -o $@ $(LIBS) $(LIBTEST)
 
 testAbst: testAbst.o $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) $(LIBTEST) -o $@ $^
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $^ -o $@ $(LIBS) $(LIBTEST)
 
 testReachSet: testReachSet.o $(OBJS)
-	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $(LIBS) $(LIBTEST) -o $@ $^
+	$(CXX) $(CXXFLAGS) $(INCS) $(LDFLAGS) $^ -o $@ $(LIBS) $(LIBTEST)
 
 
 display:

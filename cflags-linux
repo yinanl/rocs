@@ -1,30 +1,33 @@
 # set directory of external packages
 INCDIR = /usr/include
 LIBDIR = /usr/lib
-MATDIR = /usr/local/MATLAB/R2016b
+#MATDIR = /usr/local/MATLAB/R2019a
 
 
 # set all compiler and linker flags
 OPT = -O3
-#EXTRA_OPT = -fwhole-program
 
 # for armadillo
-ARMA = -DARMA_NO_DEBUG -DARMA_DONT_USE_WRAPPER
+ARMA = -DARMA_NO_DEBUG #-DARMA_DONT_USE_WRAPPER
 
 CXX = g++
 
 INCS = -I$(INCDIR)/boost \
-	-I$(INCDIR)/armadillo_bits \
-	-I$(MATDIR)/extern/include \
+	-I$(INCDIR)/armadillo_bits
 
-LIBS = -lblas -llapack \
-	-lmat -leng -lmx \
-	-lz -lm -lsz -lhdf5_hl -lhdf5 -lhdf5_cpp -lhdf5_hl_cpp \
-	-Wl, -rpath,$(MATDIR)/bin/glnxa64
+LIBS = larmadillo \
+	-lz -lm -lsz -lhdf5_hl -lhdf5 -lhdf5_cpp -lhdf5_hl_cpp
+
+LDFLAGS = -L$(LIBDIR)
+
+ifdef MATDIR
+INCS += -I$(MATDIR)/extern/include
+LIBS += -lmat -leng -lmx -Wl,-rpath,$(MATDIR)/bin/glnxa64
+LDFLAGS +=-L$(MATDIR)/bin/glnxa64
+endif
+
 LIBTEST = -lboost_unit_test_framework
 
 CXXFLAGS = -Wall -Wextra\
 	$(ARMA) $(OPT) \
 	-std=c++11
-
-LDFLAGS =-L$(MATDIR)/bin/glnxa64

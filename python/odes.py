@@ -33,6 +33,12 @@ def car(t, x, u):
                      u[0]*np.tan(u[1])])
 
 
+def car2(t, x, u):
+    return np.array([u[0]*np.cos(x[2]),
+                     u[0]*np.sin(x[2]),
+                     u[1]])
+
+
 def MG(t, x, u):
     a = 1./3.5
     B = 2.0

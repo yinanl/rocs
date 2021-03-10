@@ -4,17 +4,24 @@ import re
 from functools import reduce
 from scipy.integrate import odeint
 from scipy.integrate import solve_ivp
-
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib.collections import PolyCollection
 from mpl_toolkits import mplot3d
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection, Line3DCollection
+from os.path import dirname, realpath
+import argparse
+parser = argparse.ArgumentParser(description='Indicate control scenarios.')
+parser.add_argument('suffix', type=str, help='Indicate the suffix of the file')
+args = parser.parse_args()
 
-filename = "/Users/yinan/Desktop/rocs/examples/collision-avoid/\
-controller_safety_abst_0.8-1.2-0.3-0.2.h5"
 
-f = h5py.File(filename, "r")
+dirpath = dirname(realpath(__file__))
+
+filename = '/controller_safety_abst-' + args.suffix + '.h5'
+rmin = 0.8
+
+f = h5py.File(dirpath+filename, "r")
 tau = f['ts'][...]
 goalset = f['G'][...]
 statespace = f['X'][...]
@@ -70,7 +77,7 @@ ax.set_ylim(-3, 3)
 coll = PolyCollection(verts,closed=True,edgecolors='k',facecolors='g',alpha=0.5)
 ax.add_collection(coll)
 
-circ = patches.Circle((0., 0.), radius=1.2, fill=False, color='r')
+circ = patches.Circle((0., 0.), radius=rmin, fill=False, color='r')
 ax.add_patch(circ)
 
 # # Simulation

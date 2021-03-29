@@ -32,7 +32,7 @@ const double W2 = 3*W*W;
 struct mgode2 {
     static const int n = 2;  // system dimension
     static const int nu = 2;  // control dimension
-    
+
     /* template constructor
      * @param[out] dx
      * @param[in] x
@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
     /* set the state space */
     double xlb[]{0.44, 0.6};
     double xub[]{0.54, 0.7};
-    
+
     /* set the control values */
     double Lmu = 0.01;
     double Lu = 0.05;
@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
     double alpha = 0.5;
     double beta = 2;
     rocs::params controlparams(kmax, tol, alpha, beta);
-    
+
     /* define the control system */
     double t= 0.1;
     rocs::CTCntlSys<mgode2> engine("Moore-Greitzer", t, mgode2::n, mgode2::nu,
@@ -80,14 +80,14 @@ int main(int argc, char *argv[]) {
     // std::stringstream convert(argv[1]);
     // double e;
     // convert >> e;
-    
+
     /* case I */
     double e = 0.003;
     double glb[]{0.5039-e, 0.6605-e};
     double gub[]{0.5039+e, 0.6605+e};
     double olb[]{0.520, 0.658};
     double oub[]{0.526, 0.664};
-    
+
     // /* case II */
     // double e = 0.003;
     // double glb[]{0.4519-e, 0.6513-e};
@@ -103,11 +103,11 @@ int main(int argc, char *argv[]) {
     solver.init_goal_area();
     solver.print_controller_info();
     solver.print_controller();
-    
+
     double ei[]{0.00018, 0.00018};
     double er[]{0.005, 0.005};
     double ermin[]{0.00018, 0.00018};
-    // solver.cobuchi(&engine, ei, er);
+    // solver.cobuchi(&engine, ei, ermin);
     solver.reachstay_control(&engine, ei, ermin);
     // solver.reachstay_control(&engine, ei, er, true, ermin);
     // solver.reachability_control(&engine, ermin);
@@ -125,9 +125,9 @@ int main(int argc, char *argv[]) {
     ctlrWtr.write_ivec_array(solver._goal, "G");
     ctlrWtr.write_ivec_array(solver._obs, "xobs");
     ctlrWtr.write_sptree_controller(solver);
-    
-    
+
+
     engine.release_flows();
-    
+
     return 0;
 }

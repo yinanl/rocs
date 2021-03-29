@@ -97,9 +97,9 @@ rect_obs = patches.Rectangle((obs[0, 0], obs[1, 0]),
 # ax.add_patch(rect_ss)
 ax.add_patch(rect_goal)
 ax.add_patch(rect_obs)
-ax.add_collection(
-    utils.polycoll_interval_array(winset, True, 'palegoldenrod', 0.7)
-)
+# ax.add_collection(
+#     utils.polycoll_interval_array(winset, True, 'palegoldenrod', 0.7)
+# )
 
 
 # # Simulation

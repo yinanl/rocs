@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
      * Abstraction 
      */
     rocs::abstraction< rocs::DTCntlSys<integrator> > abst(&scara);
-    const double eta[]{0.05, 0.05, 0.1, 0.1};
+    const double eta[]{0.02, 0.02, 0.05, 0.05};
     abst.init_state(eta, xlb, xub);
     std::cout << "The number of abstraction states: " << abst._x._nv << '\n';
 
@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
     }
 
     /* Compute abstraction */
-    std::string transfile = "abst_0.05-0.01.h5";
+    std::string transfile = "abst_0.02-0.05.h5";
     struct stat buffer;
     float tabst;
     if(stat(transfile.c_str(), &buffer) == 0) {
@@ -182,7 +182,7 @@ int main(int argc, char *argv[])
      * Display and save memoryless controllers.
      */
     std::cout << "Writing the controller...\n";
-    std::string datafile = "controller_abst_0.05-0.01.h5";
+    std::string datafile = "controller_abst_0.02-0.05.h5";
     rocs::h5FileHandler ctlrWtr(datafile, H5F_ACC_TRUNC);
     ctlrWtr.write_problem_setting< rocs::DTCntlSys<integrator> >(scara);
     ctlrWtr.write_array<size_t>(targetIDs, "G");

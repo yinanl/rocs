@@ -1,8 +1,8 @@
 /**
  *  carDBA_dba4pre.cpp
- *  
+ *
  *  Control synthesis for dba4 with preprocessing. (TO BE AUTOMATED)
- *  
+ *
  *  Created by Yinan Li on Jan. 5, 2020.
  *
  *  Hybrid Systems Group, University of Waterloo.
@@ -18,7 +18,7 @@
 #include "src/system.hpp"
 #include "src/csolver.h"
 
-#include "src/matlabio.h"
+// #include "src/matlabio.h"
 #include "src/hdf5io.h"
 
 #include "car.hpp"
@@ -31,8 +31,8 @@ int main(int argc, char *argv[])
      **/
     std::string specfile = "dba4.txt";
     double e[]{0.2, 0.2, 0.2}; /* partition precision */
-    
-    
+
+
     /**
      * Input arguments: (argc = 1 or 4)
      * carAbst precision(e.g. 0.2 0.2 0.2)
@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
 	std::cout << "Input precision should be of 3-dim, e.g. 0.2 0.2 0.2.\n";
 	std::exit(1);
     }
-    
+
     if (argc > 1) {
 	for(int i = 1; i < 4; ++i)
 	    e[i-1] = std::atof(argv[i]);
@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
     std::cout << "Partition precision: " << e[0] << ' '
 	      << e[1] << ' ' << e[2] << '\n';
     std::cout << "Using preprocessing.\n";
-    
+
 
     /**
      * Read specification file
@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
     std::vector<rocs::UintSmall> acc;
     std::vector<std::vector<rocs::UintSmall>> arrayM;
     rocs::UintSmall nAP = 0, nNodes = 0, q0 = 0;
-    if (!rocs::read_spec(specfile, nNodes, nAP, q0, arrayM, acc)) 
+    if (!rocs::read_spec(specfile, nNodes, nAP, q0, arrayM, acc))
 	std::exit(1);
     size_t nProps = arrayM.size();
     /* Mark accepting states */
@@ -66,13 +66,13 @@ int main(int argc, char *argv[])
     for (rocs::UintSmall i = 0; i < acc.size(); ++i)
 	isacc[acc[i]] = true;
     std::cout << "isacc= ";
-    for (boost::dynamic_bitset<>::size_type i = 0; 
+    for (boost::dynamic_bitset<>::size_type i = 0;
          i < isacc.size(); ++i) {
         std::cout << isacc[i] << ' ';
     }
     std::cout << '\n';
 
-    
+
     /**
      * Workspace Setup
      **/
@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
 		       {10.0, 4.0, theta}, //d
 		       {2.5, 8.5, theta}, //a2
 		       {9.1, 2.9, theta}};//a3
-    
+
 
     /**
      * DBA control synthesis
@@ -131,8 +131,8 @@ int main(int argc, char *argv[])
 			  w[i]->labeling(glb[j], gub[j], labels[j]); // labeled areas
 		      w[i]->set_M(arrayM[oid[i]]);
 		  };
-    
-    
+
+
     /* Perform synthesis */
     /* order: q2,3,4 --> q5 --> q1,2 */
     /* W 2,3,4 */
@@ -168,7 +168,7 @@ int main(int argc, char *argv[])
 						init_w, oid3, e);
     w[0] = w3[0];
     w[1] = w3[1];
-    
+
 
     /**
      * Display and save memoryless controllers.
@@ -179,13 +179,13 @@ int main(int argc, char *argv[])
     }
     // rocs::write_results_to_mat(carvf, specfile, w);
     rocs::write_csolvers_to_h5(carvf, specfile, w);
-    
+
 
     /**
-     * Release dynamic memory 
+     * Release dynamic memory
      **/
     for (rocs::UintSmall i = 0; i < nNodes; ++i)
     	delete w[i];
-    
+
     return 0;
 }

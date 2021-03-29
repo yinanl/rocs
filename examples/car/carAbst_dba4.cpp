@@ -3,7 +3,7 @@
  *
  *  Abstraction-based control for vehicle motion planning.
  *  A different workspace setting from carAbst.cpp.
- *  
+ *
  *  Created by Yinan Li on Aug 10, 2020.
  *  Hybrid Systems Group, University of Waterloo.
  */
@@ -20,7 +20,6 @@
 #include "src/DBAparser.h"
 #include "src/bsolver.hpp"
 
-// #include "src/txtfileio.h"
 #include "src/hdf5io.h"
 
 #include "car.hpp"
@@ -34,8 +33,8 @@ int main(int argc, char *argv[])
     std::string specfile;
     double eta[]{0.2, 0.2, 0.2}; /* partition precision */
     bool preprocess = false;
-    
-    /* Input arguments: 
+
+    /* Input arguments:
      * carAbst dbafile precision(e.g. 0.2 0.2 0.2) -preprocess
      */
     if (argc < 2 || argc > 6) {
@@ -50,7 +49,7 @@ int main(int argc, char *argv[])
     if (argc >= 5) {
 	for(int i = 2; i < 5; ++i)
 	    eta[i-2] = std::atof(argv[i]);
-	
+
     	if (argc > 5) {
     	    std::string param = std::string(argv[5]);
     	    if (param == "-preprocess")
@@ -63,7 +62,7 @@ int main(int argc, char *argv[])
     }
     std::cout << "Partition precision: " << eta[0] << ' '
 	      << eta[1] << ' ' << eta[2] << '\n';
-    
+
     clock_t tb, te;
     /* set the state space */
     const double theta = 3.5;
@@ -78,7 +77,7 @@ int main(int argc, char *argv[])
     car.init_workspace(xlb, xub);
     car.init_inputset(mu, ulb, uub);
 
-    
+
     /**
      * Construct and save abstraction
      */
@@ -99,7 +98,7 @@ int main(int argc, char *argv[])
     		     double c1= eta[0]/2.0+1e-10;
     		     double c2= eta[1]/2.0+1e-10;
     		     for(size_t i = 0; i < nAvoid; ++i) {
-    			 if ((obs[i][0]-c1) <= x[0] && x[0] <= (obs[i][1]+c1) && 
+    			 if ((obs[i][0]-c1) <= x[0] && x[0] <= (obs[i][1]+c1) &&
     			     (obs[i][2]-c2) <= x[1] && x[1] <= (obs[i][3]+c2))
     			     return -1;
     		     }
@@ -123,13 +122,13 @@ int main(int argc, char *argv[])
     std::cout << "Time of computing abstraction: " << tabst << '\n';
     std::cout << "# of transitions: " << abst._ts._ntrans << '\n';
     /* Write abstraction to file */
-    // std::string nts_file_name = std::string("nts") + std::to_string(0.2) + std::string(".txt"); 
+    // std::string nts_file_name = std::string("nts") + std::to_string(0.2) + std::string(".txt");
     // rocs::txtWriter wtr(nts_file_name.c_str());
     // wtr.write_fts_info(abst._ts);
     // wtr.write_pre_transitions(abst._ts, abst._x, xlb, xub);
     // wtr.open();
     // wtr.close();
-    
+
 
     /**
      * Read DBA from dba*.txt file
@@ -138,11 +137,11 @@ int main(int argc, char *argv[])
     rocs::UintSmall nAP = 0, nNodes = 0, q0 = 0;
     std::vector<rocs::UintSmall> acc;
     std::vector<std::vector<rocs::UintSmall>> arrayM;
-    if (!rocs::read_spec(specfile, nNodes, nAP, q0, arrayM, acc)) 
+    if (!rocs::read_spec(specfile, nNodes, nAP, q0, arrayM, acc))
 	std::exit(1);
-    
-    
-    /* 
+
+
+    /*
      * Assign labels to states: has to be consistent with the dba file.
      */
     double goal[6][4] = {{1.0, 2.0, 0.5, 2.0},
@@ -159,7 +158,7 @@ int main(int argc, char *argv[])
 		      double c2= eta[1]/2.0; //+1e-10;
 		      boost::dynamic_bitset<> label(nGoal, false); // n is the number of goals
 		      for(rocs::UintSmall i = 0; i < nGoal; ++i) {
-			  label[nGoal-1-i] = (goal[i][0] <= (x[0]-c1) && (x[0]+c1) <= goal[i][1] && 
+			  label[nGoal-1-i] = (goal[i][0] <= (x[0]-c1) && (x[0]+c1) <= goal[i][1] &&
 				      goal[i][2] <= (x[1]-c2) && (x[1]+c2) <= goal[i][3])
 			      ? true: false;
 		      }
@@ -167,7 +166,7 @@ int main(int argc, char *argv[])
 		  };
     abst.assign_labels(label_target);
     std::cout << "Specification assignment is done.\n";
-    
+
 
     /**
      * Solve a Buchi game on the product of NTS and DBA.
@@ -192,7 +191,7 @@ int main(int argc, char *argv[])
     float tsyn = (float)(te - tb)/CLOCKS_PER_SEC;
     std::cout << "Time of synthesizing controller: " << tsyn << '\n';
 
-    
+
     /**
      * Display and save memoryless controllers.
      */
@@ -208,7 +207,7 @@ int main(int argc, char *argv[])
 	    datafile += "-";
     }
     datafile += ".h5";
-    
+
     std::cout << "Writing the controller...\n";
     // solver.write_controller_to_txt(const_cast<char*>(datafile.c_str()));
     rocs::h5FileHandler ctlrWtr(datafile, H5F_ACC_TRUNC);
@@ -219,6 +218,6 @@ int main(int argc, char *argv[])
     std::cout << "Controller writing is done.\n";
 
     std::cout << "Total time of used (abstraction+synthesis): " << tabst+tsyn << '\n';
-    
+
     return 0;
 }

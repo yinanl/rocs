@@ -106,16 +106,16 @@ In the configuration file *cflags* in the root path, the paths assigned to `INCS
 
 ## Examples
 Simulations of the examples can be found under the folder *examples*:
-- *examples/aircraft*: reachability control of an aircraft longitudinal model for safe landing [2].
-- *examples/dcdc*: DCDC converter invariance control [3].
-- *examples/car*: control a unicycle to a goal area while avoiding obstacles as well as automatic parallel parking [4].
+- *examples/aircraft*: reachability control of an aircraft longitudinal model for safe landing [3].
+- *examples/dcdc*: DCDC converter invariance control [4].
+- *examples/car*: control a unicycle to a goal area while avoiding obstacles as well as automatic parallel parking [5].
 - *examples/integrator*: reach control of a double integrator.
 - *examples/locomotion*: mode switching for a bipedal robot (see instructions in the related folder).
-- *examples/ipdl*: regulate an inverted pendulum to the upright position [3].
-- *examples/temp*: control the room temperature (4-mode system) to a desired temperature (a setpoint) and keep the temperature around the setpoint [5].
-- *examples/vdp*: estimation of the region of attraction (ROA) for Van der Pol equations [6].
-- *examples/Moore-Greitzer*: control of operation points of Moore-Greitzer jet engine.
-- *examples/scara*: motion planning of a two-link SCARA manipulator.
+- *examples/ipdl*: regulate an inverted pendulum to the upright position [4].
+- *examples/temp*: control the room temperature (4-mode system) to a desired temperature (a setpoint) and keep the temperature around the setpoint [6].
+- *examples/vdp*: estimation of the region of attraction (ROA) for Van der Pol equations [7].
+- *examples/Moore-Greitzer*: control of operation points of Moore-Greitzer jet engine [8].
+- *examples/scara*: motion planning of a two-link SCARA manipulator [8].
 
 
 
@@ -141,15 +141,19 @@ For the DCDC converter example (go to the folder *examples/dcdc*), the user can 
 ## References
 [1][Y. Li, J. Liu, ROCS: A Robustly Complete Control Synthesis Tool for Nonlinear Dynamical Systems. *Proceedings of the 21st International Conference on Hybrid Systems: Computation and Control (part of CPS Week) - HSCC '18*.](http://dl.acm.org/citation.cfm?doid=3178126.3178153)
 
-[2][Reissig, G., Weber, A., and Rungger, M.(2017). Feed-back refinement relations for the synthesis of symboliccontrollers. IEEE Trans. Automat. Contr., 62(4), 1781–1796.](http://ieeexplore.ieee.org/document/7519063/)
+[2]Y. Li, Z. Sun, and J. Liu, ROCS 2.0: An Integrated Temporal Logic Control Synthesis Tool for Nonlinear Dynamical Systems. *7th IFAC Conference on Analysis and Design of Hybrid Systems (ADHS 2021)*.
 
-[3][Y. Li, J. Liu, Invariance Control Synthesis for Switched Nonlinear Systems: An Interval Analysis Approach. IEEE Trans. Automat. Contr., 63(7), 2206-2211.](http://ieeexplore.ieee.org/document/8062786/)
+[3][Reissig, G., Weber, A., and Rungger, M.(2017). Feed-back refinement relations for the synthesis of symboliccontrollers. IEEE Trans. Automat. Contr., 62(4), 1781–1796.](http://ieeexplore.ieee.org/document/7519063/)
 
-[4][Y. Li, J. Liu, Robustly Complete Synthesis of Memoryless Controllers for Nonlinear Systems with Reach-and-Stay Specifications, IEEE Trans. Automat. Contr.](https://ieeexplore.ieee.org/document/9067073)
+[4][Y. Li, J. Liu, Invariance Control Synthesis for Switched Nonlinear Systems: An Interval Analysis Approach. IEEE Trans. Automat. Contr., 63(7), 2206-2211.](http://ieeexplore.ieee.org/document/8062786/)
 
-[5][J. Liu, N. Ozay, U. Topcu, R.M. Murray, Synthesis of Reactive Switching Protocols From Temporal Logic Specifications. IEEE Trans. Automat. Contr., 58(7), 1771-1785.](http://ieeexplore.ieee.org/document/6457409/)
+[5][Y. Li, J. Liu, Robustly Complete Synthesis of Memoryless Controllers for Nonlinear Systems with Reach-and-Stay Specifications, IEEE Trans. Automat. Contr.](https://ieeexplore.ieee.org/document/9067073)
 
-[6][Y. Li, J. Liu, Robustly Complete Synthesis of Memoryless Controllers for Nonlinear Systems with Reach-and-Stay Specifications. ArXiv: 1802.09082v2](http://arxiv.org/abs/1802.09082v2)
+[6][J. Liu, N. Ozay, U. Topcu, R.M. Murray, Synthesis of Reactive Switching Protocols From Temporal Logic Specifications. IEEE Trans. Automat. Contr., 58(7), 1771-1785.](http://ieeexplore.ieee.org/document/6457409/)
+
+[7][Y. Li, J. Liu, Robustly Complete Synthesis of Memoryless Controllers for Nonlinear Systems with Reach-and-Stay Specifications. ArXiv: 1802.09082v2](http://arxiv.org/abs/1802.09082v2)
+
+[8][Y. Li, Z. Sun, and J. Liu, A Specification-Guided Framework for Temporal Logic Control of Nonlinear Systems. ArXiv:2104.01385](https://arxiv.org/abs/2104.01385)
 
 
 ## Contact

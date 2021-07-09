@@ -114,6 +114,9 @@ def animate(i):
 
 ani = animation.FuncAnimation(fig, animate, x1.size,
                               interval=0.1*500, blit=True)
+Writer = animation.writers['ffmpeg']
+writer = Writer(fps=15, metadata=dict(artist='Me'), bitrate=1800)
+ani.save(dirpath+'/replay'+'.mp4', writer=writer)
 
 
 # # End-effector trajectory

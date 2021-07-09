@@ -1,7 +1,5 @@
 /**
- *  temp.cpp
- *
- *  Temperature control example
+ *  Temperature control with the specification-guided engine.
  *
  *  Created by yinan li on August 14, 2017.
  *  Hybrid Systems Group, University of Waterloo.

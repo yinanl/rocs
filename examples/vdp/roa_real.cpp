@@ -1,6 +1,4 @@
 /*
- *  roa_real.cpp
- *
  *  Simulate the real boundary of the region of attraction (ROA) 
  *  for the reversed VDP example.
  *

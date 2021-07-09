@@ -1,7 +1,5 @@
 /**
- *  dba_integrator.cpp
- *
- *  DBA control of the simplified SCARA manipulator dynamics (the double integrator model).
+ *  DBA control of the simplified SCARA manipulator dynamics (the double integrator model) with the specification-guided engine.
  *
  *  Created by Yinan Li on July 14, 2020.
  *  Hybrid Systems Group, University of Waterloo.
@@ -54,7 +52,7 @@ T collision2(const T &x) {
 int main(int argc, char *argv[])
 {
     /* Input arguments:
-     * carDBAall dbafile
+     * dba dbafile
      */
     if (argc != 2) {
 	std::cout << "Improper number of arguments.\n";

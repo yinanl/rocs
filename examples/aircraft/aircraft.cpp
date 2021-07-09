@@ -1,7 +1,5 @@
 /**
- *  aircraft_itvl.cpp
- *
- *  Interval method for the safe landing of DC9-30.
+ *  Safe landing control of DC9-30 with the specification-guided engine.
  *
  *  Created by Yinan Li on Feb. 10, 2020.
  *  Hybrid Systems Group, University of Waterloo.

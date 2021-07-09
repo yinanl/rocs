@@ -1,7 +1,5 @@
 /**
- *  aircraft_abst.cpp
- *
- *  Abstraction-based control for the safe landing of DC9-30.
+ *  Safe landing control of DC9-30 with the abstraction-based engine.
  *
  *  Created by Yinan Li on Jan 11, 2021.
  *  Hybrid Systems Group, University of Waterloo.

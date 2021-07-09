@@ -136,8 +136,8 @@ int main(int argc, char *argv[])
 		  };
 
     std::cout << "Start control synthesis...\n";
-    std::vector<std::string> tokens;
-    boost::split(tokens, specfile, boost::is_any_of("."));
+    // std::vector<std::string> tokens;
+    // boost::split(tokens, specfile, boost::is_any_of("."));
     rocs::UintSmall oid[nNodes];
     for(int i = 0; i < nNodes; ++i)
 	oid[i] = i;

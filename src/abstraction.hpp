@@ -1,13 +1,10 @@
 /**
- *  abstraction.h
- *
- *  An abstraction class.
+ *  The definition of an abstraction class.
  *
  *  Created by Yinan Li on Aug. 30, 2017.
  *
  *  Hybrid Systems Group, University of Waterloo.
  */
-
 
 #ifndef _abstraction_h_
 #define _abstraction_h_
@@ -29,40 +26,55 @@ namespace rocs {
     // typedef bool (*gset)(const ivec &x);
     
     /**
-     * Weighting function (of edges) of transitions.
+     * \brief Weighting function (of edges) of transitions.
      */
     typedef double (*WGT)(std::vector<double> &x0,
     			  std::vector<double> &x1,
     			  std::vector<double> &u0);
     
-    
+    /**
+     * \brief An abstraction class of a dynamical system.
+     *
+     * This is a template class where the typename %S will be replaced by the actual dynamical system type.
+     */
     template<typename S>
     class abstraction {
+	
     public:
-	grid _x;  /**< a grid of states */
-	S *_ptrsys; /**< pointer to the system object */
-	std::vector<int> _labels; /**< a vector of labels for the state grid _x */
-	WGT _wf;  /**< weighting callback function */
-	fts _ts;  /**< the transition system to be constructed */
+	grid _x;  /**< A grid of states */
+	S *_ptrsys; /**< A pointer to the system object */
+	std::vector<int> _labels; /**< A vector of labels for the state grid _x */
+	WGT _wf;  /**< Weighting callback function */
+	fts _ts;  /**< The finite transition system */
   
 	/**
-	 * Constructors: default and the other two with vector field functor.
+	 * \brief A constructor.
 	 *
-	 * Assign user defined system dynamics and weighting function to an abstraction.
-	 * @param sys the pointer to a system object.
+	 * Assign user defined system dynamics to an abstraction.
+	 *
+	 * @param[in] sys The pointer to a system object
 	 */
 	abstraction(S *sys) : _x(sys->_xdim), _ptrsys(sys), _wf(NULL) {}
+	/**
+	 * \brief A constructor.
+	 *
+	 * Assign user defined system dynamics as well as a weighting function to an abstraction.
+	 *
+	 * @param[in] sys The pointer to a system object
+	 * @param[in] wf A weighting function
+	 */
 	abstraction(S *sys, WGT wf) : _x(sys->_xdim), _ptrsys(sys), _wf(wf) {}
 
 	/**
-	 * State initialization
+	 * \brief Initialize the states in the abstraction.
 	 *
-	 * Initialize 
-	 * - state grid by bound and grid size.
-	 * - labels
-	 * @param eta[n] an array of grid size.
-	 * @param xlb[n] an array of lower bounds.
-	 * @param xub[n] an array of upper bounds.
+	 * This includes 
+	 * - assigning a grid of states by the given bounds and grid size.
+	 * - assigning labels
+	 *
+	 * @param[in] eta An array of grid size
+	 * @param[in] xlb An array of lower bounds
+	 * @param[in] xub An array of upper bounds
 	 */
 	void init_state(const double eta[], const double xlb[], const double xub[]) {
 	    _x.gridding(eta, xlb, xub);
@@ -70,7 +82,9 @@ namespace rocs {
 	}
 
 	/**
-	 * Initialize the size of _npre and _npost (n x m).
+	 * \brief Initialize the finite transition system.
+	 *
+	 * Assign the number of predecessing (fts._npre) and successing (fts._npost) states.
 	 */
 	bool init_transitions() {
 	    if (_x._nv > 0 && _ptrsys->_ugrid._nv > 0) {
@@ -83,9 +97,13 @@ namespace rocs {
 	}
 	
 	/**
-	 * Get discrete state indicies of a given area (the area is fully covered).
-	 * @param xlb lower bound of the area.
-	 * @param xub upper bound of the area.
+	 * \brief Get state indicies of a given hyper-rectangle area.
+	 *
+	 * The area is given by its lower and upper bounds.
+	 * It is allowed to be out of domain, but only the inside domain part is considered.
+	 *
+	 * @param xlb The lower bound of the area
+	 * @param xub The upper bound of the area
 	 * @return a list of indicies.
 	 */
 	std::vector<size_t> get_discrete_states(const double xlb[], const double xub[]) {
@@ -101,7 +119,7 @@ namespace rocs {
 	 * Get discrete state indicies of a given area:
 	 * \f$\{x|g(x)=\text{True}\}\f$.
 	 *
-	 * @param g the function determining whether x is inside the set.
+	 * @param[in] g The function that determines if x is inside the set
 	 * @return a list of indicies.
 	 */
 	std::vector<size_t> get_discrete_states(std::function<bool(const ivec &)> g) {
@@ -125,10 +143,10 @@ namespace rocs {
 	    return r;
 	}
 
-
 	/**
-	 * Assign labels to the state grid:
-	 * @param fcn a function that returns the label of a grid id.
+	 * \brief A template function that assigns labels to the state grid.
+	 *
+	 * @param[in] labeling A function that returns the label of a grid id
 	 */
 	template<typename F>
 	void assign_labels(F labeling) {
@@ -137,16 +155,24 @@ namespace rocs {
 		    _labels[i] = labeling(i);
 	    }
 	}
+
+	/**
+	 * \brief Assign the label to the out-of-domain part.
+	 *
+	 * @param[in] label The label given to the out-of-domain part
+	 */
 	void assign_label_outofdomain(int label) {
 	    _labels[_x._nv] = label;
 	}
 	
 
 	/**
-	 * Assign transitions with robustness margins e1,e2.
+	 * \brief Assign transitions with robustness margins e1,e2.
+	 *
+	 * This function constructs an fts according to the given system.
 	 * 
-	 * @param e1 the robustness margin at the initial point.
-	 * @param e2 the robustness margin at the end point.
+	 * @param[in] e1 the robustness margin at the initial point.
+	 * @param[in] e2 the robustness margin at the end point.
 	 * @return whether construction is successful.
 	 */
 	bool assign_transitions(const double e1[], const double e2[]) {
@@ -420,10 +446,10 @@ namespace rocs {
 	
   
 	/**
-	 * Assign transitions considering robustness margins:
+	 * \brief Assign transitions by subgridding.
 	 * see assign_transitions()
 	 *
-	 * @param rp[] the pointer to an array of relative subgridding size
+	 * @param[in] rp[] the pointer to an array of relative subgridding size
 	 * @return whether construction is successful.
 	 */
 	bool assign_transitions_subgridding(const double rp[]) {

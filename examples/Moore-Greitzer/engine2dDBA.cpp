@@ -1,7 +1,5 @@
 /**
- *  engine2dDBA.cpp
- *
- *  Reach and stay control of the ode model of Moore-Greitzer engine.
+ *  Moore-Greitzer engine DBA control with the specification-guided engine.
  *
  *  Created by Yinan Li on June 9, 2020.
  *  Hybrid Systems Group, University of Waterloo.
@@ -64,7 +62,7 @@ struct mgode2 {
 int main(int argc, char *argv[])
 {
     /* Input arguments: 
-     * carDBAall dbafile
+     * engine2dDBA dbafile
      */
     if (argc != 2) {
 	std::cout << "Improper number of arguments.\n";

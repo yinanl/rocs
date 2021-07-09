@@ -1,6 +1,4 @@
 /**
- *  interval_vector.h
- *  
  *  An interval vector class with a given dimension size.
  *
  *  Created by Yinan Li on Aug. 08, 2016.
@@ -19,6 +17,11 @@
 
 namespace rocs {
 
+    /**
+     * \brief An interval vector class with a given dimension size.
+     *
+     * It is an interval defined on \f$R^d\f$, i.e., \f$[x]=[\underline{x_1},\overline{x_1}]\times\cdots\times[\underline{x_d},\overline{x_d}]\f$.
+     */
     class ivec
     {
     private:
@@ -28,10 +31,17 @@ namespace rocs {
     public:
 
 	/**
-	 * \brief Constructors.
+	 * \brief The default constructor.
 	 */
 	ivec(): _itvls(NULL), _dim(0) {};
+
+	/**
+	 * \brief A constructor.
+	 *
+	 * @param[in] n The dimension
+	 */
 	ivec(int n) { _dim = n; _itvls = new interval[n];}
+	
 	/**
 	 * \brief A copy constructor: y = ivec(x).
 	 */
@@ -45,8 +55,9 @@ namespace rocs {
 		    _itvls[i] = x._itvls[i];
 	    }
 	}
+	
 	/**
-	 * \brief Constructor by initializer_list.
+	 * \brief A constructor by initializer_list.
 	 */
 	ivec(std::initializer_list<interval> l) {
 	    _dim = l.size();
@@ -58,6 +69,7 @@ namespace rocs {
 		++i;
 	    }
 	}
+	
 	/**
 	 * \brief A copy assignment: y = x.
 	 */
@@ -81,6 +93,7 @@ namespace rocs {
 
 	    return (*this);
 	}
+	
 	/**
 	 * \brief A destructor.
 	 */
@@ -104,6 +117,13 @@ namespace rocs {
 	 * (a1.inf,a2.inf,...,an.inf]), vec = [a1] x [a2] x... [an]
 	 */
 	std::vector<double> getinf() const;
+
+	/**
+	 * \brief Get the lower bound of an interval vector.
+	 *
+	 * @param[in,out] inf The lower bound
+	 * @see getinf()
+	 */
 	void getinf(std::vector<double> &inf) const;
 	
 	/**
@@ -112,6 +132,13 @@ namespace rocs {
 	 * (a1.sup, a2.sup,..., an.sup), vec = [a1] x [a2] x... [an]
 	 */
 	std::vector<double> getsup() const;
+
+	/**
+	 * \brief Get the upper bound of an interval vector.
+	 *
+	 * @param[in,out] sup The upper bound
+	 * @see getsup()
+	 */
 	void getsup(std::vector<double> &sup) const;
 	
 	/**
@@ -120,12 +147,17 @@ namespace rocs {
 	int getdim() const { return _dim;}
 	
 	/**
-	 * \brief Set the interval in the axis (the first argument) dimension.
+	 * \brief Set the interval in a given dimension.
+	 *
+	 * @param[in] axis The dimension
+	 * @param[in] x A 1d interval
 	 */
 	void setval(int axis, const interval &x) { _itvls[axis] = x;}
 
 	/**
-	 * \brief Get the interval in the axis (the first argument) dimension.
+	 * \brief Get the interval in a given dimension.
+	 *
+	 * @param[in] axis The dimension
 	 */
 	interval getval(int axis) { return _itvls[axis];}
 	
@@ -250,6 +282,7 @@ namespace rocs {
   
 	/**
 	 * \brief A linear affine operation on an interval vector.
+	 *
 	 * y = A[x] + b (b=0 -> y = A[x])
 	 * y = A * xc + |A|*|xr|, x = xc + [xr]
 	 */

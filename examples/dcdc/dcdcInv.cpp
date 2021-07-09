@@ -1,7 +1,5 @@
 /**
- *  dcdc.cpp
- *
- *  A DCDC converter invariance control example.
+ *  DCDC converter invariance control with the specification-guided engine.
  *
  *  Created by Yinan Li on May 10, 2018.
  *  Hybrid Systems Group, University of Waterloo.

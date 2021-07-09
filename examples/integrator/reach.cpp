@@ -1,7 +1,5 @@
 /**
- *  reach.cpp
- *
- *  Reachability control of a double integrator.
+ *  Reachability control of a double integrator with the specification-guided engine.
  *
  *  Created by Yinan Li on July 14, 2020.
  *  Hybrid Systems Group, University of Waterloo.

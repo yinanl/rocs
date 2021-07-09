@@ -1,5 +1,5 @@
-Name=GFa1 & GFa2
-AP=a1(1) a2(2) others(0)
+Name=GFg1 & GFg2
+AP=g1(1) g2(2) others(0)
 acc=0
 nNodes=3
 nAP=2

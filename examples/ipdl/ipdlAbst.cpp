@@ -1,7 +1,5 @@
 /**
- *  ipdlAbst.cpp
- *
- *  The example of stabilization of an inverted pendulum.
+ *  Stabilization of an inverted pendulum with the abstraction-based engine.
  *
  *  Created by Yinan Li on May 10, 2018.
  *  Hybrid Systems Group, University of Waterloo.
@@ -53,7 +51,7 @@ struct ipdlode {
 int main(int argc, char *argv[])
 {
     /* Input arguments: 
-     * dcdcAbstRS dbafile 
+     * ipdlAbst dbafile 
      */
     if (argc != 2) {
 	std::cout << "Improper number of arguments.\n";

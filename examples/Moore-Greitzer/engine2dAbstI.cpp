@@ -1,7 +1,5 @@
 /**
- *  engineAbstI.cpp
- *
- *  Abstraction-based reach-stay-avoid control of an engine ode.
+ *  Moore-Greitzer engine DBA control with the specification-guided engine.
  *  
  *  Created by Yinan Li on July 3, 2020.
  *  Hybrid Systems Group, University of Waterloo.
@@ -57,7 +55,7 @@ struct mgode2 {
 int main(int argc, char *argv[])
 {
     /* Input arguments: 
-     * carAbst dbafile 
+     * engine2dAbstI dbafile 
      */
     if (argc != 2) {
 	std::cout << "Improper number of arguments.\n";

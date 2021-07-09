@@ -1,19 +1,15 @@
 /**
- *  csolver.h
- *
- *  An interval based control problem solver class.
+ *  The source code of the specification-guided engine.
  *
  *  Created by Yinan Li on Jan. 03, 2017.
  *
  *  Hybrid Systems Group, University of Waterloo.
  */
 
-
 #ifndef _csolver_h
 #define _csolver_h
 
 #include <iostream>
-
 #include <climits>
 #include <vector>
 
@@ -24,53 +20,60 @@
 namespace rocs {
   
     /**
-     * An enum used to specify GOAL and AVOIDANCE.
+     * \brief An enum to specify GOAL and AVOIDANCE.
      */
     enum SPEC
 	{
-	 GOAL,  // tag = 1
-	 AVOID,   // tag = -1
-	 FREE  // tag = 0
+	 GOAL, /**< goal (tag=1) */
+	 AVOID, /**< avoid (tag=-1) */
+	 FREE  /**< free workspace (tag=0) */
 	};
 
     /**
-     * Bisection type.
+     * \brief Bisection type.
      */
     enum BISECT
 	{
-	 RELMAX, /* i = argmax{width[i]/eps[i]} */
-	 ABSMAX /* i = argmax{width[i]} */
+	 RELMAX, /**< i = argmax{width[i]/eps[i]} */
+	 ABSMAX /**< i = argmax{width[i]} */
 	};
 
 
     /**
-     * A solver of control problems.
+     * \brief The specification-guided engine solver.
+     *
+     * The state space of the system is partitioned on-the-fly, which results in a non-uniform partition.
+     * Control synthesis w.r.t. an LTL formula relies on its translation to a transition matrix _M.
+     * After control synthesis, the controller _ctlr is filled.
+     * Computational info is recorded in _fpiter and _timer. 
      */
     class CSolver
     {
     public:
 
-	SPtree _ctlr;	     /**< A controller. */
-	int _xdim;  /**< The state dimension. */
-	size_t _nu;  /**< The number of control values. */
-	std::vector<UintSmall> _M; /**< The transitions from the current S-domain to others,
-				      * which is given in a transition matrix of a DBA */
-	std::vector<ivec> _goal; /**< The goal areas (an array of intervals). */
-	std::vector<ivec> _obs;  /**< The avoiding areas (an array of intervals). */
-	BISECT _bstype;   /**< The bisection type. */
-	size_t _maxiter;  /**< The maximum number of iterations. */
-	double _winsize;  /**< The volume of the winning set. */
+	SPtree _ctlr; /**< A controller */
+	int _xdim; /**< The state dimension */
+	size_t _nu; /**< The number of control values */
+	std::vector<UintSmall> _M; /**< All the transitions from the current %DBA state (q0) to others. If q0-->q1 under a proposition with the label i, then _M[i] gives the index of the %DBA state q1. */
+	std::vector<ivec> _goal; /**< The goal areas (an array of intervals) */
+	std::vector<ivec> _obs;  /**< The avoiding areas (an array of intervals) */
+	BISECT _bstype;   /**< The bisection type */
+	size_t _maxiter;  /**< The maximum number of iterations */
+	double _winsize;  /**< The volume of the winning set */
 	
-	size_t _fpiter[3];   /**< The number of iterations: max alter depth 3. */
-	double _timer;   /**< The time of solving. */
+	size_t _fpiter[3];   /**< The number of iterations: max alter depth 3 */
+	double _timer;   /**< The time of solving */
 
 
 	/**
-	 * A constructor.
-	 * @param ptrsys the pointer to the system dynamics.
-	 * @param nProps the number of propositions.
-	 * @param bs the bisection type.
-	 * @param maxi the maximum number of iterations.
+	 * \brief A constructor.
+	 *
+	 * Set the maximum number of iterations if you want the iteration to stop earlier.
+	 *
+	 * @param[in] ptrsys The pointer to the system dynamics 
+	 * @param[in] nProps The number of propositions (default=0)
+	 * @param[in] bs The bisection type (default=ABSMAX)
+	 * @param[in] maxi The maximum number of iterations (default=UINT_MAX)
 	 */
 	template<typename system>
 	CSolver(system* ptrsys, size_t nProps=0, BISECT bs=ABSMAX, size_t maxi=UINT_MAX):
@@ -114,75 +117,96 @@ namespace rocs {
 	// 	_ctlr = SPtree(&root);
 	//     }
 
-
 	/**
-	 * Set the vector _M.
-	 * @param outedge[] the pointer to the input array.
+	 * \brief Set the vector _M.
+	 *
+	 * @param[in] outedge The lvalue ref to the input transition matrix
 	 */
 	void set_M(const std::vector<UintSmall> &outedge);
-	
 
 	/**
-	 * Determine the bisection axis.
-	 * @param box the interval vector to be bisected.
+	 * \brief Determine the bisection axis.
+	 *
+	 * @param[in,out] box The interval vector to be bisected
+	 * @param[in] eps The given precision of the grid, i.e., the minimum size of a grid
 	 */
 	int bisect_axis(ivec &box, const double eps[]);
 
-
-	/* Labeling */
 	/**
-	 * Assign labels to different area in the state space X by the labeling function.
-	 * @param prop an integer (<=255) representing the proposition.
-	 * @param lb lower bound of the interval.
-	 * @param ub upper bound.
+	 * \brief Assign a label to a given hyper-rectangle in the state space.
+	 * 
+	 * @param[in] lb The lower bound of the interval
+	 * @param[in] ub The upper bound of the interval
+	 * @param[in] prop The proposition of type UintSmall
 	 */
 	void labeling(const double lb[], const double ub[], UintSmall prop);
+	
+	/**
+	 * \brief Assign a label to a given hyper-rectangle in the state space.
+	 * 
+	 * @param[in] area The interval vector
+	 * @param[in] prop The proposition of type UintSmall
+	 */
 	void labeling(ivec &area, UintSmall prop);
+	
 	void init_label(SPnode *node, ivec &box, UintSmall prop);
 	void refine_label(SPnode *node, ivec &box, UintSmall prop);
 
-
-	/* Initilize the winning set */
 	/**
-	 * Assume that the _ctlr(an SPtree) is already partitioned by the labeling function
+	 * \brief Initialize the winning set.
+	 * 
+	 * Assume that the _ctlr is already partitioned by the labeling function.
+	 *
 	 */
 	void init_winset();
+
+	
 	void init_winset(ivec &area);
 
 	/** 
-	 * Check if the related S-domains contain targeted areas 
-	 * @param sdoms a vector of the pointers to S-domains of all DBA nodes.
+	 * \brief Check if the related S-domains contain targeted areas.
+	 *
+	 * @param[in] sdoms A vector of the pointers to the S-domains of all %DBA nodes.
 	 */
 	bool targetset_in_sdoms(std::vector<SPtree*> &sdoms);
   
-  
-	/* controller initialization */
 	/**
-	 * Initialize _ctlr by an interval constriant.
-	 * Assign a goal or an avoid area (an interval).
-	 * @param ap atomic proposition "GOAL" or "AVOID".
-	 * @param lb lower bound of the interval.
-	 * @param ub upper bound.
+	 * \brief Initialize _ctlr by an interval constriant.
 	 *
-	 * Tagging rules in initialization:
+	 * Assign a goal or an avoid area (an interval) to _ctlr by using tags.
+	 * Tagging rules are:
 	 * - goal       _tag <- 1;
 	 * - free       _tag <- 0;
 	 * - free&goal  _tag <- 2;
 	 * - avoid      _tag <- -1;
 	 * - free&avoid _tag <- -2;
 	 * - f, g & a   _tag <- 2;
+	 *
+	 * @param[in] ap A label "GOAL", "AVOID" or "FREE"
+	 * @param[in] lb lower bound of the interval
+	 * @param[in] ub upper bound of the interval
 	 */
 	void init(SPEC ap, const double lb[], const double ub[]);
-	void init(SPEC ap, ivec &area);
+
 	/**
-	 * Initialize by interval constraint.
+	 * @see init(SPEC ap, const double lb[], const double ub[])
+	 * @param[in] area The given interval
+	 */
+	void init(SPEC ap, ivec &area);
+	
+	/**
+	 * \brief A subroutin of init().
+	 *
 	 * Mark leaf node by itag if interval matches, otherwise, keep parent's tag.
-	 * @param node the node to be splitted w.r.t. box
-	 * @param box a given constraint (an interval)
-	 * @param itag tag for the constraint 1(goal), -1(avoid)
+	 * @param[in] node The node to be splitted w.r.t. box
+	 * @param[in] box A given constraint (an interval)
+	 * @param[in] itag Tag for the constraint 1(goal), -1(avoid)
 	 */
 	void paver_init(SPnode *node, ivec &box, short itag);
+	
 	/**
+	 * \brief A subroutin of init().
+	 *
 	 * Refine initialized node.
 	 * @see paver_init().
 	 */
@@ -190,23 +214,27 @@ namespace rocs {
 
   
 	/**
-	 * Initialize _ctlr by a function constraint f(x)<=0.
-	 * @param ap approximation type: inner or outer.
-	 * @param f \f$f(x)\leq 0\f$.
-	 * @param eps paver precision.
+	 * \brief Initialize _ctlr by a function constraint \f$f(x)\leq 0\f$.
+	 *
+	 * @param[in] ap A label "GOAL", "AVOID" or "FREE"
+	 * @param[in] f \f$f(x)\leq 0\f$
+	 * @param[in] eps Paver precision
 	 */
 	void init(SPEC ap, fcst f, const double eps[]);
 	void paver_init(SPtree &sp, fcst f, bool inner, short itag,
 			const double eps[]);
+	
 	/**
-	 * CSP w.r.t. a single interval
-	 * recursive function call (same as using stacks).
-	 * @param sp root of subpaving.
-	 * @param ptrnode SPnodes to be refined.
-	 * @param cst constraint region (an interval).
-	 * @param eps paver precision.
-	 * @param inner indicator of inner approximation.
-	 * @param itag tag for insiders.
+	 * \brief The algorithm Set Interval Via Interval Analysis (sivia).
+	 *
+	 * It is performed by using recursive function calls (same as using stacks).
+	 *
+	 * @param[in] sp The root of subpaving
+	 * @param[in] ptrnode The SPnode to be refined
+	 * @param[in] cst The constraint region (an interval)
+	 * @param[in] eps The paver precision
+	 * @param[in] inner The indicator of inner approximation (True)
+	 * @param[in] itag The tag for insiders
 	 */
 	void sivia(SPtree &sp, SPnode *ptrnode, ivec &cst, fcst f,
 		   bool inner, short itag, const double eps[]);
@@ -214,26 +242,28 @@ namespace rocs {
 			 const double eps[]);
 
 	/**
-	 * Initialize _goal by collecting leaves with tag 1.
+	 * \brief Initialize _goal by collecting leaves with tag 1.
+	 *
 	 * Must be used after init() functions.
 	 */
 	void init_goal_area();
 
 	/**
-	 * Initialize _obs by collecting leaves with tag -1.
+	 * \brief Initialize _obs by collecting leaves with tag -1.
+	 *
 	 * Must be used after init() functions.
 	 */
 	void init_avoid_area();
 
 	/**
-	 * Compute the normalized length of current winning set:
+	 * \brief Compute the normalized length of current winning set:
 	 * this->_winsize = pow(vol, 1/xdim)
 	 */
-	void compute_winsize();
-	
+	void compute_winsize();	
 
 	/**
-	 * Test if a box is included in the paving.
+	 * \brief Test if a box is included in the paving.
+	 *
 	 * @param sp the SPtree with tags (-2, -1, 0), 1, 2.
 	 * @param box an interval vector.
 	 * @return 0(outside), 1(inside), 2(undetermined).
@@ -241,16 +271,17 @@ namespace rocs {
 	short paver_test(SPtree&, ivec&);
 
 	/**
-	 * One-step backward reachable set (tag updates):
+	 * \brief Compute the one-step backward reachable set within the scope of the same CSolver.
+	 *
 	 * The set of states that can reach the target set in one step under some u.
 	 * Exist u for all d.
 	 *
-	 * @param l [inout] pointers of nodes to be tested (empty on return).
-	 * @param l0 [inout] outside nodes (updated on return).
-	 * @param l1 [inout] inside nodes (as above).
-	 * @param l2 [inout] undetermined nodes (as above).
-	 * @param fcn [in]function pointer to a vector field.
-	 * @param eps [in] minimum paver size.
+	 * @param[in,out] l Pointers of nodes to be tested (empty on return)
+	 * @param[in,out] l0 Outside nodes (updated on return)
+	 * @param[in,out] l1 Inside nodes (as above)
+	 * @param[in,out] l2 Undetermined nodes (as above)
+	 * @param[in] fcn Function pointer to a vector field
+	 * @param[in] eps Minimum paver size
 	 */
 	template<typename system>
 	void pre_cntl(system* ptrsys,
@@ -259,11 +290,14 @@ namespace rocs {
 		      const double evaleps[]);
 
 	/**
-	 * The union of one-step backward reachable set (tag updates):
-	 * W_i = U_j a_ij\cap Pre(W_j)
+	 * \brief Compute the union of one-step backward reachable set across different CSolver objects:
+	 *
+	 * \f$W_i = \bigcup_j a_{ij}\cap Pre(W_j)\f$
 	 *  
-	 * The result (union of predecessors) is represented by the tags in _ctlr.
-	 * @param sdoms a vector of the pointers to S-domains of all DBA nodes.
+	 *  The result (union of predecessors) is represented by the updated tags in _ctlr.
+	 * @see pre_cntl()
+	 *
+	 * @param[in] sdoms A vector of the pointers to S-domains of all %DBA nodes
 	 */
 	template<typename system>
 	void union_of_pres(system* ptrsys, std::vector<SPtree*> &sdoms,
@@ -271,22 +305,22 @@ namespace rocs {
 			   std::stack<SPnode*> &l1, std::stack<SPnode*> &l2,
 			   const double evaleps[]);
 	
-	
-	/* fixed-point algorithms */
 	/**
-	 * Initialize queues of leaves for computation
-	 * @l0 a stack of leaves with tag=0.
-	 * @l1 a stack of leaves with tag=1.
-	 * @l2 a stack of leaves with tag=2.
+	 * \brief Initialize queues of leaves for computation.
+	 *
+	 * @param[in,out] l0 A stack of leaves with tag=0.
+	 * @param[in,out] l1 A stack of leaves with tag=1.
+	 * @param[in,out] l2 A stack of leaves with tag=2.
 	 */
 	void init_leafque(std::stack<SPnode*> &l0,
 			  std::stack<SPnode*> &l1,
 			  std::stack<SPnode*> &l2);
 
 	/**
-	 * Core subroutine for invariance control computation.
-	 * @param d the depth of iteration (0 inner most, 2 outer most).
-	 * @see init_leafqueue() and invariance_control().
+	 * \brief Core subroutine for invariance control computation.
+	 *
+	 * @see init_leafqueue() and invariance_control()
+	 * @param d The depth of iteration (0 inner most, 2 outer most)
 	 */
 	template<typename system>
 	void inv_compute(system* ptrsys,
@@ -296,8 +330,9 @@ namespace rocs {
 			 int d, const double eps[]);
 
 	/**
-	 * Core subroutine for reachability control computation.
-	 * @see init_leafque() and reachability_control() and inv_compute().
+	 * \brief Core subroutine for reachability control computation.
+	 *
+	 * @see init_leafque() and reachability_control() and inv_compute()
 	 */
 	template<typename system>
 	void reach_compute(system* ptrsys,
@@ -308,18 +343,20 @@ namespace rocs {
 			   bool vareps=false, const double emin[]=nullptr);
   
 	/**
-	 * Maximal controlled invariant sets: \f$\nu X.(\text{Pre}(X)\cap X)\f$.
-	 * @param eps absolute paver precision.
+	 * \brief Compute the maximal controlled invariant set: \f$\nu X.(\text{Pre}(X)\cap X)\f$.
+	 *
+	 * @param[in] eps The paver precision
 	 * @return 0(empty set), 1(non-empty).
 	 */
 	template<typename system>
 	bool invariance_control(system* ptrsys, const double eps[]);
   
 	/**
-	 * Backward reachable sets: iterating \f$\mu X.(\text{Pre}(X)\cup X)\f$.
-	 * @param eps absolute or relative paver precision.
-	 * @param epsmin minimum absolute paver size (default=0.001).
-	 * @param vareps using variate precision (true-yes, false-no).
+	 * \brief Compute the backward reachable set: iterating \f$\mu X.(\text{Pre}(X)\cup X)\f$.
+	 *
+	 * @param[in] eps The absolute or relative paver precision
+	 * @param[in] epsmin The minimum absolute paver size (default=nullptr)
+	 * @param[in] vareps An indicator of whether using variate precision (true-yes, false-no(default))
 	 * @return 0(empty set), 1(non-empty).
 	 */
 	template<typename system>
@@ -327,13 +364,14 @@ namespace rocs {
 				  bool vareps=false, const double emin[]=nullptr);
 
 	/**
-	 * Backward reachable set to the maximal controlled invariant set.
+	 * \brief Compute the backward reachable set to the maximal controlled invariant set.
 	 *
-	 * A subset of co-Buchi set. 
-	 * @param ei relative precision for invariance.
-	 * @param er absolute or relative precision for reachability.
-	 * @param ermin minimum absolute paver size (default=0.001).
-	 * @param vareps using variate precision (true-yes, false-no).
+	 * A subset of co-Buchi set.
+	 *
+	 * @param[in] ei The relative precision for invariance
+	 * @param[in] er The absolute or relative precision for reachability
+	 * @param[in] ermin The minimum absolute paver size (default=nullptr)
+	 * @param[in] vareps An indicator of whether using variate precision (true-yes, false-no(default)).
 	 * @return 0(empty set), 1(non-empty).
 	 */
 	template<typename system>
@@ -342,7 +380,7 @@ namespace rocs {
 			       bool vareps=false, const double ermin[]=nullptr);
 
 	/**
-	 * Standard coBuchi winning set: \f$\nu Y.\nu X.[\text{Pre}(Y)\cup(B\cap \text{Pre}(X))]\f$.
+	 * \brief Compute the standard coBuchi winning set: \f$\nu Y.\nu X.[\text{Pre}(Y)\cup(B\cap \text{Pre}(X))]\f$.
 	 *
 	 * Relative and adaptive precisions.
 	 * @see reachstay_control().
@@ -352,35 +390,30 @@ namespace rocs {
 		     const double ei[], const double er[],
 		     bool vareps=false, const double ermin[]=nullptr);
 
-
 	/**
-	 * Standard Buchi winning set: \f$\nu Y.\mu X.[(B\cap\text{Pre}(Y))\cup\text{Pre}(X)]\f$.
-	 * @param er absolute or relative precision for reachability.
-	 * @param ermin minimum absolute paver size (default=0.001).
-	 * @param vareps using variate precision (true-yes, false-no).
-	 * @return 0(empty set), 1(non-empty set).
+	 * \brief Compute the standard Buchi winning set: \f$\nu Y.\mu X.[(B\cap\text{Pre}(Y))\cup\text{Pre}(X)]\f$.
+	 *
+	 * @see reachstay_control()
 	 */
 	template<typename system>
 	bool buchi(system* ptrsys, const double eps[],
 		   bool vareps=false, const double ermin[]=nullptr);
 
-  
-
-	/* display and save */
 	/**
-	 * Print controller info to screen.
+	 * \brief Print controller info to screen.
 	 */
 	void print_controller_info() const;
 
 	/**
-	 * Print a conrol table to screen.
+	 * \brief Print a conrol table to screen.
 	 */
 	void print_controller() const;
 
 	/**
-	 * Write (tag=1) leaf nodes of _ctlr to a log file.
-	 * @param filename log file name.
-	 * @param iter the number of iteration.
+	 * \brief Write (tag=1) leaf nodes of _ctlr to a log file.
+	 *
+	 * @param[in] filename The log file name
+	 * @param[in] iter The number of iteration
 	 */
 	void log_iterations(const char* filename, int iter);
   
@@ -932,13 +965,17 @@ namespace rocs {
 
     /* non-member functions */
     /**
-     * Control synthesis for DBA objectives.
+     * \brief Control synthesis for DBA objectives.
      * 
-     * @param[inout] w a vector of S-domains (CSolvers) (assumption: already initialized).
-     * @param ptrsys the pointer to the system.
-     * @param acc a vector of accepting nodes.
-     * @param nNodes the number of DBA nodes.
-     * @param e a partition precision. 
+     * The resulting winning set and each sub-controllers are recored in the corresponding %CSolver objects.
+     * @param[in,out] w A vector of S-domains (CSolvers) (assumption: already initialized)
+     * @param[in] ptrsys The pointer to the system
+     * @param[in] sdoms The pointers to the S-domains of all %DBA states
+     * @param[in] nNodes The number of %DBA states
+     * @param[in] isacc A vector of binaries (size nNodes) that marks accepting states
+     * @param[in] init_w A function that initializes labeling function
+     * @param[in] oid An index mapping between %DBA state indices and the indices  under consideration in the full list of S-domains.
+     * @param[in] e A partition precision
      */
     template<typename system, typename F>
     void dba_control(std::vector<CSolver*> &w, system* ptrsys,

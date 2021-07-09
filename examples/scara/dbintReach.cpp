@@ -1,7 +1,5 @@
 /**
- *  dba_integrator.cpp
- *
- *  DBA control of the simplified SCARA manipulator dynamics (the double integrator model).
+ *  Reachability control of the simplified SCARA manipulator dynamics (the double integrator model) with the specification-guided engine.
  *
  *  Created by Yinan Li on July 14, 2020.
  *  Hybrid Systems Group, University of Waterloo.

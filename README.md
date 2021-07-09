@@ -145,15 +145,15 @@ For the DCDC converter example (go to the folder *examples/dcdc*), the user can 
 
 [3][Reissig, G., Weber, A., and Rungger, M.(2017). Feed-back refinement relations for the synthesis of symboliccontrollers. IEEE Trans. Automat. Contr., 62(4), 1781–1796.](http://ieeexplore.ieee.org/document/7519063/)
 
-[4][Y. Li, J. Liu, Invariance Control Synthesis for Switched Nonlinear Systems: An Interval Analysis Approach. IEEE Trans. Automat. Contr., 63(7), 2206-2211.](http://ieeexplore.ieee.org/document/8062786/)
+[4][Y. Li, J. Liu (2018). Invariance Control Synthesis for Switched Nonlinear Systems: An Interval Analysis Approach. IEEE Trans. Automat. Contr., 63(7), 2206-2211.](http://ieeexplore.ieee.org/document/8062786/)
 
-[5][Y. Li, J. Liu, Robustly Complete Synthesis of Memoryless Controllers for Nonlinear Systems with Reach-and-Stay Specifications, IEEE Trans. Automat. Contr.](https://ieeexplore.ieee.org/document/9067073)
+[5][Y. Li, J. Liu (2021). Robustly Complete Synthesis of Memoryless Controllers for Nonlinear Systems with Reach-and-Stay Specifications, IEEE Trans. Automat. Contr., 66(3), 1199-1206](https://ieeexplore.ieee.org/document/9067073)
 
-[6][J. Liu, N. Ozay, U. Topcu, R.M. Murray, Synthesis of Reactive Switching Protocols From Temporal Logic Specifications. IEEE Trans. Automat. Contr., 58(7), 1771-1785.](http://ieeexplore.ieee.org/document/6457409/)
+[6][J. Liu, N. Ozay, U. Topcu, R.M. Murray (2013). Synthesis of Reactive Switching Protocols From Temporal Logic Specifications. IEEE Trans. Automat. Contr., 58(7), 1771-1785.](http://ieeexplore.ieee.org/document/6457409/)
 
-[7][Y. Li, J. Liu, Robustly Complete Synthesis of Memoryless Controllers for Nonlinear Systems with Reach-and-Stay Specifications. ArXiv: 1802.09082v2](http://arxiv.org/abs/1802.09082v2)
+[7][Y. Li, J. Liu (2018). Robustly Complete Synthesis of Memoryless Controllers for Nonlinear Systems with Reach-and-Stay Specifications. ArXiv: 1802.09082v2](http://arxiv.org/abs/1802.09082v2)
 
-[8][Y. Li, Z. Sun, and J. Liu, A Specification-Guided Framework for Temporal Logic Control of Nonlinear Systems. ArXiv:2104.01385](https://arxiv.org/abs/2104.01385)
+[8][Y. Li, Z. Sun, and J. Liu (2021). A Specification-Guided Framework for Temporal Logic Control of Nonlinear Systems. ArXiv:2104.01385](https://arxiv.org/abs/2104.01385)
 
 
 ## Contact

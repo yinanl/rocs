@@ -55,7 +55,7 @@ struct mgode2 {
 int main(int argc, char *argv[])
 {
     /* Input arguments: 
-     * carDBAall dbafile
+     * engineScaledDBA dbafile
      */
     if (argc != 2) {
 	std::cout << "Improper number of arguments.\n";

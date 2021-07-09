@@ -1,7 +1,5 @@
 /**
- *  ipdl.cpp
- *
- *  The example of stabilization of an inverted pendulum.
+ *  Stabilization of an inverted pendulum with the specification-guided engine.
  *
  *  Created by Yinan Li on May 10, 2018.
  *  Hybrid Systems Group, University of Waterloo.

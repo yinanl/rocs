@@ -1,13 +1,10 @@
 /**
- *  patcher.h
- *
  *  Local control synthesis based on a product system of an abstraction and an automaton.
  *
  *  Created by Yinan Li on Oct. 13, 2020.
  *
  *  Hybrid Systems Group, University of Waterloo.
  */
-
 
 #ifndef _patcher_h
 #define _patcher_h
@@ -39,9 +36,11 @@ namespace rocs {
     // } BiDGraph;
     
     /**
+     * \brief A class that holds a winning graph of a control problem.
+     *
      * A patcher holds:
-     * 1)an fts: the entire solved product transition system (with only winning set), 
-     * 2)a local controller
+     * - an fts: the entire solved product transition system (with only winning set), 
+     * - a local controller
      */
     class Patcher
     {
@@ -59,6 +58,8 @@ namespace rocs {
 	
 
 	/**
+	 * \brief The default constructor.
+	 *
 	 * Only use the default constructor. 
 	 * All member variables will be assigned later.
 	 *
@@ -71,28 +72,30 @@ namespace rocs {
 	Patcher& operator=(const Patcher&) = delete;
 
 	/**
-	 * Initialize the values in
+	 * \brief Initialize the values in
 	 * _winfts, _idmap, _reachstep, _decode, _encode, _na, _nwin
 	 */
 	void initialize_winning_graph(HEAD &);
 	
 
 	/**
-	 * Construct a subgraph (fts) from current node on the _winfts by forward propagation.
-	 * Solve for the _ctlr by backward reachability on the subgraph.
-	 * @param v index of (x,q) pair
-	 * @param h horizon (or steps) of forward propagation
-	 * @param safecnt the address of the bool vector indicating safe controls
+	 * \brief Solve for the _ctlr by backward reachability on the subgraph.
+	 *
+	 * A subgraph (fts) from current node on the _winfts by forward propagation will be constructed.
+	 * @param[in] v The index of (x,q) pair
+	 * @param[in] h The horizon (or steps) of forward propagation
+	 * @param[in] safecnt The address of the bool vector indicating safe controls
 	 */
 	int solve_local_reachability(size_t v, int h,
-				      boost::dynamic_bitset<> &safecnt);
+				     boost::dynamic_bitset<> &safecnt);
 	/**
-	 * Similar to solve_local_reachability, but with avoid set.
-	 * @param v index of (x,q) pair
-	 * @param N the minimun number of target nodes to be visited in forward propagation
-	 * @param avoid the set of avoid nodes
-	 * @param target the set of target nodes
-	 * @param safecnt the address of the bool vector indicating safe controls
+	 * \brief Similar to solve_local_reachability(), but with avoid set.
+	 *
+	 * @param[in] v The index of (x,q) pair
+	 * @param[in] N The minimun number of target nodes to be visited in forward propagation
+	 * @param[in] avoid The set of avoid nodes
+	 * @param[in] target The set of target nodes
+	 * @param[in] safecnt The address of the bool vector indicating safe controls
 	 */
 	std::vector< std::pair<size_t, int> >
 	solve_local_reachavoid(size_t v, size_t N,
@@ -101,12 +104,14 @@ namespace rocs {
 			       boost::dynamic_bitset<> &safecnt);
 
 	/**
-	 * Replanning: determine a local area within a radius around a point.
-	 * @param xo the given R^3 point
-	 * @param ro the radius
-	 * @param x_grid the grid for the state space
-	 * @param q the current automaton state
-	 * @param nNodes total number of automaton states
+	 * \brief Perform Replanning: determine a local area within a radius around a point.
+	 *
+	 * @param[in] xo The given \f$R^3\f$ point
+	 * @param[in] ro The radius
+	 * @param[in] x_grid The grid for the state space
+	 * @param[in] q the The current automaton state
+	 * @param[in] nNodes The total number of automaton states
+	 * @return a vector of permisible local state.
 	 */
 	std::vector<long long> replan_region(const rocs::Rn &xo, const double ro,
 						 rocs::grid &x_grid,

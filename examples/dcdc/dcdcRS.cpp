@@ -1,7 +1,5 @@
 /**
- *  dcdc_reachstay.cpp
- *
- *  A DCDC converter reach-and-stay control example.
+ *  DCDC converter reach-and-stay control with the specification-guided engine.
  *
  *  Created by Yinan Li on April, 2019.
  *  Hybrid Systems Group, University of Waterloo.

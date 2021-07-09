@@ -1,6 +1,4 @@
 /**
- *  roa.cpp
- *
  *  Compute the region of attraction (ROA) for reversed Van de Pol
  *
  *  Created by Yinan Li on April 27, 2018.
@@ -19,7 +17,7 @@
 #include "src/matlabio.h"
 
 
-/* user defined dynamics (a template functor) */
+/* user defined dynamics */
 struct vdpode {
     static const int n = 2;
     
@@ -65,7 +63,7 @@ int main()
     rocs::params controlparams(kmax, tol, alpha, beta);
     
     /* define the control system */
-    rocs::CTSys<vdpode> vdproa("VanDePol", tau, vdpode::n, delta, &controlparams);
+    rocs::CTSys<vdpode> vdproa("VanDerPol", tau, vdpode::n, delta, &controlparams);
     vdproa.init_workspace(xlb, xub);
     vdproa.allocate_flows();
 

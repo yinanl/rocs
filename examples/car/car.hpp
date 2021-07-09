@@ -37,23 +37,20 @@ struct carde {
 
 	if (std::fabs(u[0]) < 1e-6) {
 	    dx = x;
-	}
-	else if (std::fabs(u[1]) < 1e-6) {
-
+	} else if (std::fabs(u[1]) < 1e-6) {
 	    dx[0] = x[0] + u[0]* cos(x[2])*h;
 	    dx[1] = x[1] + u[0]* sin(x[2])*h;
 	    dx[2] = x[2];
-	}
-	else {
+	} else {
 	    at = alpha + u[0] * tan(u[1]) * h / 2;
 	    r = 2 * sin(u[0]*tan(u[1])*h/2) / (cos(alpha) * tan(u[1]));
-      
+
 	    dx[0] = x[0] + r * cos(at + x[2]);
 	    dx[1] = x[1] + r * sin(at + x[2]);
 	    dx[2] = x[2] + u[0] * tan(u[1]) * h;
 	}
     }
-    
+
 }; // struct carde
 
 #endif

@@ -1,6 +1,4 @@
 /**
- *  interval.h
- *
  *  An interval class.
  *
  *  Created by Yinan Li on May 24, 2016.
@@ -18,24 +16,46 @@
 
 
 namespace rocs {
-  
+
+    /**
+     * \brief An interval class.
+     * 
+     * - An interval on \f$R\f$ is defined as \f$[x]=[\underline{x},\overline{x}]\f$, where \f$\underline{x}\in R\f$ and \f$\overline{x}\in R\f$ are the lower and upper bounds, respectively.
+     * - A fundamental data structure needed for specification-guided control synthesis.
+     * - Defined also in this class: basic arithmatic operators, logical operators, and functions acquiring properties.
+     */
     class interval
     {
     private:
-	double m_inf; /**< the lower bound */
-	double m_sup; /**< the upper bound */
+	double m_inf; /**< The lower bound */
+	double m_sup; /**< The upper bound */
         
     public:
 
 	/**
-	 * \brief Constructors.
+	 * \brief The default constructor.
 	 */
 	interval(): m_inf(0), m_sup(0){};
+
+	/**
+	 * \brief A constructor.
+	 *
+	 * @param[in] l The lower bound
+	 * @param[in] u The upper bound
+	 */
 	interval(double l, double u): m_inf(l), m_sup(u){};
+
+	/**
+	 * \brief Construct an interval with same lower and upper bounds.
+	 *
+	 * @param[in] r The value
+	 */
 	interval(double r): m_inf(r), m_sup(r){};
+	
 	/**
 	 * \brief A copy constructor.
-	 * @param a another interval.
+	 *
+	 * @param a Another interval
 	 */
 	interval(const interval &a) : m_inf(a.m_inf), m_sup(a.m_sup) {}
 
@@ -56,45 +76,68 @@ namespace rocs {
 	bool isempty() const {
 	    return (m_inf > m_sup) | std::isnan(m_inf) | std::isnan(m_sup);
 	}
+	
 	/**
-	 * \brief Return lower/upper bound of (*this).
+	 * \brief Get the lower bound of (*this).
 	 */
 	double getinf() const { return m_inf; }
-	double getsup() const { return m_sup; }
+
 	/**
-	 * \brief Set values for lower/upper bound of (*this).
+	 * \brief Get the upper bound of (*this).
+	 */
+	double getsup() const { return m_sup; }
+	
+	/**
+	 * \brief Set values for lower bound of (*this).
 	 */
 	void setinf(const double val) { m_inf= val; }
+
+	/**
+	 * \brief Set values for upper bound of (*this).
+	 */
 	void setsup(const double val) { m_sup= val; }
+	
 	/**
 	 * \brief Return the width of (*this).
 	 */
 	double width() const { return roundup(m_sup - m_inf); }
+	
 	/**
 	 * \brief Return the center point of (*this).
 	 */
 	double mid() const { return roundup((m_inf + m_sup)/2.0); }
 
 	/**
-	 * \brief [x].isout([a]) is true if [x],[a] are disjoint.
+	 * \brief `[x].isout([a])` is true if [x],[a] are disjoint.
+	 *
+	 * @param[in] a The interval to be tested if it is disjoint with (*this)
 	 */
 	bool isout(const interval &a) const {
 	    return isempty() || (m_sup < a.m_inf) || (m_inf > a.m_sup);
 	}
+	
 	/**
-	 * \brief [x].isout(val) is true if a real value val is outside of [x].
+	 * \brief `[x].isout(val)` is true if a real value val is outside of [x].
+	 *
+	 * @param[in] val The value to be tested if it is outside of (*this)
 	 */
 	bool isout(const double val) const {
 	    return isempty() || (m_sup < val) || (m_inf > val);
 	}
+	
 	/**
-	 * \brief [x].isin([a]) is true if [a] is inside [x].
+	 * \brief `[x].isin([a])` is true if [a] is inside [x].
+	 *
+	 * @param[in] val The interval to be tested if it is fully included of (*this)
 	 */
 	bool isin(const interval &a) const { // if a is contained in it
 	    return !isempty() && m_inf <= a.m_inf && m_sup >= a.m_sup;
 	}
+	
 	/**
-	 * \brief [x].isin([a]) is true if a real value val is inside [x].
+	 * \brief `[x].isin(val)` is true if a real value val is inside [x].
+	 *
+	 * @param[in] val The value to be tested if it is inside of (*this)
 	 */
 	bool isin(const double val) const {
 	    return !isempty() && !(m_inf > val) && !(m_sup < val);
@@ -102,12 +145,11 @@ namespace rocs {
 	}
 
 	/**
-	 * \brief Return *this.
+	 * \brief Return the interval itself.
 	 */
 	interval& operator+() {return *this;}
 	/**
 	 * \brief Negation
-	 * Return a new interval with lower and upper bounds negated.
 	 */
 	interval operator-() const;
         /**
@@ -166,7 +208,7 @@ namespace rocs {
 	 */
 	friend bool operator>=(const interval&x, const interval& y);
 
-	/**
+	/*
 	 * Interval arithmetics
 	 */
 	friend interval operator+(const interval&, const interval&);

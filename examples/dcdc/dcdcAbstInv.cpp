@@ -1,7 +1,5 @@
 /**
- *  dcdcAbstInv.cpp
- *
- *  A DCDC converter invariance control example with abstraction-based method.
+ *  DCDC converter invariance control with the abstraction-based engine.
  *
  *  Created by Yinan Li on Jan 11, 2021.
  *  Hybrid Systems Group, University of Waterloo.
@@ -34,10 +32,10 @@ int main()
     /* define the control system */
     rocs::DTSwSys<dcde> dcdcInv("dcdc", tau, dcde::n, dcde::m);
     dcdcInv.init_workspace(xlb, xub);
-    
-    
+
+
     /**
-     * Abstraction 
+     * Abstraction
      */
     const double eta[]{0.001, 0.0002};
     rocs::abstraction< rocs::DTSwSys<dcde> > abst(&dcdcInv);
@@ -84,7 +82,7 @@ int main()
 	transWtr.write_transitions(abst._ts);
     }
     std::cout << "# of transitions: " << abst._ts._ntrans << '\n';
-    
+
     std::vector<size_t> targetIDs;
     std::vector< std::vector<double> > targetPts;   //initial invariant set
     std::vector<double> x(abst._x._dim);
@@ -108,11 +106,11 @@ int main()
     std::cout << "Time of control synthesis: " << tsyn << '\n';
     std::cout << "The size of winning set: " << solver._nw << '\n';
 
-    
+
     /**
      * Write the control synthesis result into .h5 file.
      */
-    std::string datafile = "controller_abst_invariance.h5";
+    std::string datafile = "controller_abst_Gb.h5";
     rocs::h5FileHandler ctlrWtr(datafile, H5F_ACC_TRUNC);
     ctlrWtr.write_problem_setting< rocs::DTSwSys<dcde> >(dcdcInv);
     ctlrWtr.write_2d_array<double>(targetPts, "G");
@@ -120,6 +118,6 @@ int main()
     ctlrWtr.write_2d_array<double>(abst._x._data, "xgrid");
     ctlrWtr.write_discrete_controller(solver);
 
-    
+
     return 0;
 }

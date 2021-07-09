@@ -1,7 +1,5 @@
 /**
- *  engine.cpp
- *
- *  Reach and stay control of the ode model of Moore-Greitzer engine.
+ *  Moore-Greitzer engine reach-and-stay control with the specification-guided engine.
  *
  *  Created by Yinan Li on June 9, 2020.
  *  Hybrid Systems Group, University of Waterloo.

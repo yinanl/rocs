@@ -1,7 +1,5 @@
 /**
- *  dbintAbst.cpp
- *
- *  Abstraction-based DBA control of the simplified SCARA manipulator dynamics (the double integrator model).
+ *  DBA control of the simplified SCARA manipulator dynamics (the double integrator model) with the abstraction-based engine.
  *
  *  Created by Yinan Li on August 8, 2020.
  *  Hybrid Systems Group, University of Waterloo.
@@ -32,7 +30,7 @@ double a2 = asin(h / l1);
 int main(int argc, char *argv[])
 {
     /* Input arguments: 
-     * carAbst dbafile 
+     * abst dbafile 
      */
     if (argc != 2) {
 	std::cout << "Improper number of arguments.\n";

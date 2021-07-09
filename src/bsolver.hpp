@@ -1,17 +1,13 @@
 /**
- *  bsolver.hpp
- *
- *  A class for solving a Buchi game on product system of an NTS and a DBA.
+ *  A class for solving a Buchi game on product system of an %NTS and a %DBA.
  *
  *  Created by Yinan Li on Oct. 26, 2020.
  *
  *  Hybrid Systems Group, University of Waterloo.
  */
 
-
 #ifndef _bsolver_h_
 #define _bsolver_h_
-
 
 #include <climits>
 #include <vector>
@@ -20,56 +16,97 @@
 
 #include "config.h"
 #include "abstraction.hpp"
-
 #include "buchi.h"
 
 
 namespace rocs {
   
     /**
-     * A control synthesis solver class over a (finite) transition system.
+     * \brief The abstraction-based engine solver 
+     * 
+     * It is a wrapper class of the core data structures and algorithms defined in C files buchi.h and buchi.c
+     *
      */
     class BSolver
     {
     public:
-	HEAD _sol;
+	HEAD _sol; /**< A HEAD of solver info */
 
+	/**
+	 * \brief The default constructor.
+	 *
+	 * No other constructors are allowed.
+	 */
 	BSolver() {initialization(&_sol);}
 	BSolver(const BSolver&) = delete;
 	BSolver(BSolver&&) = delete;
 	BSolver& operator=(const BSolver&) = delete;
 	BSolver& operator=(BSolver&&) = delete;
-  
+
+	/**
+	 * \brief A destructor to release memory.
+	 */
 	~BSolver() {free_memory(&_sol, 1);}
 
 	/**
-	 * Construct the DBA struct in _sol.
+	 * \brief Construct the DBA struct in _sol.
+	 *
+	 * Assign values to
+	 * - n: # of %DBA states.
+	 * - k: # of atomic propositions.
+	 * - ini: the initial %DBA state.
+	 * - acc: an array (k elements) of BOOL denoting accepting or not.
+	 * - q_prime: the lookup table of size (2^k x n), recording transition relation.
+	 * - q_prime_size: the total # of elements in q_prime (2^k x n).
+	 *
+	 * @param[in] nAP # of atomic propositions
+	 * @param[in] nNodes # of %DBA states
+	 * @param[in] q0 The initial state (UintSmall type)
+	 * @param[in] acc The accepting states (a vector of UintSmall variables)
+	 * @param[in] arrayM arrayM The transition matrix (a 2d array of UintSmall variables)
 	 */
 	void construct_dba(int nAP, int nNodes, int q0,
 			   std::vector<rocs::UintSmall> &acc,
 			   std::vector<std::vector<rocs::UintSmall>> arrayM);
 
 	/**
-	 * Construct a graph with in-going edges in _sol.
+	 * \brief Construct a graph with in-going edges in _sol.
+	 *
+	 * - nts_pre.n: # of graph states.
+	 * - nts_pre.m: # of edges.
+	 * - nts_pre.graph: an array of reverse graph nodes
+	 * - nts_pre.outdeg: an out degree table of the graph nts_pre
+	 * - nts_pre.in_edge: an array of in-going edges
+	 * - action: # of actions.
+	 *
+	 * @param[in] abst An abstraction object
 	 */
 	template<typename S>
 	void load_abstraction(abstraction<S> &abst);
 
 	/**
-	 * Take product of the forward graph and the DBA.
+	 * \brief Take product of the forward graph and the %DBA.
+	 *
+	 * - Construct a backward graph for %NTS, and do safety processing.
+	 * - Convert the backward graph to a forward graph.
+	 * - Take product of the forward graph and the %DBA.
+	 *
+	 * @param[in] abst An abstraction object
 	 */
 	template<typename S>
 	void generate_product(abstraction<S> &abst);
 
 	/**
-	 * Solve the buchi game on the product.
+	 * \brief Solve the buchi game on the product.
 	 */
 	void solve_buchigame_on_product() {
 	    buchi_and_controller(&_sol);
 	}
 
 	/**
-	 * Write controller to a file
+	 * \brief Write controller to a file
+	 * 
+	 * @param[in] filename The name of the output file
 	 */
 	void write_controller_to_txt(char *filename) {
 	    write_controller(&_sol, filename);
@@ -77,16 +114,6 @@ namespace rocs {
 	
     };
 
-
-    /**
-     * Construct the DBA struct in _sol: assign values to
-     * - n: # of DBA states.
-     * - k: # of atomic propositions.
-     * - ini: the initial DBA state.
-     * - acc: an array (k elements) of BOOL denoting accepting or not.
-     * - q_prime: the lookup table of size (2^k x n), recording transition relation.
-     * - q_prime_size: the total # of elements in q_prime (2^k x n).
-     */
     inline void BSolver::construct_dba(int nAP, int nNodes, int q0,
     				       std::vector<rocs::UintSmall> &acc,
     				       std::vector<std::vector<rocs::UintSmall>> arrayM) {
@@ -109,16 +136,6 @@ namespace rocs {
     		*(dba->q_prime + j*R + i) = arrayM[i][j];
     } //end construct_dba
     
-
-    /**
-     * Construct a graph with in-going edges in _sol:
-     * - nts_pre.n: # of graph states.
-     * - nts_pre.m: # of edges.
-     * - nts_pre.graph: an array of reverse graph nodes
-     * - nts_pre.outdeg: an out degree table of the graph nts_pre
-     * - nts_pre.in_edge: an array of in-going edges
-     * - action: # of actions.
-     */
     template<typename S>
     void BSolver::load_abstraction(abstraction<S> &abst) {
 	NODE_PRE *nts_pre;
@@ -151,28 +168,21 @@ namespace rocs {
 	    }
 	}
 	p5->next=0;
-    }
-
-
-    /**
-     * 1) pre_saConstruct a backward graph for NTS, and do safety processing.
-     * 2) Convert the backward graph to a forward graph.
-     * 4) Take product of the forward graph and the DBA.
-     * 5) Solve the buchi game on the product.
-     */
+    }//end load_abstraction
+    
     template<typename S>
     void BSolver::generate_product(abstraction<S> &abst) {
 	int *labels = new int[abst._labels.size()];
 	for(size_t i = 0; i < abst._labels.size(); ++i)
 	    labels[i] = abst._labels[i];
 
-	/**
+	/*
 	 * Construct and assign memory to
 	 * 1)head->nts_pre, 2)encode1[n0], 3)decode1[n0_1].
 	 */
 	safety_pre(&_sol);
 
-	/**
+	/*
 	 * Construct and assign memory to
 	 * head->nts_post by converting from head->nts_pre. 
 	 * 
@@ -180,7 +190,7 @@ namespace rocs {
 	 */
 	pre2post(&_sol, labels);
 
-	/**
+	/*
 	 * Construct and assign memory to
 	 * 1)head->nts_product, 2)encode2[n0_1*n1], 3)decode2[np]
 	 * 
@@ -190,7 +200,7 @@ namespace rocs {
 	post2product(&_sol);
 	
 	delete[] labels;
-    }
+    }//end generate_product
 
 
 } // namespace rocs

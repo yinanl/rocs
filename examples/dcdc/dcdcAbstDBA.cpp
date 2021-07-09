@@ -1,7 +1,5 @@
 /**
- *  dcdcAbstRS.cpp
- *
- *  Abstraction-based method for reach-stay control of DC-DC converter.
+ *  DCDC converter reach-and-stay control with the abstraction-based engine.
  *
  *  Created by Yinan Li on Jan 11, 2021.
  *  Hybrid Systems Group, University of Waterloo.

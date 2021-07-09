@@ -1,14 +1,10 @@
 /**
- * controlsystem.h
- *
- * A control system class.
+ * Control system classes.
  *
  * Created by Yinan Li on April 27, 2018.
  *
  * Hybrid Systems Group, University of Waterloo.
  */
-
-
 
 #ifndef _system_h_
 #define _system_h_
@@ -23,69 +19,78 @@
 namespace rocs {
 
     /**
-     * System class: <T,X,U>.
-     * Must contain control to be used by CSolver, and U can be a singleton.
+     * \brief A system template class with typenames <T,X,U>.
+     * 
+     * This is a very basic system class, which can be derived as discrete-time, continuous-time, control systems or even systems without controls.
      */
     class System {
     public:
-	const char *_name;  /**< problem name (can't change) */
+	const char *_name;  /**< The system name */
 
-	double _tau;
+	double _tau; /**< The sampling time */
 	
-	int _xdim;	/**< state dimension */
-	ivec _workspace;  /**< state space */
+	int _xdim;	/**< The state dimension */
+	ivec _workspace;  /**< The state space */
 
-	int _udim;	/**< input dimension */
-	grid _ugrid;  /**< a grid of controls */
+	int _udim;	/**< The input dimension */
+	grid _ugrid;  /**< A grid of controls */
 	
 	/**
-	 * Constructor.
-	 * @param name control problem name.
-	 * @param xd dimension of state space.
-	 * @param ws state space (an interval vector).
+	 * \brief A Constructor.
+	 *
+	 * @param[in] name The control problem name
+	 * @param[in] t The sampling time
+	 * @param[in] xd The state dimension
+	 * @param[in] ud The input dimension (default=1)
 	 */
 	System(const char *name, const double t, const int xd, const int ud = 1):
 	    _name(name),_tau(t),_xdim(xd),_workspace(xd),_udim(ud),_ugrid(ud) {} //treat as no control if don't specify it.
 
 
 	/**
-	 * Initialize the workspace (X):
-	 * @param ws an interval vector.
-	 * @param lb[] an array of lower bound.
-	 * @param ub[] an array of upper bound.
+	 * \brief Initialize the workspace.
+	 *
+	 * @param[in] ws An interval vector
 	 */
 	void init_workspace(const ivec &ws) {
 	    assert(ws.getdim() == _workspace.getdim());
 	    _workspace = ws;
 	}
+
+	/**
+	 * \brief Initialize the workspace.
+	 *
+	 * @param[in] lb An array of lower bound
+	 * @param[in] ub An array of upper bound
+	 */
 	void init_workspace(const double lb[], const double ub[]) {
 	    for (int i = 0; i < _xdim; ++i)
 		_workspace[i] = interval(lb[i], ub[i]);
 	}
 
 	/**
-	 * Initialize the input set {U}:
-	 * @param mu[] an array of grid width.
-	 * @param lb[] an array of lower bound.
-	 * @param ub[] an array of upper bound.
+	 * \brief Initialize the input set.
+	 *
+	 * @param[in] mu An array of grid width
+	 * @param[in] lb An array of lower bound
+	 * @param[in] ub An array of upper bound
 	 */
 	void init_inputset(const double mu[], const double lb[], const double ub[]) {
 	    _ugrid.init(mu, lb, ub);
 	    _ugrid.gridding();
 	}
+	
 	/**
-	 * Initialize the input set {U}:
-	 * @param U an array of selected input values (double).
+	 * \brief Initialize the input set.
+	 *
+	 * @param[in] U An array of selected input values (double)
 	 */
 	void init_inputset(vecRn &U) {
 	    _ugrid._nv = U.size();
 	    _ugrid._dim = U[0].size();
 	    _ugrid._data = U;
 	}
-
-	/**
-	 * I/O interface
-	 */
+	
 	friend std::ostream& operator<<(std::ostream&, const System&);
   
     };
@@ -94,7 +99,7 @@ namespace rocs {
 
     
     /**
-     * Discrete-time system class with real-valued controls.
+     * \brief A discrete-time system class with real-valued controls.
      */
     template<typename F>
     class DTCntlSys : public System {
@@ -111,7 +116,7 @@ namespace rocs {
     };
 
     /**
-     * Discrete-time switched system class with finite number of modes.
+     * \brief A discrete-time switched system class with finite number of modes.
      */
     template<typename F>
     class DTSwSys : public System {
@@ -128,7 +133,7 @@ namespace rocs {
     };
 
     /**
-     * Discrete-time system class without controls.
+     * \brief A discrete-time system class without controls.
      */
     template<typename F>
     class DTSys : public System {
@@ -146,7 +151,7 @@ namespace rocs {
 
 
     /**
-     * Continuous-time system class.
+     * \brief A continuous-time system class.
      */
     class ContinuousTime : public System {
     public:
@@ -164,7 +169,7 @@ namespace rocs {
     
 
     /**
-     * Continuous-time real-valued control system class.
+     * \brief A continuous-time real-valued control system class.
      */
     template<typename F>
     class CTCntlSys : public ContinuousTime {
@@ -212,7 +217,7 @@ namespace rocs {
 
 
     /**
-     * Continuous-time switched system class.
+     * \brief A continuous-time switched system class.
      */
     template<typename F>
     class CTSwSys : public ContinuousTime {
@@ -258,7 +263,7 @@ namespace rocs {
     
 
     /**
-     * Continuous-time system class without controls.
+     * \brief A continuous-time system class without controls.
      */
     template<typename F>
     class CTSys : public ContinuousTime {

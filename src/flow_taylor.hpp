@@ -1,6 +1,4 @@
 /**
- *  flowTaylor.hpp
- *
  *  A flowpipe class based on Taylor models.
  *
  *  Created by Yinan Li on Mar. 23, 2018.
@@ -32,18 +30,27 @@ namespace rocs {
      */
     class params {
     public:
-	int kmax;  /**< maximum order */
-	double tol;  /**< tolerance to determine the order k */
-	double alpha;  /**< the error distribution factor */
-	double beta; /**< the bloating factor */
-
-	double eps;  /**< the precision control parameter */
+	int kmax;  /**< The maximum order */
+	double tol;  /**< The tolerance to determine the order k */
+	double alpha;  /**< The error distribution factor */
+	double beta; /**< The bloating factor */
+	double eps;  /**< The precision control parameter */
 
 	/**
-	 * Constructors.
+	 * \brief A default Constructor.
+	 *
+	 * Default: kmax=10, tol=0.01, alpha=0.5, beta=2,eps=0.01.
 	 */
 	params():kmax(10),tol(0.01),alpha(0.5),beta(2),eps(0.01) {}
-    
+
+	/**
+	 * \brief A Constructor.
+	 *
+	 * @param[in] maxorder The maximum order for Taylor expansion
+	 * @param[in] tolerance The tolerance to determine the highest Taylor order 
+	 * @param[in] a alpha=a
+	 * @param[in] b beta=b
+	 */
 	params(const int maxorder, const double tolerance,
 	       const double a, const double b)
 	    : kmax(maxorder), tol(tolerance), alpha(a), beta(b), eps(0.01) {}
@@ -52,13 +59,13 @@ namespace rocs {
     
 
     /**
-     * A Taylor model class for reachable set computation.
+     * \brief A Taylor model class for reachable set computation.
      */
     template<typename F, typename S, typename P>
     class flowTaylor {
     public:
 	/**
-	 * Constructors (with or without controls).
+	 * \brief A Constructor for systems with controls.
 	 */
 	flowTaylor(const P u, params *pdata,
 		   const double T=0.01, const double delta=0,
@@ -78,6 +85,10 @@ namespace rocs {
 // 		      << '\n';
 // #endif
 	}
+
+	/**
+	 * \brief A Constructor for systems without controls.
+	 */
 	flowTaylor(params *pdata,
 		   const double T=0.01, const double delta=0,
 		   const double K=1.0):
@@ -95,13 +106,15 @@ namespace rocs {
 // 		      << '\n';
 // #endif
 	}
+	
 	/**
-	 * Pre-computation of some coefficients:
-	 * _parameters->eps: (al*t)*del/(Ke^t),
-	 * _logdel1: log((1-al)*del/K),
-	 * _logdel2: log(t).
+	 * \brief Pre-computation of some coefficients.
 	 *
-	 * If K is known a priori, should be set in constructor (see @flowTaylor).
+	 * - _parameters->eps: \f$(al*t)*del/(Ke^t)\f$
+	 * - _logdel1: \f$\log((1-al)*del/K)\f$
+	 * - _logdel2: \f$\log(t)\f$
+	 *
+	 * If K is known a priori, it should be set in constructor (see @flowTaylor).
 	 */
 	void construct_helper() {
 	    _parameters->eps = _parameters->alpha*_delta*_tau/(_K*std::exp(_tau));
@@ -110,13 +123,16 @@ namespace rocs {
 	}
 
 	/**
-	 * Operations to Taylor coefficients.
+	 * \brief Reset Taylor coefficients.
 	 */
 	void reset_taylor_coeffs() {
 	    for (int j = 0; j < F::n; ++j)
 		fterms[j].reset();
 	}
-    
+
+	/**
+	 * \brief Initialize Taylor coefficients.
+	 */
 	void init_taylor_coeffs(S *x) {
 	    for (int j = 0; j < F::n; ++j) {
 		fterms[j].reset();
@@ -124,6 +140,9 @@ namespace rocs {
 	    }
 	}
 
+	/**
+	 * \brief Evaluate Taylor coefficients.
+	 */
 	void eval_taylor_coeffs(int order = 5) {
 	    for (int i = 0; i < order; ++i) {
 		for (int j = 0; j < F::n; ++j) {
@@ -133,6 +152,9 @@ namespace rocs {
 	    }
 	}
 
+	/**
+	 * \brief Print Taylor coefficients.
+	 */
 	void print_taylor_coeffs() {
 	    for(int j = 0; j < F::n; ++j) {
 		std::cout << j << " :";
@@ -144,9 +166,10 @@ namespace rocs {
 
 
 	/**
-	 * Evaluate the bound of Taylor terms for intervals.
-	 * @param x a given interval.
-	 * @param k the order of the Taylor model (=10 by default).
+	 * \brief Evaluate the bound of Taylor terms for intervals.
+	 *
+	 * @param[in] x A given interval
+	 * @param[in] k The order of the Taylor model (=10 by default)
 	 */
 	double eval_taylorterm_bound(const ivec &x, int k = 10) {
 	    double K = 0;
@@ -179,10 +202,11 @@ namespace rocs {
 	}
 
 	/**
-	 * Evaluate the Taylor model approximation of order k for intervals.
-	 * @param[inout] y an interval storing the evaluation results.
-	 * @param x a given interval.
-	 * @param k the order of the Taylor model (=10 by default).
+	 * \brief Evaluate the Taylor model approximation of order k for intervals.
+	 *
+	 * @param[in,out] y An interval storing the evaluation results
+	 * @param[in] x A given interval
+	 * @param[in] k The order of the Taylor model (=10 by default)
 	 */
 	void eval_taylor_terms(ivec &y, const ivec &x, int k = 10) {
 	    /* Taylor coefficients are saved in yterms */
@@ -194,6 +218,13 @@ namespace rocs {
 		eval_taylor_kthterm(y, i);
 	    
 	}
+
+	/**
+	 * \brief Evaluate the kth term (remainder) of the Taylor model.
+	 *
+	 * @param[in,out] y An interval storing the evaluation results
+	 * @param[in] k The order of the Taylor model (=10 by default)
+	 */
 	void eval_taylor_kthterm(ivec &y, int k) {
 	    
 	    for (int j = 0; j < F::n; ++j) {
@@ -206,9 +237,10 @@ namespace rocs {
 	}
 
 	/**
-	 * Evaluate the apriori enclosure of an interval ODE solution.
-	 * @param x a given interval.
-	 * @param k the order of the Taylor model (=10 by default).
+	 * \brief Evaluate the apriori enclosure of an interval ODE solution.
+	 *
+	 * @param[in] x A given interval
+	 * @param[in] k The order of the Taylor model (=10 by default)
 	 */
 	void eval_taylor_apriori(const ivec &x, int k = 10) {
 	    /* results are saved in yrems */
@@ -226,10 +258,11 @@ namespace rocs {
 
 	
 	/**
-	 * Compute a valid reachable set.
-	 * @param[inout] y the reachable set in terms of interval.
-	 * @param x a given interval.
-	 * @return 1 if success and 0 otherwise.
+	 * \brief Compute a valid reachable set.
+	 *
+	 * @param[in,out] y The reachable set in terms of interval
+	 * @param x A given interval
+	 * @return 1 if success and 0 otherwise
 	 */
 	bool compute_reachset_valid(ivec &y, const ivec &x) {
 #ifdef LOGGING
@@ -366,9 +399,9 @@ namespace rocs {
 
 	
 	/**
-	 * Compute a reachable set that satisfies robustly complete condition.
-	 * @param[inout] y the reachable set in terms of interval.
-	 * @param x a given interval.
+	 * \brief Compute a reachable set that satisfies robustly complete condition.
+	 *
+	 * @param[in,out] y The reachable set in terms of interval
 	 */
 	void compute_reachset_robust(ivec &y) {
 	    int kfac = 1;
@@ -400,7 +433,12 @@ namespace rocs {
 	}
 
 	/**
-	 * Consider robustness when width([x]) < epsilon.
+	 * \brief Consider robustness when width([x]) < epsilon.
+	 *
+	 * @param[in,out] y The reachable set in terms of interval
+	 * @param[in] x A given interval
+	 * @param[in] eps The given precision
+	 * @return 1 if the reachable set is validated.
 	 */
 	bool reachset_robust(ivec &y, const ivec &x, double eps) {
 	    
@@ -416,35 +454,44 @@ namespace rocs {
 	static const interval I;
 	static const interval II;
     
-	double _tau;  /**< The continuous time horizon. */
-	double _delta;  /**< The bound of the perturbation. */
-	double _K;  /**< The maximum operator norm of jacobian (df^[i]/dx). */
+	double _tau;  /**< The continuous time horizon */
+	double _delta;  /**< The bound of the perturbation */
+	double _K;  /**< The maximum operator norm of jacobian (df^[i]/dx) */
 
-	int _kbar;  /**< The valid order (locally updated). */
-	double _wbar;  /**< The width of the enclosure (locally updated). */
+	int _kbar;  /**< The valid order (locally updated) */
+	double _wbar;  /**< The width of the enclosure (locally updated) */
 	
 	T<S> yterms[F::n];  /**< Taylor terms of the solution (independent variables) */
-	T<S> fterms[F::n];  /**< The dependent variables of yterms. */
-	T<S> yrems[F::n];  /**< The remainder (evaluated by apriori enclosure). */
-	T<S> frems[F::n];  /**< The dependent variables of yrems. */
+	T<S> fterms[F::n];  /**< The dependent variables of yterms */
+	T<S> yrems[F::n];  /**< The remainder (evaluated by apriori enclosure) */
+	T<S> frems[F::n];  /**< The dependent variables of yrems */
 
 	params *_parameters;  /**< The pointer to a parameters class. */
 
-	double _logdel1, _logdel2;  /**< The variables to store intermediate info. */
-	ivec _p;  /**< sum of yterms[i]*[0,1] */
-	ivec _u;  /**< yrem*/
-	ivec _xenc;
+	double _logdel1, _logdel2;  /**< The variables to store intermediate info */
+	ivec _p;  /**< Sum of yterms[i]*[0,1] */
+	ivec _u;  /**< yrem */
+	ivec _xenc; /**< The enclosure */
 
 	/**
-	 * Evaluate the local epsilon using the local a prior enclosure.
+	 * \brief Evaluate the local epsilon using the local a prior enclosure.
+	 *
+	 * A friend function of the class flowTaylor.
+	 * @param[in] f A flowTaylor object
+	 * @return the local precision.
 	 */
 	friend double eval_epsilon(flowTaylor& f);
     };
     
-    
+    /**
+     * \brief The interval \f$[0,1]\f$
+     */
     template<typename F, typename S, typename P>
     const interval flowTaylor<F,S,P>::I = interval(0,1);
-    
+
+    /**
+     * \brief The interval \f$[-1,1]\f$
+     */
     template<typename F, typename S, typename P>
     const interval flowTaylor<F,S,P>::II = interval(-1,1);
 

@@ -1,7 +1,5 @@
 /** 
- *  csolver.cpp
- *  
- *  An interval based control problem solver class.
+ *  The source code of the specification-guided engine.
  *
  *  Created by Yinan Li on Jan. 03, 2017.
  *
@@ -55,6 +53,7 @@ namespace rocs {
 	
 	labeling(area, prop);
     }
+    
     void CSolver::labeling(ivec &area, UintSmall prop) {
 	assert(!_ctlr.isempty());
 	if (_ctlr.isleaf(_ctlr._root)) {
@@ -63,6 +62,7 @@ namespace rocs {
 	    refine_label(_ctlr._root, area, prop);
 	}
     }
+    
     void CSolver::init_label(SPnode *current, ivec &cbox, UintSmall prop) {
 	if (cbox.isempty() || current->_tag == -1)
 	    return;
@@ -114,6 +114,7 @@ namespace rocs {
 	
 	}  //end for
     }
+    
     void CSolver::refine_label(SPnode *node, ivec &box, UintSmall prop) {
 	assert(node->_box.isin(box));  // assume that box inside node
 
@@ -165,6 +166,7 @@ namespace rocs {
 	}
 	_ctlr.tagging(EXACT);
     }
+    
     void CSolver::init_winset(ivec &area) {
 	assert(!_ctlr.isempty());
 	if (area == _ctlr._root->_box) {

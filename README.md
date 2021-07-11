@@ -4,6 +4,8 @@ This is an improved version of **ROCS** [1] the robust symbolic control synthesi
 - Abstraction-based control synthesis: state and control space are uniformly discretized.
 - Specification-guided control synthesis: state space are partitioned adaptively with respect to given specifications and local dynamics of the systems.
 
+**Check this [page](https://rocs-doc.readthedocs.io/en/latest/) for detailed documentation.**
+
 
 
 ## New features
